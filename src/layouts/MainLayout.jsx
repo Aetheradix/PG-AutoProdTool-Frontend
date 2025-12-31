@@ -59,7 +59,7 @@ const MainLayout = ({ children }) => {
             style={{ flex: 1, border: 'none', minWidth: 0 }}
           />
 
-          <div className="flex items-center gap-4 flex-shrink-0">
+          <div className="flex items-center gap-4 shrink-0">
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
               <Space className="cursor-pointer">
                 <div className="text-right hidden sm:block">
