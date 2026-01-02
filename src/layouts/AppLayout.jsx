@@ -6,12 +6,13 @@ const { Content } = Layout;
 
 const AppLayout = ({ children }) => {
   return (
-    <Layout className="min-h-screen bg-[#F8FAFC]">
+    <Layout className="app-layout">
       <Header />
-      <Content className="container mx-auto px-6 py-8">
+      <Content className="main-content">
         <div style={{ minHeight: '100%' }}>{children}</div>
       </Content>
     </Layout>
+
   );
 };
 

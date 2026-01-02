@@ -22,19 +22,25 @@ export function MasterDataPage() {
     ];
 
     return (
-        <div className="space-y-8 fade-in">
-            <header className="flex justify-between items-center">
+        <div className="fade-in space-y-8">
+            <header className="master-data-header">
                 <div>
-                    <Title level={2} className="!m-0">Master Data Management</Title>
+                    <Title level={2} className="m-0!">
+                        Master Data Management
+                    </Title>
                     <Text type="secondary">View and manage production assets and categories.</Text>
                 </div>
                 <Space>
-                    <Button icon={<FiLock />} className="rounded-xl">Admin Login</Button>
-                    <Button type="primary" icon={<FiPlus />} className="rounded-xl h-11 px-6">Add New Entry</Button>
+                    <Button icon={<FiLock />} className="rounded-xl">
+                        Admin Login
+                    </Button>
+                    <Button type="primary" icon={<FiPlus />} className="rounded-xl h-11 px-6">
+                        Add New Entry
+                    </Button>
                 </Space>
             </header>
 
-            <Card className="rounded-3xl border-slate-100 shadow-sm overflow-hidden" styles={{ body: { padding: 0 } }}>
+            <Card className="master-data-card" styles={{ body: { padding: 0 } }}>
                 <Table
                     columns={columns}
                     dataSource={dataSource}
@@ -43,5 +49,6 @@ export function MasterDataPage() {
                 />
             </Card>
         </div>
+
     );
 }

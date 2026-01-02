@@ -3,25 +3,27 @@ import { Form, Button, Typography, message } from 'antd';
 import { FiMail, FiLock, FiUser, FiCheckCircle } from 'react-icons/fi';
 import { useAuth } from '@/context/AuthContext';
 import { FormInput } from '@/components/shared/FormInput';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const { Text } = Typography;
 
 export function SignupForm() {
     const { signup } = useAuth();
     const [form] = Form.useForm();
+    const navigate = useNavigate();
 
     const onFinish = (values) => {
         const success = signup(values);
         if (success) {
-            message.success('Account created successfully! Redirecting to dashboard...');
+            message.success('Account created successfully!');
+            navigate('/');
         } else {
             message.error('Signup failed. Please try again.');
         }
     };
 
     return (
-        <div className="w-full max-w-sm">
+        <div className="form-container">
             <Form
                 form={form}
                 name="signup"
@@ -34,7 +36,7 @@ export function SignupForm() {
                     name="name"
                     label="Full Name"
                     rules={[{ required: true, message: 'Please input your full name!' }]}
-                    prefix={<FiUser className="text-slate-400" />}
+                    prefix={<FiUser className="form-input-prefix" />}
                     placeholder="John Doe"
                 />
 
@@ -45,7 +47,7 @@ export function SignupForm() {
                         { required: true, message: 'Please input your email!' },
                         { type: 'email', message: 'Invalid email address!' },
                     ]}
-                    prefix={<FiMail className="text-slate-400" />}
+                    prefix={<FiMail className="form-input-prefix" />}
                     placeholder="user@example.com"
                 />
 
@@ -57,7 +59,7 @@ export function SignupForm() {
                         { required: true, message: 'Please input your password!' },
                         { min: 6, message: 'Password must be at least 6 characters!' },
                     ]}
-                    prefix={<FiLock className="text-slate-400" />}
+                    prefix={<FiLock className="form-input-prefix" />}
                     placeholder="••••••••"
                 />
 
@@ -66,7 +68,8 @@ export function SignupForm() {
                         type="primary"
                         htmlType="submit"
                         icon={<FiCheckCircle />}
-                        className="w-full h-11"
+                        block
+                        className="h-11 rounded-xl"
                     >
                         Create Account
                     </Button>
@@ -82,5 +85,6 @@ export function SignupForm() {
                 </div>
             </Form>
         </div>
+
     );
 }

@@ -6,6 +6,7 @@ import AppLayout from "./layouts/AppLayout";
 import { ConfigProvider, Spin } from 'antd';
 
 const Login = lazy(() => import("./features/auth/login/LoginPage").then(module => ({ default: module.LoginPage })));
+const Signup = lazy(() => import("./features/auth/signup/SignupPage").then(module => ({ default: module.SignupPage })));
 
 const ProtectedApp = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -70,6 +71,7 @@ const App = () => {
           >
             <Routes>
               <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
               <Route path="/*" element={<ProtectedApp />} />
             </Routes>
           </Suspense>

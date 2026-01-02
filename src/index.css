@@ -44,13 +44,17 @@
   --font-sans: "Inter", system-ui, sans-serif;
 }
 
-/* Reset & Base Styles */
+/* ==========================================================================
+   Reset & Base Styles
+   ========================================================================== */
 body {
   background-color: var(--color-background);
   color: var(--color-text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Scrollbar styling */
@@ -73,12 +77,6 @@ body {
   background: var(--color-secondary);
 }
 
-/* Disable text selection for app-like feel */
-body {
-  user-select: none;
-  -webkit-user-select: none;
-}
-
 /* Allow selection in inputs and textareas */
 input,
 textarea {
@@ -86,6 +84,36 @@ textarea {
   -webkit-user-select: text;
 }
 
+/* Animations */
+.fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   Layout Styles
+   ========================================================================== */
+
+.app-layout {
+  @apply min-h-screen bg-[#F8FAFC];
+}
+
+.main-content {
+  @apply container mx-auto px-6 py-8;
+}
+
+/* Header & Navigation Classes */
 @media (max-width: 1023px) {
   .desktop-menu {
     display: none !important;
@@ -128,4 +156,225 @@ textarea {
   .logo-text {
     font-size: 20px !important;
   }
+}
+
+/* ==========================================================================
+   Auth Styles (Login / Signup)
+   ========================================================================== */
+
+.auth-page-container {
+  @apply min-h-screen w-full flex bg-background;
+}
+
+.auth-form-side {
+  @apply w-full lg:w-1/2 flex flex-col justify-center items-center px-8 lg:px-20 relative z-10;
+}
+
+.auth-form-wrapper {
+  @apply w-full max-w-md space-y-8;
+}
+
+.auth-header-logo {
+  @apply h-12 w-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl mb-6;
+}
+
+.auth-title {
+  @apply text-4xl font-bold tracking-tight text-secondary;
+}
+
+.auth-subtitle {
+  @apply text-text-muted text-lg;
+}
+
+.auth-illustration-side {
+  @apply hidden lg:flex lg:w-1/2 bg-blue-50 relative items-center justify-center overflow-hidden;
+}
+
+.auth-bg-gradient {
+  @apply absolute inset-0 bg-linear-to-br from-blue-50 to-blue-100 z-0;
+}
+
+.auth-deco-circle {
+  @apply absolute -left-20 top-1/2 -translate-y-1/2 w-96 h-96 bg-primary rounded-full opacity-5 blur-3xl;
+}
+
+.auth-info-text {
+  @apply mt-8 text-secondary/70 font-medium;
+}
+
+/* ==========================================================================
+   Production Dashboard Styles
+   ========================================================================== */
+
+.dashboard-container {
+  @apply min-h-screen bg-[#f8fafc] py-12 px-4;
+}
+
+.dashboard-content {
+  @apply max-w-6xl mx-auto space-y-16;
+}
+
+.section-title {
+  @apply text-4xl font-extrabold text-[#0284c7] text-center mb-8;
+}
+
+.dashboard-section {
+  @apply space-y-10;
+}
+
+.plan-form-wrapper {
+  @apply space-y-6 flex flex-col items-center;
+}
+
+/* Create Plan Section */
+.plan-form-container {
+  @apply bg-white rounded-3xl p-2 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center gap-2 max-w-4xl mx-auto;
+}
+
+.plan-input {
+  @apply flex-1 border-none focus:ring-0 text-slate-600 placeholder:text-slate-300 text-lg px-6 py-4 w-full !bg-transparent;
+}
+
+.plan-select {
+  @apply min-w-[180px] h-12 border-none bg-slate-50 rounded-xl text-slate-600 font-medium;
+}
+
+.generate-button {
+  @apply bg-[#0ea5e9] hover:bg-[#0284c7] text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all shadow-lg shadow-blue-200 hover:shadow-blue-300 w-full md:w-auto mt-4 md:mt-0 active:scale-95;
+}
+
+/* Explore More Section */
+.explore-section {
+  @apply space-y-8;
+}
+
+.explore-title {
+  @apply text-xl font-bold text-slate-800 border-b border-slate-100 pb-4;
+}
+
+.explore-grid {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-8;
+}
+
+/* Explore Card Styles */
+.explore-card {
+  @apply bg-white rounded-[32px] overflow-hidden shadow-sm border border-slate-100 transition-all hover:shadow-xl hover:-translate-y-1;
+}
+
+.card-header {
+  @apply h-32 bg-[#0ea5e9] relative overflow-hidden;
+}
+
+.card-header-overlay {
+  @apply absolute inset-0 bg-gradient-to-br from-white/10 to-transparent;
+}
+
+.card-body {
+  @apply p-6 space-y-4;
+}
+
+.card-title {
+  @apply text-lg font-bold text-slate-800;
+}
+
+.card-button {
+  @apply w-full bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-xl py-3 font-semibold transition-colors active:scale-95;
+}
+
+/* ==========================================================================
+   Production - Status Page
+   ========================================================================== */
+
+.page-header {
+  @apply space-y-2;
+}
+
+.status-card {
+  @apply rounded-3xl border-slate-100 shadow-sm h-full;
+}
+
+.tank-grid {
+  @apply grid grid-cols-2 md:grid-cols-4 gap-6;
+}
+
+.tank-item {
+  @apply p-4 bg-slate-50 rounded-2xl text-center space-y-2 border border-slate-100;
+}
+
+.material-item {
+  @apply space-y-1;
+}
+
+.material-alert {
+  @apply pt-4 p-4 bg-rose-50 rounded-2xl border border-rose-100;
+}
+
+/* ==========================================================================
+   Production - KPI Page
+   ========================================================================== */
+
+.kpi-card-blue {
+  @apply rounded-3xl border-slate-100 shadow-sm bg-blue-50/30;
+}
+
+.kpi-card-emerald {
+  @apply rounded-3xl border-slate-100 shadow-sm bg-emerald-50/30;
+}
+
+.kpi-card-amber {
+  @apply rounded-3xl border-slate-100 shadow-sm bg-amber-50/30;
+}
+
+.kpi-card-purple {
+  @apply rounded-3xl border-slate-100 shadow-sm bg-purple-50/30;
+}
+
+.chart-card {
+  @apply rounded-3xl border-slate-100 shadow-sm h-80 flex items-center justify-center;
+}
+
+/* ==========================================================================
+   Production - Master Data
+   ========================================================================== */
+
+.master-data-header {
+  @apply flex flex-col md:flex-row justify-between items-start md:items-center gap-4;
+}
+
+.master-data-card {
+  @apply rounded-3xl border-slate-100 shadow-sm overflow-hidden;
+}
+
+/* ==========================================================================
+   Shared Form Components
+   ========================================================================== */
+
+.form-container {
+  @apply w-full max-w-sm;
+}
+
+.form-label {
+  @apply font-semibold text-slate-700;
+}
+
+.form-input-prefix {
+  @apply text-slate-400;
+}
+
+/* Project Utilities */
+.header-divider {
+  @apply h-px bg-slate-200 w-full my-12;
+}
+
+/* Ant Design Overrides */
+.plan-select .ant-select-selector {
+  @apply !border-none !shadow-none !bg-transparent !h-full !flex !items-center !px-4 !text-slate-600 !font-medium !text-base;
+}
+
+.ant-btn.rounded-xl {
+  @apply rounded-xl;
+}
+
+.ant-card.rounded-3xl {
+  @apply rounded-3xl;
 }

@@ -3,23 +3,27 @@ import { Form, Button, Typography, message } from 'antd';
 import { FiMail, FiLock, FiLogIn } from 'react-icons/fi';
 import { useAuth } from '@/context/AuthContext';
 import { FormInput } from '@/components/shared/FormInput';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const { Text } = Typography;
 
 export function LoginForm() {
   const { login } = useAuth();
   const [form] = Form.useForm();
+  const navigate = useNavigate();
 
   const onFinish = (values) => {
     const success = login(values);
-    if (!success) {
+    if (success) {
+      message.success('Login successful!');
+      navigate('/');
+    } else {
       message.error('Invalid email or password. Use admin@admin.com / admin123');
     }
   };
 
   return (
-    <div className="w-full max-w-sm">
+    <div className="form-container">
       <Form
         form={form}
         name="login"
@@ -35,7 +39,7 @@ export function LoginForm() {
             { required: true, message: 'Please input your email!' },
             { type: 'email', message: 'Invalid email address!' },
           ]}
-          prefix={<FiMail className="text-slate-400" />}
+          prefix={<FiMail className="form-input-prefix" />}
           placeholder="admin@example.com"
         />
 
@@ -47,7 +51,7 @@ export function LoginForm() {
             { required: true, message: 'Please input your password!' },
             { min: 6, message: 'Password must be at least 6 characters!' },
           ]}
-          prefix={<FiLock className="text-slate-400" />}
+          prefix={<FiLock className="form-input-prefix" />}
           placeholder="••••••••"
         />
 
@@ -56,7 +60,8 @@ export function LoginForm() {
             type="primary"
             htmlType="submit"
             icon={<FiLogIn />}
-            className="w-full h-11"
+            block
+            className="h-11 rounded-xl"
           >
             Sign In
           </Button>
@@ -72,5 +77,6 @@ export function LoginForm() {
         </div>
       </Form>
     </div>
+
   );
 }

@@ -6,8 +6,8 @@ const { Title, Text } = Typography;
 
 export function StatusPage() {
   return (
-    <div className="space-y-8 fade-in">
-      <header>
+    <div className="fade-in space-y-8">
+      <header className="page-header">
         <Title level={2} className="m-0!">
           Current Status View
         </Title>
@@ -22,13 +22,13 @@ export function StatusPage() {
                 <FiActivity className="text-blue-500" /> Tank Availability (TTS View)
               </Space>
             }
-            className="rounded-3xl border-slate-100 shadow-sm h-full"
+            className="status-card"
           >
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="tank-grid">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                 <div
                   key={i}
-                  className="p-4 bg-slate-50 rounded-2xl text-center space-y-2 border border-slate-100"
+                  className="tank-item"
                 >
                   <Text strong className="block text-xs">
                     TANK {i}
@@ -55,17 +55,17 @@ export function StatusPage() {
                 <FiDroplet className="text-amber-500" /> Raw Material Levels
               </Space>
             }
-            className="rounded-3xl border-slate-100 shadow-sm h-full"
+            className="status-card"
           >
             <div className="space-y-8">
-              <div>
+              <div className="material-item">
                 <div className="flex justify-between mb-2">
                   <Text strong>Substance Alpha</Text>
                   <Text type="secondary">8,400 L</Text>
                 </div>
                 <Progress percent={84} strokeColor="#3b82f6" railColor="#f1f5f9" />
               </div>
-              <div>
+              <div className="material-item">
                 <div className="flex justify-between mb-2">
                   <Text strong>Substance Beta</Text>
                   <Text type="secondary">2,100 L</Text>
@@ -77,7 +77,7 @@ export function StatusPage() {
                   railColor="#f1f5f9"
                 />
               </div>
-              <div className="pt-4 p-4 bg-rose-50 rounded-2xl border border-rose-100">
+              <div className="material-alert">
                 <Text type="danger" strong className="flex items-center gap-2">
                   <FiActivity /> Low Material Alert
                 </Text>
@@ -90,5 +90,6 @@ export function StatusPage() {
         </Col>
       </Row>
     </div>
+
   );
 }
