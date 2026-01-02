@@ -85,3 +85,47 @@ textarea {
   user-select: text;
   -webkit-user-select: text;
 }
+
+@media (max-width: 1023px) {
+  .desktop-menu {
+    display: none !important;
+  }
+
+  .mobile-toggle {
+    display: flex !important;
+  }
+
+  .desktop-user {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .desktop-menu {
+    display: flex !important;
+  }
+
+  .mobile-toggle {
+    display: none !important;
+  }
+
+  .desktop-user {
+    display: block !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .logo-text {
+    font-size: 16px !important;
+  }
+
+  .user-text {
+    display: none !important;
+  }
+}
+
+@media (min-width: 641px) {
+  .logo-text {
+    font-size: 20px !important;
+  }
+}

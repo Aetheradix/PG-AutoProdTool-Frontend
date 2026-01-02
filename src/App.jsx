@@ -1,14 +1,35 @@
-import { AuthProvider, useAuth } from '@/context/AuthContext';
-import { LoginPage } from '@/features/auth/login/LoginPage';
-import { SignupPage } from '@/features/auth/signup/SignupPage';
-import { ProductionDashboard } from '@/features/production/dashboard/ProductionDashboard';
-import MainLayout from '@/layouts/MainLayout';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-
+import React, { Suspense, lazy } from 'react';
+import { Routes, Route, Navigate, BrowserRouter } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import AppFeature from "./pages";
+import AppLayout from "./layouts/AppLayout";
 import { ConfigProvider, Spin } from 'antd';
-import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
-function App() {
+const Login = lazy(() => import("./features/auth/login/LoginPage").then(module => ({ default: module.LoginPage })));
+
+const ProtectedApp = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return (
+    <AppLayout>
+      <AppFeature />
+    </AppLayout>
+  );
+};
+
+const App = () => {
   return (
     <ConfigProvider
       theme={{
@@ -40,64 +61,22 @@ function App() {
     >
       <AuthProvider>
         <BrowserRouter>
-          <Routes>
-            {/* Public Route: Signup */}
-            <Route
-              path="/signup"
-              element={
-                <PublicOnlyRoute>
-                  <SignupPage />
-                </PublicOnlyRoute>
-              }
-            />
-
-            {/* Public Route: Login */}
-            <Route
-              path="/login"
-              element={
-                <PublicOnlyRoute>
-                  <LoginPage />
-                </PublicOnlyRoute>
-              }
-            />
-
-            {/* Protected Routes: Dashboard */}
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <ProductionDashboard />
-                  </MainLayout>
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Catch all redirect to root */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <Suspense
+            fallback={
+              <div className="min-h-screen flex items-center justify-center">
+                <Spin size="large" tip="Loading..." />
+              </div>
+            }
+          >
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/*" element={<ProtectedApp />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </AuthProvider>
     </ConfigProvider>
   );
-}
-
-function PublicOnlyRoute({ children }) {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spin size="large" />
-      </div>
-    );
-  }
-
-  if (isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-
-  return children;
-}
+};
 
 export default App;
