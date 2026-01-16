@@ -64,7 +64,7 @@ export function StatusPage() {
 
             <Row gutter={[12, 12]}>
               {ttsTankData.map((batch, index) => (
-                <Col key={batch.id} xs={12} sm={8} md={4.8} className="!flex">
+                <Col key={batch.id} xs={12} sm={8} md={4.8} className="flex!">
                   <div className="w-full">
                     <BatchCard
                       {...batch}

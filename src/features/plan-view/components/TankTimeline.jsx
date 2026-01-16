@@ -19,7 +19,7 @@ const TankTimeline = ({ tasks = [] }) => {
   return (
     <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden animate-fade-in mb-8">
       <div className="overflow-x-auto">
-        <div className="min-w-[1200px]">
+        <div className="min-w-300">
           {/* Time Header */}
           <div className="flex border-b border-slate-100">
             <div className="w-20 shrink-0 border-r border-slate-100 bg-slate-50"></div>
@@ -38,7 +38,7 @@ const TankTimeline = ({ tasks = [] }) => {
             {tasks.map((resourceRow, rowIndex) => (
               <div
                 key={rowIndex}
-                className="flex border-b border-slate-100 last:border-b-0 min-h-[50px] group"
+                className="flex border-b border-slate-100 last:border-b-0 min-h-12.5 group"
               >
                 {/* Resource Label */}
                 <div className="w-20 shrink-0 flex items-center justify-center font-bold text-slate-700 border-r border-slate-100 bg-slate-50 group-hover:bg-slate-100 transition-colors text-xs">
