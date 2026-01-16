@@ -124,16 +124,16 @@ export function MasterDataPage() {
 
   return (
     <div className="fade-in pb-10">
-      <div className="flex gap-8 items-start">
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
         {/* Sidebar */}
-        <div className="w-64 shrink-0 space-y-1 mt-16">
+        <div className="w-full lg:w-64 shrink-0 flex lg:flex-col gap-1 mt-4 lg:mt-16 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 scrollbar-hide">
           {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`w-full text-left px-6 py-3 rounded-lg text-sm font-semibold transition-all ${activeCategory === cat.id
-                  ? 'bg-blue-50 text-blue-600 shadow-sm'
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+              className={`whitespace-nowrap lg:w-full text-left px-4 lg:px-6 py-2 lg:py-3 rounded-lg text-sm font-semibold transition-all ${activeCategory === cat.id
+                ? 'bg-blue-50 text-blue-600 shadow-sm'
+                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
                 }`}
             >
               {cat.label}
@@ -142,12 +142,12 @@ export function MasterDataPage() {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1">
+        <div className="flex-1 w-full">
           <Card
             className="border-none shadow-sm rounded-xl overflow-hidden min-h-[500px]"
-            bodyStyle={{ padding: '32px' }}
+            styles={{ body: { padding: '24px' } }}
           >
-            <div className="flex justify-between items-center mb-10">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 lg:mb-10">
               <Title level={4} className="m-0! font-bold text-slate-800">
                 {categories.find(c => c.id === activeCategory)?.label}
               </Title>
@@ -155,7 +155,7 @@ export function MasterDataPage() {
                 type="primary"
                 icon={<FiPlus />}
                 onClick={handleAdd}
-                className="bg-blue-600 h-11 px-6 rounded-lg font-bold border-none shadow-md hover:shadow-lg transition-all"
+                className="bg-blue-600 h-11 px-6 rounded-lg font-bold border-none shadow-md hover:shadow-lg transition-all w-full sm:w-auto"
               >
                 Add New Entry
               </Button>
@@ -167,6 +167,7 @@ export function MasterDataPage() {
               pagination={false}
               className="master-data-table-custom"
               rowClassName="group"
+              scroll={{ x: 'max-content' }}
             />
           </Card>
         </div>
@@ -234,28 +235,6 @@ export function MasterDataPage() {
           )}
         </Form>
       </Modal>
-
-      <style jsx global>{`
-        .master-data-table-custom .ant-table-thead > tr > th {
-          background: #f8fafc !important;
-          color: #94a3b8 !important;
-          font-size: 11px !important;
-          font-weight: 700 !important;
-          padding: 12px 16px !important;
-          border-bottom: 1px solid #f1f5f9 !important;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-        }
-        .master-data-table-custom .ant-table-tbody > tr > td {
-          padding: 16px 16px !important;
-          color: #475569 !important;
-          font-weight: 500 !important;
-          border-bottom: 1px solid #f1f5f9 !important;
-        }
-        .master-data-table-custom .ant-table-tbody > tr:hover > td {
-          background: #f8fafc !important;
-        }
-      `}</style>
     </div>
   );
 }

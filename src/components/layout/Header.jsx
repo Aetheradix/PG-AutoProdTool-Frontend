@@ -104,8 +104,8 @@ const Header = () => {
                 <Text strong style={{ fontSize: '14px', display: 'block' }}>
                   {user?.name || 'Planner Client'}
                 </Text>
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  Administrator
+                <Text type="secondary" style={{ fontSize: '12px', textTransform: 'capitalize' }}>
+                  {user?.role || 'Guest'}
                 </Text>
               </div>
               <Avatar
