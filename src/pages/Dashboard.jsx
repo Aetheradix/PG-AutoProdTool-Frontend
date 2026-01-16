@@ -1,3 +1,3 @@
-import { ProductionDashboard } from '@/features/production/dashboard/ProductionDashboard';
+import { ProductionDashboard } from '@/features/dashboard/ProductionDashboard';
 
 export default ProductionDashboard;

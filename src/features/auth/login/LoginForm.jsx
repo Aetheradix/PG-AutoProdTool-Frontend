@@ -31,6 +31,7 @@ export function LoginForm() {
         layout="vertical"
         size="large"
         requiredMark={false}
+        className="mt-4"
       >
         <FormInput
           name="email"
@@ -39,7 +40,7 @@ export function LoginForm() {
             { required: true, message: 'Please input your email!' },
             { type: 'email', message: 'Invalid email address!' },
           ]}
-          prefix={<FiMail className="form-input-prefix" />}
+          prefix={<FiMail className="form-input-prefix text-blue-500" />}
           placeholder="admin@example.com"
         />
 
@@ -51,26 +52,26 @@ export function LoginForm() {
             { required: true, message: 'Please input your password!' },
             { min: 6, message: 'Password must be at least 6 characters!' },
           ]}
-          prefix={<FiLock className="form-input-prefix" />}
+          prefix={<FiLock className="form-input-prefix text-blue-500" />}
           placeholder="••••••••"
         />
 
-        <Form.Item>
+        <Form.Item className="mb-0">
           <Button
             type="primary"
             htmlType="submit"
             icon={<FiLogIn />}
             block
-            className="h-11 rounded-xl"
+            className="h-12 rounded-xl text-lg font-bold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all border-none"
           >
             Sign In
           </Button>
         </Form.Item>
 
-        <div className="text-center mt-4">
+        <div className="text-center mt-6">
           <Text className="text-text-muted">
             Don't have an account?{' '}
-            <Link to="/signup" className="text-primary font-medium hover:underline">
+            <Link to="/signup" className="text-primary font-semibold hover:text-primary/80 transition-colors">
               Sign Up
             </Link>
           </Text>

@@ -1,8 +1,8 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, BrowserRouter } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import AppFeature from "./pages";
-import AppLayout from "./layouts/AppLayout";
+import AppFeature from "./features";
+import AppLayout from "./components/layout/AppLayout";
 import { ConfigProvider, Spin } from 'antd';
 
 const Login = lazy(() => import("./features/auth/login/LoginPage").then(module => ({ default: module.LoginPage })));
