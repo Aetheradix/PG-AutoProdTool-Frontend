@@ -1,17 +1,24 @@
-import { FiActivity, FiFileText, FiPieChart, FiPlusCircle, FiSettings } from "react-icons/fi";
+import React from 'react';
+import {
+  FiPlusCircle,
+  FiFileText,
+  FiActivity,
+  FiPieChart,
+  FiSettings
+} from 'react-icons/fi';
 
-export const cards = [
+export const dashboardCardsData = [
   {
     title: 'Create Production Plan',
     action: 'Start Planning',
-    path: '/master-data', // Adjust paths as needed
+    path: '/create-production-plan',
     icon: <FiPlusCircle size={24} className="text-blue-600" />,
     description: 'Generate a new 24-hour shift-wise plan for a selected date.',
   },
   {
     title: 'View Last Plan',
     action: 'Open Plan',
-    path: '/status',
+    path: '/view-last-plan',
     icon: <FiFileText size={24} className="text-blue-600" />,
     description: 'Review and tweak the most recently generated production plan.',
   },

@@ -1,10 +1,31 @@
 import React from 'react';
-import { Card, Typography, Row, Col, Statistic, Progress } from 'antd';
+import { Card, Typography, Row, Col, Statistic } from 'antd';
 import { FiPieChart, FiTrendingUp, FiCheckCircle, FiClock } from 'react-icons/fi';
+import { kpiDataItems } from './kpiData';
 
 const { Title, Text } = Typography;
 
 export function KPIPage() {
+  const getIcon = (type) => {
+    switch (type) {
+      case 'blue': return <FiTrendingUp className="mr-2" />;
+      case 'emerald': return <FiCheckCircle className="mr-2" />;
+      case 'amber': return <FiClock className="mr-2" />;
+      case 'purple': return <FiPieChart className="mr-2" />;
+      default: return null;
+    }
+  };
+
+  const getColor = (type) => {
+    switch (type) {
+      case 'blue': return '#2563eb';
+      case 'emerald': return '#059669';
+      case 'amber': return '#d97706';
+      case 'purple': return '#7c3aed';
+      default: return '#000';
+    }
+  };
+
   return (
     <div className="fade-in space-y-8">
       <header className="page-header">
@@ -15,51 +36,20 @@ export function KPIPage() {
       </header>
 
       <Row gutter={[24, 24]}>
-        <Col xs={24} md={6}>
-          <Card className="kpi-card-blue">
-            <Statistic
-              title="Overall Efficiency"
-              value={92.4}
-              precision={1}
-              suffix="%"
-              prefix={<FiTrendingUp className="mr-2" />}
-              style={{ color: '#2563eb', fontWeight: 800 }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} md={6}>
-          <Card className="kpi-card-emerald">
-            <Statistic
-              title="Plan Adherence"
-              value={98}
-              suffix="%"
-              prefix={<FiCheckCircle className="mr-2" />}
-              style={{ color: '#059669', fontWeight: 800 }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} md={6}>
-          <Card className="kpi-card-amber">
-            <Statistic
-              title="Avg. Downtime"
-              value={12}
-              suffix="m"
-              prefix={<FiClock className="mr-2" />}
-              style={{ color: '#d97706', fontWeight: 800 }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} md={6}>
-          <Card className="kpi-card-purple">
-            <Statistic
-              title="Tank Utilization"
-              value={87}
-              suffix="%"
-              prefix={<FiPieChart className="mr-2" />}
-              style={{ color: '#7c3aed', fontWeight: 800 }}
-            />
-          </Card>
-        </Col>
+        {kpiDataItems.map((item) => (
+          <Col key={item.id} xs={24} md={6}>
+            <Card className={`kpi-card-${item.type}`}>
+              <Statistic
+                title={item.title}
+                value={item.value}
+                precision={item.precision}
+                suffix={item.suffix}
+                prefix={getIcon(item.type)}
+                style={{ color: getColor(item.type), fontWeight: 800 }}
+              />
+            </Card>
+          </Col>
+        ))}
       </Row>
 
       <Row gutter={[24, 24]}>

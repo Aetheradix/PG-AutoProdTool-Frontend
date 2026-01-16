@@ -2,12 +2,12 @@ import { useAuth } from '@/context/AuthContext';
 import { Avatar, Drawer, Dropdown, Layout, Menu, Space, Typography } from 'antd';
 import { useState } from 'react';
 import {
-    FiActivity,
-    FiDatabase,
-    FiHome,
-    FiLogOut,
-    FiPieChart,
-    FiUser
+  FiActivity,
+  FiDatabase,
+  FiHome,
+  FiLogOut,
+  FiPieChart,
+  FiUser
 } from 'react-icons/fi';
 import { useLocation, useNavigate } from 'react-router-dom';
 import DesktopMenu from '../DesktopMenu';
@@ -24,6 +24,7 @@ const Header = () => {
 
   const menuItems = [
     { key: '/', icon: <FiHome />, label: 'Home Page' },
+    { key: '/plan-view', icon: <FiActivity />, label: 'Plan View' },
     { key: '/master-data', icon: <FiDatabase />, label: 'Master Data' },
     { key: '/status', icon: <FiActivity />, label: 'Current Status' },
     { key: '/kpi', icon: <FiPieChart />, label: 'KPI Dashboard' },

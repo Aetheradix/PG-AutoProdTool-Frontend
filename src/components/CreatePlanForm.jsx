@@ -4,6 +4,7 @@ import { FormSelect } from '@/components/shared/FormSelect';
 import { Button, Divider, Form, notification, Typography } from 'antd';
 import { useState } from 'react';
 import { FiCalendar, FiClock, FiTrash2 } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
@@ -118,11 +119,11 @@ export function CreatePlanForm() {
                     name="reason"
                     label="Reason"
                     placeholder="e.g., CIL"
-                    className=" h-10 placeholder:!text-gray-400"
+                    className=" h-10 placeholder:text-gray-400!"
                   />
                 </div>
               </div>
-              <div className='mt-12'>
+              <div className="mt-12">
                 <Button
                   onClick={addDowntime}
                   className="px-12 py-12  bg-slate-100 border-none font-semibold text-slate-600 hover:bg-slate-200"
@@ -166,14 +167,16 @@ export function CreatePlanForm() {
             <Button size="large" className="rounded-lg px-8 border-slate-200">
               Cancel
             </Button>
-            <Button
-              type="primary"
-              htmlType="submit"
-              size="large"
-              className="bg-blue-600 px-8 rounded-lg font-bold border-none"
-            >
-              Generate Plan
-            </Button>
+            <Link to="/plan-view">
+              <Button
+                type="primary"
+                htmlType="submit"
+                size="large"
+                className="bg-blue-600 px-8 rounded-lg font-bold border-none"
+              >
+                Generate Plan
+              </Button>
+            </Link>
           </div>
         </div>
       </Form>

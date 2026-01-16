@@ -1,95 +1,82 @@
 import React from 'react';
-import { Card, Typography, Row, Col, Progress, Tag, Statistic, Space } from 'antd';
-import { FiActivity, FiDatabase, FiDroplet } from 'react-icons/fi';
+import { Typography, Row, Col, Space } from 'antd';
+import StatusCard from './components/StatusCard';
+import BatchCard from './components/BatchCard';
+import { rmTankData, ttsTankData } from './statusData';
 
 const { Title, Text } = Typography;
 
 export function StatusPage() {
+  const lastRefreshRM = '9/9/2025 7:38:09 AM';
+  const lastRefreshTTS = '9/9/2025 7:33:07 AM';
+
   return (
-    <div className="fade-in space-y-8">
-      <header className="page-header">
-        <Title level={2} className="m-0!">
-          Current Status View
+    <div className="fade-in space-y-6 pb-8">
+      <header className="flex justify-center mb-8">
+        <Title level={2} className="m-0! text-blue-600 font-extrabold tracking-tight">
+          Current Status
         </Title>
-        <Text type="secondary">Real-time monitoring of tank levels and raw materials.</Text>
       </header>
 
-      <Row gutter={[24, 24]}>
-        <Col xs={24} lg={16}>
-          <Card
-            title={
-              <Space>
-                <FiActivity className="text-blue-500" /> Tank Availability (TTS View)
-              </Space>
-            }
-            className="status-card"
-          >
-            <div className="tank-grid">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <div
-                  key={i}
-                  className="tank-item"
-                >
-                  <Text strong className="block text-xs">
-                    TANK {i}
-                  </Text>
-                  <Progress
-                    type="dashboard"
-                    percent={Math.floor(Math.random() * 100)}
-                    size={60}
-                    strokeWidth={10}
-                  />
-                  <Tag color="processing" className="m-0 text-[10px]">
-                    AVAILABLE
-                  </Tag>
-                </div>
-              ))}
+      <Row gutter={[32, 32]}>
+        {/* Left Column - RM TANK STATUS */}
+        <Col xs={24} lg={12}>
+          <div className="bg-slate-50/50 rounded-3xl border border-slate-100 p-6 shadow-sm h-full">
+            <div className="flex justify-between items-center mb-4 px-2">
+              <div className="bg-amber-400 px-4 py-1 rounded text-slate-900 font-bold text-sm uppercase">
+                LIVE RM TANK STATUS
+              </div>
+              
             </div>
-          </Card>
+
+            <div className="bg-black text-white text-[10px] py-1 px-4 mb-6 flex justify-center font-mono tracking-widest uppercase">
+              LAST REFRESH: {lastRefreshRM}
+            </div>
+
+            <Row gutter={[12, 12]}>
+              {rmTankData.map((tank) => (
+                <Col key={tank.id} xs={12} sm={8} md={6}>
+                  <StatusCard
+                    title={tank.name}
+                    value={tank.value}
+                    unit={tank.unit}
+                    status={tank.status}
+                  />
+                </Col>
+              ))}
+            </Row>
+          </div>
         </Col>
 
-        <Col xs={24} lg={8}>
-          <Card
-            title={
-              <Space>
-                <FiDroplet className="text-amber-500" /> Raw Material Levels
-              </Space>
-            }
-            className="status-card"
-          >
-            <div className="space-y-8">
-              <div className="material-item">
-                <div className="flex justify-between mb-2">
-                  <Text strong>Substance Alpha</Text>
-                  <Text type="secondary">8,400 L</Text>
-                </div>
-                <Progress percent={84} strokeColor="#3b82f6" railColor="#f1f5f9" />
+        {/* Right Column - TTS TANK STATUS */}
+        <Col xs={24} lg={12}>
+          <div className="bg-slate-50/50 rounded-3xl border border-slate-100 p-6 shadow-sm h-full">
+            <div className="flex justify-between items-center mb-4 px-2">
+              <div className="bg-amber-400 px-4 py-1 rounded text-slate-900 font-bold text-sm uppercase">
+                LIVE TTS TANK STATUS
               </div>
-              <div className="material-item">
-                <div className="flex justify-between mb-2">
-                  <Text strong>Substance Beta</Text>
-                  <Text type="secondary">2,100 L</Text>
-                </div>
-                <Progress
-                  percent={21}
-                  status="exception"
-                  strokeColor="#ef4444"
-                  railColor="#f1f5f9"
-                />
-              </div>
-              <div className="material-alert">
-                <Text type="danger" strong className="flex items-center gap-2">
-                  <FiActivity /> Low Material Alert
-                </Text>
-                <Text className="text-xs block mt-1 text-rose-700">
-                  Beta supply is below critical threshold (25%).
-                </Text>
-              </div>
+              
             </div>
-          </Card>
+
+            <div className="bg-black text-white text-[10px] py-1 px-4 mb-6 flex justify-center font-mono tracking-widest uppercase">
+              LAST REFRESH: {lastRefreshTTS}
+            </div>
+
+            <Row gutter={[12, 12]}>
+              {ttsTankData.map((batch, index) => (
+                <Col key={batch.id} xs={12} sm={8} md={4.8} className="!flex">
+                  <div className="w-full">
+                    <BatchCard
+                      {...batch}
+                      index={index + 1}
+                    />
+                  </div>
+                </Col>
+              ))}
+            </Row>
+          </div>
         </Col>
       </Row>
     </div>
-
   );
 }
