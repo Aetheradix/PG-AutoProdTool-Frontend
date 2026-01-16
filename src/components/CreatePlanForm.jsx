@@ -92,6 +92,7 @@ export function CreatePlanForm() {
               layout="vertical"
               className="bg-transparent"
               requiredMark={false}
+              component={false}
             >
               <div className="grid grid-cols-1 md:grid-cols-11 gap-4 items-end">
                 <div className="md:col-span-3">

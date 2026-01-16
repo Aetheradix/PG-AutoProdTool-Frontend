@@ -6,6 +6,7 @@ import { StatusPage } from '@/features/status/StatusPage';
 import { KPIPage } from '@/features/kpi/KPIPage';
 import CreateProductionPlan from './create-production-plan';
 import PlanView from './plan-view';
+import ProfilePage from './profile/ProfilePage';
 
 export default function AppFeature() {
   return (
@@ -16,6 +17,7 @@ export default function AppFeature() {
       <Route path="master-data" element={<MasterDataPage />} />
       <Route path="status" element={<StatusPage />} />
       <Route path="kpi" element={<KPIPage />} />
+      <Route path="profile" element={<ProfilePage />} />
 
       {/* Fallback for any route not implemented yet */}
       <Route path="*" element={<div className="p-8 text-center">Page Under Construction</div>} />

@@ -16,7 +16,7 @@ const BatchCard = ({ batchId, brand, date, status, color, index }) => {
     return (
         <Card
             className={`border-none ${colorMaps[color]} shadow-md relative overflow-hidden h-full transition-all hover:translate-y-[-4px]`}
-            bodyStyle={{ padding: '16px' }}
+            styles={{ body: { padding: '16px' } }}
         >
             <div className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-white/20 text-white text-[10px] font-bold">
                 {index}

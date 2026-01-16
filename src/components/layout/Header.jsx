@@ -40,6 +40,7 @@ const Header = () => {
       key: 'profile',
       label: 'Profile',
       icon: <FiUser />,
+      onClick: () => navigate('/profile'),
     },
     {
       key: 'logout',

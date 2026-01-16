@@ -13,7 +13,7 @@ const StatusCard = ({ title, value, unit, status }) => {
     return (
         <Card
             className={`border-none ${statusColors[status]} transition-transform hover:scale-[1.02] cursor-pointer shadow-sm`}
-            bodyStyle={{ padding: '16px' }}
+            styles={{ body: { padding: '16px' } }}
         >
             <Text className="text-white/90 text-xs font-semibold block mb-4 uppercase tracking-wider">
                 {title}
