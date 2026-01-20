@@ -13,7 +13,16 @@ export function CreatePlanForm() {
   const [downtimeForm] = Form.useForm();
   const [downtimes, setDowntimes] = useState([]);
 
+  const reasonOptions = [
+    { value: 'CIL', label: 'CIL' },
+    { value: 'Changeover', label: 'Changeover' },
+    { value: 'Breakdown', label: 'Breakdown' },
+    { value: 'Maintenance', label: 'Maintenance' },
+    { value: 'Cleaning', label: 'Cleaning' },
+  ];
+
   const onFinish = (values) => {
+    console.log('Form Values:', values);
     const finalData = {
       ...values,
       plannedDowntimes: downtimes,
@@ -32,9 +41,10 @@ export function CreatePlanForm() {
       const newDowntime = {
         id: Date.now(),
         reason: values.reason,
-        startTime: values.startTime.format('DD/MM/YYYY, HH:mm:ss'),
-        endTime: values.endTime.format('DD/MM/YYYY, HH:mm:ss'),
+        startTime: values.startTime.format('DD/MM/YYYY, hh:mm A'),
+        duration: values.duration,
       };
+
       setDowntimes([...downtimes, newDowntime]);
       downtimeForm.resetFields();
     } catch (error) {
@@ -94,33 +104,33 @@ export function CreatePlanForm() {
               requiredMark={false}
               component={false}
             >
-              <div className="grid grid-cols-1 md:grid-cols-11 gap-4 items-end">
-                <div className="md:col-span-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div>
                   <FormDatePicker
                     name="startTime"
                     label="Start Time"
-                    showTime
-                    format="DD/MM/YYYY, HH:mm:ss"
+                    showTime={{ use12Hours: true, format: 'hh:mm A' }}
+                    format="DD/MM/YYYY, hh:mm A"
                     className=" h-10"
                     placeholder="dd/mm/yyyy, --:-- --"
                   />
                 </div>
-                <div className="md:col-span-3">
-                  <FormDatePicker
-                    name="endTime"
-                    label="End Time"
-                    showTime
-                    format="DD/MM/YYYY, HH:mm:ss"
-                    className=" h-10"
-                    placeholder="dd/mm/yyyy, --:-- --"
-                  />
-                </div>
-                <div className="md:col-span-4">
+                <div>
                   <FormInput
+                    name="duration"
+                    label="Duration (mins)"
+                    type="number"
+                    placeholder="e.g., 30"
+                    className=" h-10"
+                  />
+                </div>
+                <div>
+                  <FormSelect
                     name="reason"
                     label="Reason"
-                    placeholder="e.g., CIL"
-                    className=" h-10 placeholder:text-gray-400!"
+                    placeholder="Select Reason"
+                    className=" h-10"
+                    options={reasonOptions}
                   />
                 </div>
               </div>
@@ -148,7 +158,7 @@ export function CreatePlanForm() {
                     <div className="flex items-center gap-3">
                       <FiClock className="text-slate-400" />
                       <Text className="text-slate-600">
-                        <span className="font-bold">{d.reason}:</span> {d.startTime} - {d.endTime}
+                        <span className="font-bold">{d.reason}:</span> {d.startTime} ({d.duration} mins)
                       </Text>
                     </div>
                     <Button
