@@ -6,7 +6,7 @@ import TankTimeline from './components/TankTimeline';
 import { defaultTasks, tankTasks } from './planData';
 
 const PlanView = ({ tasks = defaultTasks }) => {
-  const [activeTab, setActiveTab] = useState('tank'); // Default to tank for testing or as per user focus
+  const [activeTab, setActiveTab] = useState('tank');
 
   const renderContent = () => {
     switch (activeTab) {
