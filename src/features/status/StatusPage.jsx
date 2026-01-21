@@ -20,13 +20,13 @@ export function StatusPage() {
 
       <Row gutter={[32, 32]}>
         {/* Left Column - RM TANK STATUS */}
-        <Col xs={24} lg={12}>
+        <Col xs={24} lg={24}>
           <div className="bg-slate-50/50 rounded-3xl border border-slate-100 p-6 shadow-sm h-full">
             <div className="flex justify-between items-center mb-4 px-2">
               <div className="bg-amber-400 px-4 py-1 rounded text-slate-900 font-bold text-sm uppercase">
                 LIVE RM TANK STATUS
               </div>
-              
+
             </div>
 
             <div className="bg-black text-white text-[10px] py-1 px-4 mb-6 flex justify-center font-mono tracking-widest uppercase">
@@ -49,13 +49,13 @@ export function StatusPage() {
         </Col>
 
         {/* Right Column - TTS TANK STATUS */}
-        <Col xs={24} lg={12}>
+        <Col xs={24} lg={24}>
           <div className="bg-slate-50/50 rounded-3xl border border-slate-100 p-6 shadow-sm h-full">
             <div className="flex justify-between items-center mb-4 px-2">
               <div className="bg-amber-400 px-4 py-1 rounded text-slate-900 font-bold text-sm uppercase">
                 LIVE TTS TANK STATUS
               </div>
-              
+
             </div>
 
             <div className="bg-black text-white text-[10px] py-1 px-4 mb-6 flex justify-center font-mono tracking-widest uppercase">
