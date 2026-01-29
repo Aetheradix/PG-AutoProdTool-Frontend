@@ -24,6 +24,7 @@ const Header = () => {
 
   const menuItems = [
     { key: '/', icon: <FiHome />, label: 'Home Page' },
+    { key: '/upload', icon: <FiDatabase />, label: 'Upload Data' },
     { key: '/plan-view', icon: <FiActivity />, label: 'Plan View' },
     { key: '/master-data', icon: <FiDatabase />, label: 'Master Data' },
     { key: '/status', icon: <FiActivity />, label: 'Current Status' },
