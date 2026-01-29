@@ -2,7 +2,8 @@ import React from 'react';
 import { Button, Table, Card, Upload, Space, Form } from 'antd';
 import { UploadOutlined, SaveOutlined, DeleteOutlined } from '@ant-design/icons';
 import EditableCell from './components/EditableCell';
-import { useExcelUpload } from '@/hooks/useExcelUpload';
+import { useExcelUpload } from './hooks/useExcelUpload';
+
 
 export const ExcelUpload = () => {
   const {
