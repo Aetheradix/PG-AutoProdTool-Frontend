@@ -78,7 +78,7 @@ export const ExcelUpload = () => {
             loading={isUploading}
             disabled={data.length === 0}
           >
-            Submit to Backend
+            Submit
           </Button>
           <Button
             danger
