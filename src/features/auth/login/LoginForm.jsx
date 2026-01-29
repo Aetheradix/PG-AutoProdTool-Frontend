@@ -12,13 +12,17 @@ export function LoginForm() {
   const [form] = Form.useForm();
   const navigate = useNavigate();
 
-  const onFinish = (values) => {
-    const success = login(values);
-    if (success) {
-      message.success('Login successful!');
-      navigate('/');
-    } else {
-      message.error('Invalid email or password. Use admin@admin.com / admin123');
+  const onFinish = async (values) => {
+    try {
+      const success = login(values);
+      if (success) {
+        message.success('Login successful!');
+        navigate('/');
+      } else {
+        message.error('Invalid email or password. Use admin@admin.com / admin123');
+      }
+    } catch (err) {
+      message.error('Failed to login. Please try again.');
     }
   };
 
