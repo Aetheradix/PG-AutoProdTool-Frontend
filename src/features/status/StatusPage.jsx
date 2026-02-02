@@ -1,22 +1,19 @@
-import React from 'react';
-import { Typography, Row, Col, Spin, Alert } from 'antd';
-import StatusCard from './components/StatusCard';
-import BatchCard from './components/BatchCard';
-import { rmTankData } from './statusData';
-import { useGetRecentDataQuery } from '../../store/api/statusApi';
+import { Row, Typography } from 'antd';
+import { useGetStatusQuery } from '../../store/api/statusApi';
 import RMTank from './components/RMTank';
 import TTSTank from './components/TTSTank';
+import { rmTankData } from './statusData';
 
 const { Title } = Typography;
 
 export function StatusPage() {
   const lastRefreshRM = '9/9/2025 7:38:09 AM';
 
-  const { data: recentData, isLoading, isError, error } = useGetRecentDataQuery(10);
+  const { data: statusData, isLoading, isError, error } = useGetStatusQuery();
 
-  const rawData = Array.isArray(recentData)
-    ? recentData
-    : recentData?.data || recentData?.recent_data || [];
+  const rawData = Array.isArray(statusData)
+    ? statusData
+    : statusData?.data || [];
 
   const getLatestDate = (item) => {
     const dateFields = ['DT#_10_#', 'DT#_15_#', 'DT#_16_#', 'DT#_19_#', 'DT#_20_#'];

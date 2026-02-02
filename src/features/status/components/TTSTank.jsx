@@ -2,7 +2,7 @@ import { Alert, Col, Row, Spin } from 'antd';
 import React from 'react';
 import BatchCard from './BatchCard';
 
-const TTSTank = ({ isLoading, lastRefreshTTS, productionData, getLatestDate, error ,isError}) => {
+const TTSTank = ({ isLoading, lastRefreshTTS, productionData, getLatestDate, error, isError }) => {
   return (
     <Col xs={24} lg={24}>
       <div className="bg-slate-50/50 rounded-3xl border border-slate-100 p-6 shadow-sm h-full">
@@ -22,7 +22,7 @@ const TTSTank = ({ isLoading, lastRefreshTTS, productionData, getLatestDate, err
           </div>
         ) : isError ? (
           <Alert
-            message="Error"
+            title="Error"
             description={error?.data?.message || 'Failed to fetch recent data'}
             type="error"
             showIcon
@@ -32,6 +32,9 @@ const TTSTank = ({ isLoading, lastRefreshTTS, productionData, getLatestDate, err
           <Row gutter={[12, 12]}>
             {productionData.map((item, index) => {
               const latestTimestamp = getLatestDate(item);
+              const statusName = item.status || item.STATUS || 'Active';
+              const hexCode = item.hex_code || item.HEX_CODE;
+              const colorName = item.color_name || item.colour_name || item.COLOR_NAME || item.COLOUR_NAME;
               return (
                 <Col key={item.ID || index} xs={12} sm={8} md={4.8} className="flex!">
                   <div className="w-full">
@@ -41,20 +44,9 @@ const TTSTank = ({ isLoading, lastRefreshTTS, productionData, getLatestDate, err
                       date={
                         latestTimestamp > 0 ? new Date(latestTimestamp).toLocaleDateString() : 'N/A'
                       }
-                      status={item.STATUS || 'Active'}
-                      color={
-                        index % 6 === 0
-                          ? 'black'
-                          : index % 6 === 1
-                            ? 'magenta'
-                            : index % 6 === 2
-                              ? 'cyan'
-                              : index % 6 === 3
-                                ? 'purple'
-                                : index % 6 === 4
-                                  ? 'lime'
-                                  : 'green'
-                      }
+                      color={colorName}
+                      status={statusName}
+                      hexCode={hexCode}
                       index={index + 1}
                     />
                   </div>
