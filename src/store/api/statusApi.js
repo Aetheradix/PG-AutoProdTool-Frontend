@@ -18,7 +18,11 @@ export const statusApi = apiSlice.injectEndpoints({
             query: (limit = 10) => `/v1/recent-data?limit=${limit}`,
             providesTags: ['Status'],
         }),
+        getRmStatus: builder.query({
+            query: () => '/v1/rm-status',
+            providesTags: ['Status'],
+        }),
     }),
 });
 
-export const { useGetTankStatusQuery, useGetBatchStatusQuery, useGetRecentDataQuery, useGetStatusQuery } = statusApi;
+export const { useGetTankStatusQuery, useGetBatchStatusQuery, useGetRecentDataQuery, useGetStatusQuery, useGetRmStatusQuery } = statusApi;
