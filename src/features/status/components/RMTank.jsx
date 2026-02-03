@@ -6,6 +6,7 @@ import { useGetRmStatusQuery } from '@/store/api/statusApi';
 const RMTank = ({ lastRefreshRM }) => {
   const { data, isLoading, isError, error } = useGetRmStatusQuery();
 
+  const latestRefreshTime = data?.DateandTime || null;
   const rmTankData =
     data?.data?.map((tank) => ({
       name: tank.tank_name,
@@ -25,7 +26,7 @@ const RMTank = ({ lastRefreshRM }) => {
         </div>
 
         <div className="bg-black text-white text-[10px] py-1 px-4 mb-6 flex justify-center font-mono tracking-widest uppercase">
-          LAST REFRESH: {isLoading ? 'REFRESHING...' : lastRefreshRM}
+          LAST REFRESH: {isLoading ? 'REFRESHING...' : latestRefreshTime || lastRefreshRM || 'N/A'}
         </div>
 
         {isLoading ? (

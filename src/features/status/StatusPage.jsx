@@ -7,7 +7,7 @@ import { rmTankData } from './statusData';
 const { Title } = Typography;
 
 export function StatusPage() {
-  const lastRefreshRM = '9/9/2025 7:38:09 AM';
+
 
   const { data: statusData, isLoading, isError, error } = useGetStatusQuery();
 
@@ -40,7 +40,7 @@ export function StatusPage() {
 
       <Row gutter={[32, 32]}>
         {/* Left Column - RM TANK STATUS */}
-        <RMTank lastRefreshRM={lastRefreshRM} rmTankData={rmTankData} />
+        <RMTank  rmTankData={rmTankData} />
 
         {/* Right Column - LIVE RECENT DATA (Replacing TTS TANK STATUS) */}
         <TTSTank
