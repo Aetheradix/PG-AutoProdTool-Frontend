@@ -12,7 +12,7 @@ const TTSTank = ({ isLoading, lastRefreshTTS, productionData, getLatestDate, err
           </div>
         </div>
 
-        <div className="bg-black text-white text-[10px] py-1 px-4 mb-6 flex justify-center font-mono tracking-widest uppercase">
+        <div className="bg-black text-white text-xl py-1 px-4 mb-6 flex justify-center font-mono tracking-widest uppercase">
           LAST REFRESH: {isLoading ? 'REFRESHING...' : lastRefreshTTS}
         </div>
 

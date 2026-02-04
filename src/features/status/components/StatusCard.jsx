@@ -11,20 +11,20 @@ const StatusCard = ({ title, value, hexCode, unit }) => {
         body: {
           padding: '16px',
           background: hexCode,
-          height: '110px',
+          height: '120px',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
         },
       }}
     >
-      <Text className="text-white/90 text-xs font-semibold uppercase tracking-wider">
+      <h1 className=" text-xl font-semibold uppercase tracking-wider truncate">
         {title}
-      </Text>
+      </h1>
       <div className="flex justify-end">
-        <Text className="text-white text-3xl font-bold">
-          {value} <span className="text-sm align-baseline ml-1">{unit}</span>
-        </Text>
+        <h2 className=" text-2xl font-bold">
+          {value?.toFixed(2) || 0} <span className="text-2xl align-baseline ml-1">{unit}</span>
+        </h2>
       </div>
     </Card>
   );

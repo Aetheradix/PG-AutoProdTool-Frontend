@@ -42,30 +42,30 @@ const BatchCard = ({ batchId, brand, date, status, color, index, hexCode }) => {
 
       <div className="space-y-3">
         <div>
-          <Text style={{ color: secondaryTextColor }} className="text-[10px] font-bold block">
+          <p style={{ color: secondaryTextColor }} className="text-xs font-bold block">
             BATCH ID
-          </Text>
-          <Text style={{ color: textColor }} className="text-xl font-black">
+          </p>
+          <p style={{ color: textColor }} className="text-xl font-black">
             {batchId}
-          </Text>
+          </p>
         </div>
 
         <div>
-          <Text
-            style={{ color: secondaryTextColor }}
-            className="text-[10px] font-bold block uppercase tracking-tighter"
+          <h4
+            style={{ color: textColor }}
+            className="text-base font-bold block uppercase tracking-tight leading-tight"
           >
             {brand}
-          </Text>
-          <Text
+          </h4>
+          <p
             style={{ color: secondaryTextColor }}
-            className="text-[10px] font-medium block leading-tight"
+            className="text-[10px] font-medium block mt-1"
           >
             NEXT_SAINT_DATE
-          </Text>
-          <Text style={{ color: textColor }} className="text-[10px] font-bold block">
+          </p>
+          <p style={{ color: textColor }} className="text-sm font-bold block">
             {date}
-          </Text>
+          </p>
         </div>
 
         <div>
