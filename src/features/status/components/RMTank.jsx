@@ -11,7 +11,7 @@ const RMTank = ({ lastRefreshRM }) => {
     data?.data?.map((tank) => ({
       name: tank.tank_name,
       value: tank.current_value,
-      unit: tank.unit,
+      unit: tank.deadstock_value > 100 ? 'KG' : '%',
       status: tank.status,
       hexCode: tank.hex_code,
     })) || [];
@@ -50,6 +50,7 @@ const RMTank = ({ lastRefreshRM }) => {
                   value={tank.value}
                   hexCode={tank.hexCode}
                   status={tank.status}
+                  unit={tank.unit}
                 />
               </Col>
             ))}
