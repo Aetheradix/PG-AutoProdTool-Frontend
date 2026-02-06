@@ -6,7 +6,6 @@ const { Text } = Typography;
 const BatchCard = ({ batchId, brand, date, status, color, index, hexCode }) => {
   const normalizedHex = hexCode?.toLowerCase();
   const normalizedColor = color?.toLowerCase() || '';
-
   const isDarkBackground =
     normalizedHex === '#000000' ||
     normalizedHex === '#c00000' ||
@@ -20,61 +19,89 @@ const BatchCard = ({ batchId, brand, date, status, color, index, hexCode }) => {
 
   const textColor = isDarkBackground ? '#ffffff' : '#0f172a';
   const secondaryTextColor = isDarkBackground
-    ? 'rgba(255, 255, 255, 0.7)'
-    : 'rgba(15, 23, 42, 0.7)';
-  const badgeBg = isDarkBackground ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
+    ? 'rgba(255, 255, 255, 0.6)'
+    : 'rgba(15, 23, 42, 0.5)';
 
   return (
     <Card
-      className={`border-none shadow-md relative overflow-hidden h-full transition-all hover:-translate-y-1 ${!hexCode && color ? `bg-${color}` : ''}`}
+      className={`border border-zinc-800 shadow-lg relative overflow-hidden h-full transform transition-all hover:scale-[1.02] duration-300 ${!hexCode && color ? `bg-${color}` : ''}`}
       style={{
         backgroundColor: hexCode || (color ? undefined : '#1a1a1a'),
+        borderRadius: '40px',
         color: textColor,
+        border:`2px solid black`
       }}
-      styles={{ body: { padding: '16px' } }}
+      styles={{
+        body: {
+          padding: '24px',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center'
+        }
+      }}
     >
       <div
-        className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold"
-        style={{ backgroundColor: badgeBg, color: textColor }}
+        className="absolute top-0 right-8 px-3 py-2 rounded-b-lg shadow-sm font-bold text-lg leading-none border border-zinc-700 border-top none bg-white text-black z-10"
       >
         {index}
       </div>
 
-      <div className="space-y-3">
-        <div>
-          <p style={{ color: secondaryTextColor }} className="text-xs font-bold block">
+      <div className="w-full flex flex-col items-center justify-between h-full space-y-4">
+        {/* Batch ID Section */}
+        <div className="flex flex-col items-center">
+          <p style={{ color: secondaryTextColor }} className="text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1">
             BATCH ID
           </p>
-          <p style={{ color: textColor }} className="text-xl font-black">
-            {batchId}
-          </p>
+          <div className="flex items-center gap-2">
+            <p style={{ color: textColor }} className="text-2xl sm:text-3xl font-black tracking-tighter">
+              {batchId}
+            </p>
+            {/* Placeholder for Icon if status implies it (e.g. check/clock) - Keeping simple for now based on props */}
+          </div>
         </div>
 
-        <div>
+        {/* Brand Name */}
+        <div className="w-full">
+          <p style={{ color: secondaryTextColor }} className="text-[10px] font-bold uppercase tracking-widest mb-1">
+            BRAND_NAME
+          </p>
           <h4
             style={{ color: textColor }}
-            className="text-base font-bold block uppercase tracking-tight leading-tight"
+            className="text-lg sm:text-xl font-extrabold uppercase leading-tight px-2 line-clamp-2"
           >
             {brand}
           </h4>
+        </div>
+
+        {/* Separator */}
+        <div className="w-24 h-px bg-current opacity-20 my-2"></div>
+
+        {/* Date Section */}
+        <div className="flex flex-col items-center">
           <p
             style={{ color: secondaryTextColor }}
-            className="text-[10px] font-medium block mt-1"
+            className="text-[10px] font-bold uppercase tracking-widest mb-1"
           >
             NEXT_SAINT_DATE
           </p>
-          <p style={{ color: textColor }} className="text-sm font-bold block">
+          <p style={{ color: textColor }} className="text-sm sm:text-base font-bold whitespace-nowrap">
             {date}
           </p>
         </div>
 
-        <div>
-          <Text style={{ color: secondaryTextColor }} className="text-[10px] font-bold block">
+        {/* Status Section */}
+        <div className="mt-auto pt-2">
+          <p style={{ color: secondaryTextColor }} className="text-[10px] font-bold uppercase tracking-widest mb-1">
             STATUS
-          </Text>
-          <Text style={{ color: textColor }} className="text-xs font-bold block">
-            {status}
-          </Text>
+          </p>
+          <div className="flex items-center justify-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${status?.includes('DUE') ? 'bg-red-500' : 'bg-green-500'}`}></span>
+            <p style={{ color: textColor }} className="text-sm sm:text-base font-black uppercase tracking-wide">
+              {status}
+            </p>
+          </div>
         </div>
       </div>
     </Card>

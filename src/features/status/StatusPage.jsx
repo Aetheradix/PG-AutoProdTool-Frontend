@@ -7,13 +7,9 @@ import { rmTankData } from './statusData';
 const { Title } = Typography;
 
 export function StatusPage() {
-
-
   const { data: statusData, isLoading, isError, error } = useGetStatusQuery();
 
-  const rawData = Array.isArray(statusData)
-    ? statusData
-    : statusData?.data || [];
+  const rawData = Array.isArray(statusData) ? statusData : statusData?.data || [];
 
   const getLatestDate = (item) => {
     const dateFields = ['DT#_10_#', 'DT#_15_#', 'DT#_16_#', 'DT#_19_#', 'DT#_20_#'];
@@ -26,10 +22,9 @@ export function StatusPage() {
   };
 
   const productionData = [...rawData].sort((a, b) => getLatestDate(b) - getLatestDate(a));
-
+  console.log('Sorted Production Data:', productionData);
   const lastRefreshTTS =
     productionData.length > 0 ? new Date(getLatestDate(productionData[0])).toLocaleString() : 'N/A';
-
   return (
     <div className="fade-in space-y-6 pb-8">
       <header className="flex justify-center mb-8">
@@ -40,7 +35,7 @@ export function StatusPage() {
 
       <Row gutter={[32, 32]}>
         {/* Left Column - RM TANK STATUS */}
-        <RMTank  rmTankData={rmTankData} />
+        <RMTank rmTankData={rmTankData} />
 
         {/* Right Column - LIVE RECENT DATA (Replacing TTS TANK STATUS) */}
         <TTSTank
