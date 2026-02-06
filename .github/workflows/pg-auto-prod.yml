@@ -33,6 +33,25 @@ jobs:
           if [ "$HOST_EXISTS" == "true" ]; then echo "HOST is set"; else echo "::error::HOST is MISSING"; fi
           if [ "$USERNAME_EXISTS" == "true" ]; then echo "USERNAME is set"; else echo "::error::USERNAME is MISSING"; fi
 
+      - name: Validate SSH Key Format
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          if [ -n "$SSH_KEY" ]; then
+            echo "$SSH_KEY" > private_key.pem
+            chmod 600 private_key.pem
+            if openssl rsa -in private_key.pem -check -noout; then
+              echo "✅ SSH Key is a valid RSA private key."
+            else
+              echo "::error::❌ SSH Key is INVALID or CORRUPTED. Please check line breaks and format."
+              echo "First line of key is:"
+              head -n 1 private_key.pem
+            fi
+            rm private_key.pem
+          else
+             echo "Skipping validation (Key missing)"
+          fi
+
       - name: Deploy to Hostinger via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
