@@ -38,7 +38,7 @@ export function MasterDataPage() {
           <Card
             title={
               <div className="flex items-center gap-2 py-1">
-                <span className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                <span className="text-xl font-bold bg-linear-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
                   Master Data Upload
                 </span>
               </div>
