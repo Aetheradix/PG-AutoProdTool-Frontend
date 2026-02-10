@@ -119,6 +119,115 @@ export const tankTasks = [
       { id: 114, title: 'W...', type: 'washout', start: 9, duration: 1 },
     ],
   },
-  { resource: 'T06', items: [] },
-  { resource: 'T07', items: [] },
+
+  {
+    resource: 'T06',
+    items: [
+      { id: 115, title: 'B009', type: 'shampoo', start: 9, duration: 3 },
+      { id: 116, title: 'W...', type: 'washout', start: 12, duration: 1 },
+    ],
+  },
+  {
+    resource: 'T07',
+    items: [
+      { id: 117, title: 'B010', type: 'conditioner', start: 14, duration: 3 },
+      { id: 118, title: 'W...', type: 'washout', start: 17, duration: 1 },
+    ],
+  },
+  {
+    resource: 'T08',
+    items: [
+      { id: 119, title: 'B011', type: 'shampoo', start: 8, duration: 4 },
+      { id: 120, title: 'W...', type: 'washout', start: 12, duration: 1 },
+    ],
+  },
+  {
+    resource: 'T09',
+    items: [
+      { id: 121, title: 'B012', type: 'shampoo', start: 16, duration: 3 },
+      { id: 122, title: 'W...', type: 'washout', start: 19, duration: 1 },
+    ],
+  },
+  {
+    resource: 'T10',
+    items: [
+      { id: 123, title: 'B013', type: 'conditioner', start: 10, duration: 3 },
+      { id: 124, title: 'W...', type: 'washout', start: 13, duration: 1 },
+    ],
+  },
+
+  {
+    resource: 'T11',
+    items: [
+      { id: 125, title: 'B014', type: 'shampoo', start: 7, duration: 3 },
+      { id: 126, title: 'W...', type: 'washout', start: 10, duration: 1 },
+    ],
+  },
+  {
+    resource: 'T12',
+    items: [
+      { id: 127, title: 'B015', type: 'premix', start: 12, duration: 2 },
+      { id: 128, title: 'W...', type: 'washout', start: 14, duration: 1 },
+    ],
+  },
+  {
+    resource: 'T13',
+    items: [
+      { id: 129, title: 'B016', type: 'shampoo', start: 15, duration: 3 },
+      { id: 130, title: 'W...', type: 'washout', start: 18, duration: 1 },
+    ],
+  },
+  {
+    resource: 'T14',
+    items: [
+      { id: 131, title: 'B017', type: 'conditioner', start: 9, duration: 3 },
+      { id: 132, title: 'W...', type: 'washout', start: 12, duration: 1 },
+    ],
+  },
+  {
+    resource: 'T15',
+    items: [
+      { id: 133, title: 'B018', type: 'shampoo', start: 18, duration: 3 },
+      { id: 134, title: 'W...', type: 'washout', start: 21, duration: 1 },
+    ],
+  },
+  ...Array.from({ length: 13 }, (_, i) => ({
+    resource: `T${String(i + 16).padStart(2, '0')}`,
+    items: [
+      {
+        id: 135 + i * 2,
+        title: `B${String(19 + i).padStart(3, '0')}`,
+        type: 'shampoo',
+        start: 8 + (i % 5) * 2,
+        duration: 3,
+      },
+      {
+        id: 136 + i * 2,
+        title: 'W...',
+        type: 'washout',
+        start: 11 + (i % 5) * 2,
+        duration: 1,
+      },
+    ],
+  })),
+
+  {
+    resource: 'R1',
+    items: [
+      { id: 200, title: 'R-B01', type: 'ronkie', start: 9, duration: 2 },
+    ],
+  },
+  {
+    resource: 'R2',
+    items: [
+      { id: 201, title: 'R-B02', type: 'ronkie', start: 13, duration: 2 },
+    ],
+  },
+  {
+    resource: 'R3',
+    items: [
+      { id: 202, title: 'R-B03', type: 'ronkie', start: 17, duration: 2 },
+    ],
+  },
 ];
+
