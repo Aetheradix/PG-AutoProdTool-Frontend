@@ -22,7 +22,7 @@ export function StatusPage() {
   };
 
   const productionData = [...rawData].sort((a, b) => getLatestDate(b) - getLatestDate(a));
-  console.log('Sorted Production Data:', productionData);
+  
   const lastRefreshTTS =
     productionData.length > 0 ? new Date(getLatestDate(productionData[0])).toLocaleString() : 'N/A';
   return (
