@@ -31,7 +31,9 @@ const RMTank = ({ lastRefreshRM }) => {
 
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <Spin size="large" tip="Loading RM tank status..." />
+            <Spin size="large" tip="Loading RM tank status...">
+              <div className="p-10" />
+            </Spin>
           </div>
         ) : isError ? (
           <Alert
@@ -44,7 +46,7 @@ const RMTank = ({ lastRefreshRM }) => {
         ) : (
           <Row gutter={[12, 12]}>
             {rmTankData.map((tank) => (
-              <Col key={tank.id} xs={12} sm={8} md={6}>
+              <Col key={tank.name} xs={12} sm={8} md={6}>
                 <StatusCard
                   title={tank.name}
                   value={tank.value}

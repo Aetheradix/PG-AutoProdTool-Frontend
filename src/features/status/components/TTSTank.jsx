@@ -18,7 +18,9 @@ const TTSTank = ({ isLoading, lastRefreshTTS, productionData, getLatestDate, err
 
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <Spin size="large" tip="Loading recent data..." />
+            <Spin size="large" tip="Loading recent data...">
+              <div className="p-10" />
+            </Spin>
           </div>
         ) : isError ? (
           <Alert
