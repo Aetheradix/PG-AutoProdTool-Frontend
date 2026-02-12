@@ -1,24 +1,27 @@
 import React, { useState, useMemo } from 'react';
-import { Table, Form, Input, Button, Space, message, Typography } from 'antd';
-import { FiEdit2, FiSearch, FiPlus } from 'react-icons/fi';
-import { useGetBulkDetailsQuery, useUpdateBulkDetailMutation, useCreateBulkDetailMutation } from '../../../store/api/masterDataApi';
+import { Table, Form, Input, Button, Space, message, Typography, Popconfirm } from 'antd';
+import { FiEdit2, FiSearch, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { useGetBulkDetailsQuery, useUpdateBulkDetailMutation, useCreateBulkDetailMutation, useDeleteBulkDetailMutation } from '../../../store/api/masterDataApi';
 import EditableCell from '../../excel-upload/components/EditableCell';
 
 const { Text } = Typography;
 
 export function BulkDetailTable() {
     const [form] = Form.useForm();
-    const { data: bulkData, isLoading, isError } = useGetBulkDetailsQuery();
+    const { data: bulkData, isLoading, isError } = useGetBulkDetailsQuery({
+        page: 1,
+        limit: 1000 
+    });
     const [updateBulkDetail, { isLoading: isUpdating }] = useUpdateBulkDetailMutation();
     const [createBulkDetail, { isLoading: isCreating }] = useCreateBulkDetailMutation();
+    const [deleteBulkDetail] = useDeleteBulkDetailMutation();
     const [editingKey, setEditingKey] = useState('');
     const [isAdding, setIsAdding] = useState(false);
     const [searchText, setSearchText] = useState('');
 
     const baseDataSource = useMemo(() => {
-        return Array.isArray(bulkData)
-            ? bulkData
-            : (bulkData && Array.isArray(bulkData.data) ? bulkData.data : []);
+        if (!bulkData) return [];
+        return Array.isArray(bulkData.data) ? bulkData.data : (Array.isArray(bulkData) ? bulkData : []);
     }, [bulkData]);
 
     const rowKey = useMemo(() => {
@@ -143,14 +146,41 @@ export function BulkDetailTable() {
                         </Button>
                     </Space>
                 ) : (
-                    <Button
-                        type="link"
-                        disabled={editingKey !== ''}
-                        onClick={() => edit(record)}
-                        className="text-blue-600 font-bold p-0 flex items-center gap-1"
-                    >
-                        <FiEdit2 size={14} /> Edit
-                    </Button>
+                    <Space size="middle">
+                        <Button
+                            type="link"
+                            disabled={editingKey !== ''}
+                            onClick={() => edit(record)}
+                            className="text-blue-600 font-bold p-0 flex items-center gap-1"
+                        >
+                            <FiEdit2 size={14} /> Edit
+                        </Button>
+                        <Popconfirm
+                            title="Delete this item?"
+                            description="Are you sure you want to delete this record?"
+                            onConfirm={async () => {
+                                try {
+                                    await deleteBulkDetail(record[rowKey]).unwrap();
+                                    message.success('Record deleted successfully');
+                                } catch (err) {
+                                    console.error('Delete failed:', err);
+                                    message.error('Failed to delete record');
+                                }
+                            }}
+                            okText="Yes"
+                            cancelText="No"
+                            disabled={editingKey !== ''}
+                        >
+                            <Button
+                                type="link"
+                                danger
+                                disabled={editingKey !== ''}
+                                className="font-bold p-0 flex items-center gap-1"
+                            >
+                                <FiTrash2 size={14} /> Delete
+                            </Button>
+                        </Popconfirm>
+                    </Space>
                 );
             },
         });

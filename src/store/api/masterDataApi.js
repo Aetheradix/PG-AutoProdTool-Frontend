@@ -3,7 +3,13 @@ import { apiSlice } from './apiSlice';
 export const masterDataApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         getSkuMaster: builder.query({
-            query: () => '/v1/sku-master',
+            query: (params = { page: 1, limit: 10 }) => ({
+                url: '/v1/sku-master',
+                params: {
+                    page: params.page,
+                    limit: params.limit,
+                },
+            }),
             providesTags: ['MasterData'],
         }),
         updateSkuMaster: builder.mutation({
@@ -22,8 +28,21 @@ export const masterDataApi = apiSlice.injectEndpoints({
             }),
             invalidatesTags: ['MasterData'],
         }),
+        deleteSkuMaster: builder.mutation({
+            query: (gcas) => ({
+                url: `/v1/sku-master/${encodeURIComponent(gcas)}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['MasterData'],
+        }),
         getBulkDetails: builder.query({
-            query: () => '/v1/bulk-details',
+            query: (params = { page: 1, limit: 10 }) => ({
+                url: '/v1/bulk-details',
+                params: {
+                    page: params.page,
+                    limit: params.limit,
+                },
+            }),
             providesTags: ['MasterData'],
         }),
         updateBulkDetail: builder.mutation({
@@ -42,6 +61,13 @@ export const masterDataApi = apiSlice.injectEndpoints({
             }),
             invalidatesTags: ['MasterData'],
         }),
+        deleteBulkDetail: builder.mutation({
+            query: (id) => ({
+                url: `/v1/bulk-details/${encodeURIComponent(id)}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['MasterData'],
+        }),
     }),
 });
 
@@ -49,7 +75,9 @@ export const {
     useGetSkuMasterQuery,
     useUpdateSkuMasterMutation,
     useCreateSkuMasterMutation,
+    useDeleteSkuMasterMutation,
     useGetBulkDetailsQuery,
     useUpdateBulkDetailMutation,
-    useCreateBulkDetailMutation
+    useCreateBulkDetailMutation,
+    useDeleteBulkDetailMutation
 } = masterDataApi;

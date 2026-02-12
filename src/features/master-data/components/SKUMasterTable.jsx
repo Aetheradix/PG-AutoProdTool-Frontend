@@ -1,16 +1,20 @@
 import React, { useState, useMemo } from 'react';
-import { Table, Form, Input, Button, Space, message, Typography } from 'antd';
-import { FiEdit2, FiSearch, FiPlus } from 'react-icons/fi';
-import { useGetSkuMasterQuery, useUpdateSkuMasterMutation, useCreateSkuMasterMutation } from '../../../store/api/masterDataApi';
+import { Table, Form, Input, Button, Space, message, Typography, Popconfirm } from 'antd';
+import { FiEdit2, FiSearch, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { useGetSkuMasterQuery, useUpdateSkuMasterMutation, useCreateSkuMasterMutation, useDeleteSkuMasterMutation } from '../../../store/api/masterDataApi';
 import EditableCell from '../../excel-upload/components/EditableCell';
 
 const { Text } = Typography;
 
 export function SKUMasterTable() {
     const [form] = Form.useForm();
-    const { data: skuData, isLoading, isError } = useGetSkuMasterQuery();
+    const { data: skuData, isLoading, isError } = useGetSkuMasterQuery({
+        page: 1,
+        limit: 1000 
+    });
     const [updateSkuMaster, { isLoading: isUpdating }] = useUpdateSkuMasterMutation();
     const [createSkuMaster, { isLoading: isCreating }] = useCreateSkuMasterMutation();
+    const [deleteSkuMaster] = useDeleteSkuMasterMutation();
     const [editingKey, setEditingKey] = useState('');
     const [isAdding, setIsAdding] = useState(false);
     const [searchText, setSearchText] = useState('');
@@ -67,9 +71,8 @@ export function SKUMasterTable() {
     };
 
     const baseDataSource = useMemo(() => {
-        return Array.isArray(skuData)
-            ? skuData
-            : (skuData && Array.isArray(skuData.data) ? skuData.data : []);
+        if (!skuData) return [];
+        return Array.isArray(skuData.data) ? skuData.data : (Array.isArray(skuData) ? skuData : []);
     }, [skuData]);
 
     const dataSource = useMemo(() => {
@@ -136,14 +139,41 @@ export function SKUMasterTable() {
                         </Button>
                     </Space>
                 ) : (
-                    <Button
-                        type="link"
-                        disabled={editingKey !== ''}
-                        onClick={() => edit(record)}
-                        className="text-blue-600 font-bold p-0 flex items-center gap-1"
-                    >
-                        <FiEdit2 size={14} /> Edit
-                    </Button>
+                    <Space size="middle">
+                        <Button
+                            type="link"
+                            disabled={editingKey !== ''}
+                            onClick={() => edit(record)}
+                            className="text-blue-600 font-bold p-0 flex items-center gap-1"
+                        >
+                            <FiEdit2 size={14} /> Edit
+                        </Button>
+                        <Popconfirm
+                            title="Delete this item?"
+                            description="Are you sure you want to delete this record?"
+                            onConfirm={async () => {
+                                try {
+                                    await deleteSkuMaster(record.gcas).unwrap();
+                                    message.success('Record deleted successfully');
+                                } catch (err) {
+                                    console.error('Delete failed:', err);
+                                    message.error('Failed to delete record');
+                                }
+                            }}
+                            okText="Yes"
+                            cancelText="No"
+                            disabled={editingKey !== ''}
+                        >
+                            <Button
+                                type="link"
+                                danger
+                                disabled={editingKey !== ''}
+                                className="font-bold p-0 flex items-center gap-1"
+                            >
+                                <FiTrash2 size={14} /> Delete
+                            </Button>
+                        </Popconfirm>
+                    </Space>
                 );
             },
         });
