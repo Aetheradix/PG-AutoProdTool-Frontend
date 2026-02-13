@@ -10,7 +10,7 @@ export function BulkDetailTable() {
     const [form] = Form.useForm();
     const { data: bulkData, isLoading, isError } = useGetBulkDetailsQuery({
         page: 1,
-        limit: 1000 
+        limit: 1000
     });
     const [updateBulkDetail, { isLoading: isUpdating }] = useUpdateBulkDetailMutation();
     const [createBulkDetail, { isLoading: isCreating }] = useCreateBulkDetailMutation();
@@ -18,6 +18,8 @@ export function BulkDetailTable() {
     const [editingKey, setEditingKey] = useState('');
     const [isAdding, setIsAdding] = useState(false);
     const [searchText, setSearchText] = useState('');
+    const [pageSize, setPageSize] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const baseDataSource = useMemo(() => {
         if (!bulkData) return [];
@@ -111,7 +113,7 @@ export function BulkDetailTable() {
             dataIndex: key,
             key: key,
             editable: true,
-            width: key === 'description' || key === 'name' ? 300 : 150,
+            width: key === 'id' || key === 'bulk_id' ? 100 : (key === 'description' || key === 'name' ? 300 : 200),
             ellipsis: true,
             fixed: key === rowKey ? 'left' : undefined,
             sorter: (a, b) => {
@@ -235,14 +237,22 @@ export function BulkDetailTable() {
                     columns={mergedColumns}
                     rowKey={rowKey}
                     loading={isLoading}
-                    rowClassName="editable-row"
+                    rowClassName={(record, index) => index % 2 === 1 ? 'editable-row even-row' : 'editable-row'}
                     pagination={{
-                        pageSize: 10,
+                        current: currentPage,
+                        pageSize: pageSize,
                         showSizeChanger: true,
-                        className: "px-4"
+                        className: "px-4",
+                        onChange: (page, size) => {
+                            setCurrentPage(page);
+                            setPageSize(size);
+                        },
+                        onShowSizeChange: (current, size) => {
+                            setPageSize(size);
+                        }
                     }}
                     scroll={{ x: 'max-content', y: 600 }}
-                    className="border-slate-100 shadow-sm rounded-lg overflow-hidden"
+                    className="premium-table border-slate-100 shadow-sm rounded-lg overflow-hidden"
                 />
             </Form>
         </div>

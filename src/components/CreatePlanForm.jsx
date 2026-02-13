@@ -22,12 +22,10 @@ export function CreatePlanForm() {
   ];
 
   const onFinish = (values) => {
-    console.log('Form Values:', values);
     const finalData = {
       ...values,
       plannedDowntimes: downtimes,
     };
-    console.log('Final Plan Data:', finalData);
     notification.success({
       message: 'Plan Generated',
       description: 'Production plan has been generated with ' + downtimes.length + ' downtimes.',

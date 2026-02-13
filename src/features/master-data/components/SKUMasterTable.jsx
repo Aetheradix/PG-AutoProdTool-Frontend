@@ -10,7 +10,7 @@ export function SKUMasterTable() {
     const [form] = Form.useForm();
     const { data: skuData, isLoading, isError } = useGetSkuMasterQuery({
         page: 1,
-        limit: 1000 
+        limit: 1000
     });
     const [updateSkuMaster, { isLoading: isUpdating }] = useUpdateSkuMasterMutation();
     const [createSkuMaster, { isLoading: isCreating }] = useCreateSkuMasterMutation();
@@ -18,6 +18,8 @@ export function SKUMasterTable() {
     const [editingKey, setEditingKey] = useState('');
     const [isAdding, setIsAdding] = useState(false);
     const [searchText, setSearchText] = useState('');
+    const [pageSize, setPageSize] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const isEditing = (record) => record.gcas === editingKey;
 
@@ -104,7 +106,7 @@ export function SKUMasterTable() {
             dataIndex: key,
             key: key,
             editable: true,
-            width: key === 'description' ? 300 : (key === 'gcas' ? 150 : 120),
+            width: key === 'description' ? 300 : (key === 'gcas' ? 120 : 180),
             ellipsis: true,
             fixed: key === 'gcas' ? 'left' : undefined,
             sorter: (a, b) => {
@@ -228,14 +230,22 @@ export function SKUMasterTable() {
                     columns={mergedColumns}
                     rowKey="gcas"
                     loading={isLoading}
-                    rowClassName="editable-row"
+                    rowClassName={(record, index) => index % 2 === 1 ? 'editable-row even-row' : 'editable-row'}
                     pagination={{
-                        pageSize: 10,
+                        current: currentPage,
+                        pageSize: pageSize,
                         showSizeChanger: true,
-                        className: "px-4"
+                        className: "px-4",
+                        onChange: (page, size) => {
+                            setCurrentPage(page);
+                            setPageSize(size);
+                        },
+                        onShowSizeChange: (current, size) => {
+                            setPageSize(size);
+                        }
                     }}
                     scroll={{ x: 'max-content', y: 600 }}
-                    className="border-slate-100 shadow-sm rounded-lg overflow-hidden"
+                    className="premium-table border-slate-100 shadow-sm rounded-lg overflow-hidden"
                 />
             </Form>
         </div>

@@ -16,9 +16,6 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (credentials) => {
-    // Simulate login API call
-    console.log('Logging in with:', credentials);
-
     // Fixed credentials check
     if (credentials.email === 'admin@admin.com' && credentials.password === 'admin123') {
       const userData = {
@@ -35,8 +32,6 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signup = (userData) => {
-    // Simulate signup API call
-    console.log('Signing up with:', userData);
     const user = {
       name: userData.name || 'New User',
       email: userData.email,
