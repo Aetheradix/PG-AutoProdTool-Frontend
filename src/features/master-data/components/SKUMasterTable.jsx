@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Table, Form, Input, Button, Space, message, Typography, Popconfirm } from 'antd';
+import { Table, Form, Input, Button, Space, message, Typography, Popconfirm, Modal } from 'antd';
 import { FiEdit2, FiSearch, FiPlus, FiTrash2 } from 'react-icons/fi';
 import { useGetSkuMasterQuery, useUpdateSkuMasterMutation, useCreateSkuMasterMutation, useDeleteSkuMasterMutation } from '../../../store/api/masterDataApi';
 import EditableCell from '../../excel-upload/components/EditableCell';
@@ -16,17 +16,17 @@ export function SKUMasterTable() {
     const [createSkuMaster, { isLoading: isCreating }] = useCreateSkuMasterMutation();
     const [deleteSkuMaster] = useDeleteSkuMasterMutation();
     const [editingKey, setEditingKey] = useState('');
-    const [isAdding, setIsAdding] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [addForm] = Form.useForm();
 
     const isEditing = (record) => record.gcas === editingKey;
 
     const handleAdd = () => {
-        setIsAdding(true);
-        setEditingKey('NEW_RECORD');
-        form.resetFields();
+        setIsAddModalOpen(true);
+        addForm.resetFields();
     };
 
     const edit = (record) => {
@@ -36,38 +36,47 @@ export function SKUMasterTable() {
 
     const cancel = () => {
         setEditingKey('');
-        setIsAdding(false);
     };
 
     const save = async (gcas) => {
         try {
             const row = await form.validateFields();
-            if (gcas === 'NEW_RECORD') {
-                await createSkuMaster(row).unwrap();
-                message.success('SKU created successfully');
-                setIsAdding(false);
-            } else {
-                await updateSkuMaster({ gcas, ...row }).unwrap();
-                message.success('SKU updated successfully');
-            }
+            await updateSkuMaster({ gcas, ...row }).unwrap();
+            message.success('SKU updated successfully');
             setEditingKey('');
         } catch (err) {
             console.error('Save failed:', err);
             let errorMessage = 'Failed to save SKU';
 
             if (err.data && err.data.detail) {
-                // Backend string error
                 errorMessage = Array.isArray(err.data.detail)
                     ? err.data.detail.map(e => e.msg).join(', ')
                     : err.data.detail;
             } else if (err.message) {
-                // JS Error
                 errorMessage = err.message;
             } else if (err.errorFields) {
-                // Form validation error
                 errorMessage = 'Please check the highlighted fields';
             }
 
+            message.error(errorMessage);
+        }
+    };
+
+    const handleAddOk = async () => {
+        try {
+            const row = await addForm.validateFields();
+            await createSkuMaster(row).unwrap();
+            message.success('SKU created successfully');
+            setIsAddModalOpen(false);
+            addForm.resetFields();
+        } catch (err) {
+            console.error('Create failed:', err);
+            let errorMessage = 'Failed to create SKU';
+            if (err.data && err.data.detail) {
+                errorMessage = Array.isArray(err.data.detail)
+                    ? err.data.detail.map(e => e.msg).join(', ')
+                    : err.data.detail;
+            }
             message.error(errorMessage);
         }
     };
@@ -78,14 +87,8 @@ export function SKUMasterTable() {
     }, [skuData]);
 
     const dataSource = useMemo(() => {
-        if (!isAdding) return baseDataSource;
-
-        const emptyRow = baseDataSource.length > 0 ? { ...baseDataSource[0] } : { gcas: 'NEW_RECORD' };
-        Object.keys(emptyRow).forEach(k => emptyRow[k] = '');
-        emptyRow.gcas = 'NEW_RECORD';
-
-        return [emptyRow, ...baseDataSource];
-    }, [baseDataSource, isAdding]);
+        return baseDataSource;
+    }, [baseDataSource]);
 
     const filteredData = useMemo(() => {
         if (!searchText) return dataSource;
@@ -195,7 +198,7 @@ export function SKUMasterTable() {
                 }),
             };
         });
-    }, [dataSource, editingKey, isUpdating, isCreating, isAdding]);
+    }, [dataSource, editingKey, isUpdating, isCreating]);
 
     return (
         <div className="flex flex-col gap-4">
@@ -203,7 +206,7 @@ export function SKUMasterTable() {
                 <Button
                     type="primary"
                     onClick={handleAdd}
-                    disabled={isAdding || editingKey !== ''}
+                    disabled={editingKey !== ''}
                     icon={<FiPlus />}
                     className="bg-blue-600 hover:bg-blue-700 font-medium"
                 >
@@ -248,6 +251,39 @@ export function SKUMasterTable() {
                     className="premium-table border-slate-100 shadow-sm rounded-lg overflow-hidden"
                 />
             </Form>
+
+            <Modal
+                title="Add New SKU"
+                open={isAddModalOpen}
+                onOk={handleAddOk}
+                onCancel={() => setIsAddModalOpen(false)}
+                okText="Create"
+                confirmLoading={isCreating}
+                width={1200}
+                className="premium-modal"
+            >
+                <Form
+                    form={addForm}
+                    layout="vertical"
+                    className="grid grid-cols-4 gap-x-6 gap-y-2 py-4"
+                >
+                    {dataSource.length > 0 && Object.keys(dataSource[0])
+                        .filter(key => key !== 'id' && key !== 'created_at' && key !== 'updated_at')
+                        .map(key => (
+                            <Form.Item
+                                key={key}
+                                name={key}
+                                label={<span className="font-semibold text-slate-700 uppercase text-xs tracking-wider">{key.replace(/_/g, ' ')}</span>}
+                                rules={[{ required: true, message: `Please input ${key.replace(/_/g, ' ')}` }]}
+                            >
+                                <Input
+                                    placeholder={`Enter ${key.replace(/_/g, ' ')}`}
+                                    className="rounded-lg border-slate-200 h-10"
+                                />
+                            </Form.Item>
+                        ))}
+                </Form>
+            </Modal>
         </div>
     );
 }

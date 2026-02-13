@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Table, Form, Input, Button, Space, message, Typography, Popconfirm } from 'antd';
+import { Table, Form, Input, Button, Space, message, Typography, Popconfirm, Modal } from 'antd';
 import { FiEdit2, FiSearch, FiPlus, FiTrash2 } from 'react-icons/fi';
 import { useGetBulkDetailsQuery, useUpdateBulkDetailMutation, useCreateBulkDetailMutation, useDeleteBulkDetailMutation } from '../../../store/api/masterDataApi';
 import EditableCell from '../../excel-upload/components/EditableCell';
@@ -16,10 +16,11 @@ export function BulkDetailTable() {
     const [createBulkDetail, { isLoading: isCreating }] = useCreateBulkDetailMutation();
     const [deleteBulkDetail] = useDeleteBulkDetailMutation();
     const [editingKey, setEditingKey] = useState('');
-    const [isAdding, setIsAdding] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [addForm] = Form.useForm();
 
     const baseDataSource = useMemo(() => {
         if (!bulkData) return [];
@@ -34,21 +35,14 @@ export function BulkDetailTable() {
     }, [baseDataSource]);
 
     const dataSource = useMemo(() => {
-        if (!isAdding) return baseDataSource;
-
-        const emptyRow = baseDataSource.length > 0 ? { ...baseDataSource[0] } : { id: 'NEW_RECORD' };
-        Object.keys(emptyRow).forEach(k => emptyRow[k] = '');
-        emptyRow[rowKey] = 'NEW_RECORD';
-
-        return [emptyRow, ...baseDataSource];
-    }, [baseDataSource, isAdding, rowKey]);
+        return baseDataSource;
+    }, [baseDataSource]);
 
     const isEditing = (record) => record[rowKey] === editingKey;
 
     const handleAdd = () => {
-        setIsAdding(true);
-        setEditingKey('NEW_RECORD');
-        form.resetFields();
+        setIsAddModalOpen(true);
+        addForm.resetFields();
     };
 
     const edit = (record) => {
@@ -58,38 +52,47 @@ export function BulkDetailTable() {
 
     const cancel = () => {
         setEditingKey('');
-        setIsAdding(false);
     };
 
     const save = async (key) => {
         try {
             const row = await form.validateFields();
-            if (key === 'NEW_RECORD') {
-                await createBulkDetail(row).unwrap();
-                message.success('Bulk detail created successfully');
-                setIsAdding(false);
-            } else {
-                await updateBulkDetail({ [rowKey]: key, ...row }).unwrap();
-                message.success('Bulk detail updated successfully');
-            }
+            await updateBulkDetail({ [rowKey]: key, ...row }).unwrap();
+            message.success('Bulk detail updated successfully');
             setEditingKey('');
         } catch (err) {
             console.error('Save failed:', err);
             let errorMessage = 'Failed to save bulk detail';
 
             if (err.data && err.data.detail) {
-                // Backend string error
                 errorMessage = Array.isArray(err.data.detail)
                     ? err.data.detail.map(e => e.msg).join(', ')
                     : err.data.detail;
             } else if (err.message) {
-                // JS Error
                 errorMessage = err.message;
             } else if (err.errorFields) {
-                // Form validation error
                 errorMessage = 'Please check the highlighted fields';
             }
 
+            message.error(errorMessage);
+        }
+    };
+
+    const handleAddOk = async () => {
+        try {
+            const row = await addForm.validateFields();
+            await createBulkDetail(row).unwrap();
+            message.success('Bulk detail created successfully');
+            setIsAddModalOpen(false);
+            addForm.resetFields();
+        } catch (err) {
+            console.error('Create failed:', err);
+            let errorMessage = 'Failed to create bulk detail';
+            if (err.data && err.data.detail) {
+                errorMessage = Array.isArray(err.data.detail)
+                    ? err.data.detail.map(e => e.msg).join(', ')
+                    : err.data.detail;
+            }
             message.error(errorMessage);
         }
     };
@@ -202,7 +205,7 @@ export function BulkDetailTable() {
                 }),
             };
         });
-    }, [dataSource, editingKey, isUpdating, isCreating, rowKey, isAdding]);
+    }, [dataSource, editingKey, isUpdating, isCreating, rowKey]);
 
     return (
         <div className="flex flex-col gap-4">
@@ -210,7 +213,7 @@ export function BulkDetailTable() {
                 <Button
                     type="primary"
                     onClick={handleAdd}
-                    disabled={isAdding || editingKey !== ''}
+                    disabled={editingKey !== ''}
                     icon={<FiPlus />}
                     className="bg-blue-600 hover:bg-blue-700 font-medium"
                 >
@@ -255,6 +258,39 @@ export function BulkDetailTable() {
                     className="premium-table border-slate-100 shadow-sm rounded-lg overflow-hidden"
                 />
             </Form>
+
+            <Modal
+                title="Add New Bulk Detail"
+                open={isAddModalOpen}
+                onOk={handleAddOk}
+                onCancel={() => setIsAddModalOpen(false)}
+                okText="Create"
+                confirmLoading={isCreating}
+                width={1200}
+                className="premium-modal"
+            >
+                <Form
+                    form={addForm}
+                    layout="vertical"
+                    className="grid grid-cols-4 gap-x-6 gap-y-2 py-4"
+                >
+                    {dataSource.length > 0 && Object.keys(dataSource[0])
+                        .filter(key => key !== 'id' && key !== 'bulk_id' && key !== 'created_at' && key !== 'updated_at')
+                        .map(key => (
+                            <Form.Item
+                                key={key}
+                                name={key}
+                                label={<span className="font-semibold text-slate-700 uppercase text-xs tracking-wider">{key.replace(/_/g, ' ')}</span>}
+                                rules={[{ required: true, message: `Please input ${key.replace(/_/g, ' ')}` }]}
+                            >
+                                <Input
+                                    placeholder={`Enter ${key.replace(/_/g, ' ')}`}
+                                    className="rounded-lg border-slate-200 h-10"
+                                />
+                            </Form.Item>
+                        ))}
+                </Form>
+            </Modal>
         </div>
     );
 }
