@@ -7,6 +7,9 @@ import { SKUMasterTable } from './components/SKUMasterTable';
 import { BulkDetailTable } from './components/BulkDetailTable';
 import { getUploadColumns } from './utils/uploadColumns';
 import { FiUpload, FiDatabase, FiPackage } from 'react-icons/fi';
+import { AiOutlineStock } from "react-icons/ai";
+import RMStatusDeadStock from './components/RMStatusDeadStock';
+
 
 export function MasterDataPage() {
   // Excel upload hook
@@ -91,6 +94,22 @@ export function MasterDataPage() {
             <h3 className="text-lg font-semibold text-slate-700">Manage Bulk Details</h3>
           </div>
           <BulkDetailTable />
+        </div>
+      )
+    },
+    {
+      key: 'dead-stock',
+      label: (
+        <span className="flex items-center gap-2 px-1">
+          <AiOutlineStock /> Dead Stock
+        </span>
+      ),
+      children: (
+        <div className="flex flex-col gap-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-slate-700">Manage Dead Stock</h3>
+          </div>
+          <RMStatusDeadStock />
         </div>
       )
     }

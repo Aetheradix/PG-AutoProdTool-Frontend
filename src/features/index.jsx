@@ -8,6 +8,7 @@ import CreateProductionPlan from './create-production-plan';
 import PlanView from './plan-view';
 import ProfilePage from './profile/ProfilePage';
 import { ExcelUpload } from './excel-upload/ExcelUpload';
+import BPRPDR from './bpr-pdr';
 
 export default function AppFeature() {
   return (
@@ -20,7 +21,14 @@ export default function AppFeature() {
       <Route path="kpi" element={<KPIPage />} />
       <Route path="profile" element={<ProfilePage />} />
       <Route path="upload" element={<ExcelUpload />} />
-
+      <Route
+        path="bpr-pdr"
+        element={
+          <React.Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
+            <BPRPDR />
+          </React.Suspense>
+        }
+      />
       {/* Fallback for any route not implemented yet */}
       <Route path="*" element={<div className="p-8 text-center">Page Under Construction</div>} />
     </Routes>

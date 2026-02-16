@@ -43,4 +43,11 @@ export const dashboardCardsData = [
     icon: <FiSettings size={24} className="text-blue-600" />,
     description: 'View and edit core data like BCTs, washout matrices, and buffers.',
   },
+  {
+    title: 'BPR-PDR',
+    action: 'View BPR-PDR',
+    path: '/bpr-pdr',
+    icon: <FiFileText size={24} className="text-blue-600" />,
+    description: 'View and manage the BPR-PDR (Buffer Planning and Bottleneck Detection Report) ',
+  },
 ];

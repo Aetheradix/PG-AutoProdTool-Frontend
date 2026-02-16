@@ -68,6 +68,24 @@ export const masterDataApi = apiSlice.injectEndpoints({
             }),
             invalidatesTags: ['MasterData'],
         }),
+        getDeadstock: builder.query({
+            query: (params = { page: 1, limit: 1000 }) => ({
+                url: '/v1/rm-data',
+                params: {
+                    page: params.page,
+                    limit: params.limit,
+                },
+            }),
+            providesTags: ['MasterData'],
+        }),
+        updateDeadstock: builder.mutation({
+            query: (data) => ({
+                url: `/v1/rm-data/${encodeURIComponent(data.id)}`,
+                method: 'PUT',
+                body: data,
+            }),
+            invalidatesTags: ['MasterData'],
+        }),
     }),
 });
 
@@ -79,5 +97,7 @@ export const {
     useGetBulkDetailsQuery,
     useUpdateBulkDetailMutation,
     useCreateBulkDetailMutation,
-    useDeleteBulkDetailMutation
+    useDeleteBulkDetailMutation,
+    useGetDeadstockQuery,
+    useUpdateDeadstockMutation
 } = masterDataApi;
