@@ -19,7 +19,7 @@ export const statusApi = apiSlice.injectEndpoints({
             providesTags: ['Status'],
         }),
         getRmStatus: builder.query({
-            query: () => '/v1/rm-status',
+            query: () => '/v1/rm-data',
             providesTags: ['Status'],
         }),
     }),
