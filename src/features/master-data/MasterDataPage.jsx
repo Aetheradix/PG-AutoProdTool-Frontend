@@ -114,22 +114,6 @@ export function MasterDataPage() {
         </div>
       )
     },
-    {
-      key: 'ea-bnaa',
-      label: (
-        <span className="flex items-center gap-2 px-1">
-          <FiGrid /> EA BNAA
-        </span>
-      ),
-      children: (
-        <div className="flex flex-col gap-6">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-slate-700">Manage EA BNAA</h3>
-          </div>
-          <EABNAATable />
-        </div>
-      )
-    }
   ];
 
   return (
