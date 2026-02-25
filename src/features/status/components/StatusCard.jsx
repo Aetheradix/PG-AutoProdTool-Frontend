@@ -30,7 +30,6 @@ const StatusCard = ({ title, value, hexCode, unit, status }) => {
       styles={{
         body: {
           padding: '24px',
-          height: '320px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',

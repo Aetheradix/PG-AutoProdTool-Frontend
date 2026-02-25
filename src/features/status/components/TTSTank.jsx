@@ -12,7 +12,7 @@ const TTSTank = ({ isLoading, lastRefreshTTS, productionData, getLatestDate, err
       isError={isError}
       error={error}
       data={productionData}
-      columns={{ xs: 24, sm: 12, md: 8 }}
+      columns={{ xs: 24, sm: 12, md: 4 }}
       titleColor="bg-amber-400"
       renderItem={(item, index) => {
         const latestTimestamp = getLatestDate(item);
