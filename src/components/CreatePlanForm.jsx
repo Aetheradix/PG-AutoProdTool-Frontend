@@ -1,17 +1,22 @@
 import { FormDatePicker } from '@/components/shared/FormDatePicker';
 import { FormInput } from '@/components/shared/FormInput';
 import { FormSelect } from '@/components/shared/FormSelect';
-import { Button, Divider, Form, notification, Typography } from 'antd';
-import { useState } from 'react';
+import { Button, Divider, Form, Typography } from 'antd';
 import { FiCalendar, FiClock, FiTrash2 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
+import { useCreatePlanForm } from '@/hooks/useCreatePlanForm';
 
 const { Title, Text } = Typography;
 
 export function CreatePlanForm() {
-  const [form] = Form.useForm();
-  const [downtimeForm] = Form.useForm();
-  const [downtimes, setDowntimes] = useState([]);
+  const {
+    form,
+    downtimeForm,
+    downtimes,
+    onFinish,
+    addDowntime,
+    removeDowntime,
+  } = useCreatePlanForm();
 
   const reasonOptions = [
     { value: 'CIL', label: 'CIL' },
@@ -20,39 +25,6 @@ export function CreatePlanForm() {
     { value: 'Maintenance', label: 'Maintenance' },
     { value: 'Cleaning', label: 'Cleaning' },
   ];
-
-  const onFinish = (values) => {
-    const finalData = {
-      ...values,
-      plannedDowntimes: downtimes,
-    };
-    notification.success({
-      message: 'Plan Generated',
-      description: 'Production plan has been generated with ' + downtimes.length + ' downtimes.',
-      placement: 'topRight',
-    });
-  };
-
-  const addDowntime = async () => {
-    try {
-      const values = await downtimeForm.validateFields();
-      const newDowntime = {
-        id: Date.now(),
-        reason: values.reason,
-        startTime: values.startTime.format('DD/MM/YYYY, hh:mm A'),
-        duration: values.duration,
-      };
-
-      setDowntimes([...downtimes, newDowntime]);
-      downtimeForm.resetFields();
-    } catch (error) {
-      console.log('Validation failed:', error);
-    }
-  };
-
-  const removeDowntime = (id) => {
-    setDowntimes(downtimes.filter((d) => d.id !== id));
-  };
 
   return (
     <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 w-full max-w-4xl mx-auto mt-8">

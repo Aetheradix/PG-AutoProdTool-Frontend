@@ -1,24 +1,19 @@
-import React, { useState } from 'react';
-import { Card, Form, Input, Button, Avatar, Typography, Divider, Space, notification, Badge } from 'antd';
-import { useAuth } from '@/context/AuthContext';
+import React from 'react';
+import { Card, Form, Input, Button, Avatar, Typography, Divider, Badge } from 'antd';
 import { FiUser, FiMail, FiShield, FiEdit2, FiSave, FiX } from 'react-icons/fi';
+import { useProfile } from '@/hooks/useProfile';
 
 const { Title, Text } = Typography;
 
 export function ProfilePage() {
-    const { user, updateUser } = useAuth();
-    const [isEditing, setIsEditing] = useState(false);
-    const [form] = Form.useForm();
-
-    const onFinish = (values) => {
-        updateUser(values);
-        setIsEditing(false);
-        notification.success({
-            message: 'Profile Updated',
-            description: 'Your profile information has been successfully updated.',
-            placement: 'topRight',
-        });
-    };
+    const {
+        user,
+        isEditing,
+        form,
+        onFinish,
+        toggleEdit,
+        handleCancel
+    } = useProfile();
 
     return (
         <div className="max-w-4xl mx-auto p-4 md:p-8">
@@ -88,7 +83,7 @@ export function ProfilePage() {
                                     <Button
                                         type="primary"
                                         icon={<FiEdit2 />}
-                                        onClick={() => setIsEditing(true)}
+                                        onClick={() => toggleEdit(true)}
                                         className="bg-blue-600 flex items-center gap-2"
                                     >
                                         Edit Profile
@@ -139,10 +134,7 @@ export function ProfilePage() {
                                 <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-100">
                                     <Button
                                         icon={<FiX />}
-                                        onClick={() => {
-                                            setIsEditing(false);
-                                            form.resetFields();
-                                        }}
+                                        onClick={handleCancel}
                                         className="rounded-xl h-12 px-6 flex items-center gap-2"
                                     >
                                         Cancel
