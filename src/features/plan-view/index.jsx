@@ -57,8 +57,38 @@ const mapToTankFormat = (tanksData) => {
 
 const PlanView = () => {
   const [activeTab, setActiveTab] = useState('tank');
+  const [activeFilter, setActiveFilter] = useState(null);
+
   const { data: apiResponse, isLoading, error } = useGetGhanttChartQuery(100);
   const { data: timelineResponse, isLoading: isTimelineLoading } = useGetTimelineDataQuery(100);
+
+  const filterRange = useMemo(() => {
+    if (!activeFilter || !apiResponse?.data) return null;
+
+   
+    let minDate = null;
+    Object.values(apiResponse.data).forEach(list => {
+      list.forEach(item => {
+        const d = new Date(item.start_time);
+        if (!minDate || d < minDate) minDate = d;
+      });
+    });
+
+    if (!minDate) return null;
+
+    const start = new Date(minDate);
+    const end = new Date(minDate);
+
+    if (activeFilter === 'morning') {
+      start.setHours(8, 0, 0, 0);
+      end.setHours(16, 0, 0, 0);
+    } else {
+      start.setHours(16, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+    }
+
+    return { start, end };
+  }, [activeFilter, apiResponse]);
 
   const { tasks, tankTasks } = useMemo(() => {
     if (!apiResponse?.data) return { tasks: [], tankTasks: [] };
@@ -98,21 +128,26 @@ const PlanView = () => {
       case 'table':
         return <ScheduleTable tasks={tasks} />;
       case 'tank':
-        return <TankTimeline tasks={tankTasks} />;
+        return <TankTimeline tasks={tankTasks} filterRange={filterRange} />;
       default:
-        return <GanttChart tasks={tasks} />;
+        return <GanttChart tasks={tasks} filterRange={filterRange} />;
     }
   };
 
   return (
     <div className="space-y-6">
-      <PlanHeader activeTab={activeTab} onTabChange={setActiveTab} />
+      <PlanHeader
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+      />
       {renderContent()}
 
       {/* Draggable Gantt Chart Section */}
       {activeTab === 'gantt' && (
         <div className="mt-12">
-          <DraggableGanttChart tasks={draggableTasks} />
+          <DraggableGanttChart tasks={draggableTasks} filterRange={filterRange} />
         </div>
       )}
     </div>

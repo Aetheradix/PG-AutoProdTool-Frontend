@@ -4,7 +4,7 @@ import { useMemo } from 'react';
  * Shared hook for timeline-based visualizations (Gantt, Tank Timeline).
  * Handles time range calculation, label generation, and lane assignment.
  */
-export const useTimeline = (tasks = []) => {
+export const useTimeline = (tasks = [], filterRange = null) => {
     const { timelineItems, timelineStart, timelineEnd, timeLabels, totalDurationHrs } = useMemo(() => {
         let minTime = Infinity;
         let maxTime = -Infinity;
@@ -22,7 +22,7 @@ export const useTimeline = (tasks = []) => {
             });
         });
 
-        if (allItems.length === 0) {
+        if (allItems.length === 0 && !filterRange) {
             return {
                 timelineItems: [],
                 timelineStart: 0,
@@ -32,15 +32,25 @@ export const useTimeline = (tasks = []) => {
             };
         }
 
+        // Use filter range if provided, otherwise calculate from data
+        let finalMinTime = filterRange?.start ? new Date(filterRange.start).getTime() : minTime;
+        let finalMaxTime = filterRange?.end ? new Date(filterRange.end).getTime() : maxTime;
+
+        // Fallback for empty data with filterRange
+        if (allItems.length === 0 && filterRange) {
+            finalMinTime = new Date(filterRange.start).getTime();
+            finalMaxTime = new Date(filterRange.end).getTime();
+        }
+
         // Round start down to nearest hour
-        const start = new Date(minTime);
+        const start = new Date(finalMinTime);
         start.setMinutes(0, 0, 0);
         const timelineStart = start.getTime();
 
         // Round end up to nearest hour
-        const end = new Date(maxTime);
+        const end = new Date(finalMaxTime);
         end.setMinutes(0, 0, 0);
-        if (end.getTime() < maxTime) {
+        if (end.getTime() < finalMaxTime) {
             end.setHours(end.getHours() + 1);
         }
         const timelineEnd = end.getTime();
@@ -67,7 +77,7 @@ export const useTimeline = (tasks = []) => {
             timeLabels: labels,
             totalDurationHrs,
         };
-    }, [tasks]);
+    }, [tasks, filterRange]);
 
     /**
      * Assigns lanes to items within a resource to prevent visual overlapping.

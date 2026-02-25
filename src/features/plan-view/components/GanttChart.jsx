@@ -11,14 +11,15 @@ const statusColors = {
   warning: 'bg-gradient-to-r from-amber-500 to-amber-600',
 };
 
-const GanttChart = ({ tasks = [] }) => {
+const GanttChart = ({ tasks = [], filterRange = null }) => {
   const {
     tasksWithLanes,
     timeLabels,
     timelineStart,
+    timelineEnd,
     totalDurationHrs,
     getPosition,
-  } = useTimeline(tasks);
+  } = useTimeline(tasks, filterRange);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-fade-in mb-10">

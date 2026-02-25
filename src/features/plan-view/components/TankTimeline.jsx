@@ -11,7 +11,7 @@ const productColors = {
   washout: 'bg-slate-500',
 };
 
-const TankTimeline = ({ tasks = [] }) => {
+const TankTimeline = ({ tasks = [], filterRange = null }) => {
   const sortedTasks = useMemo(() => {
     return [...tasks].sort((a, b) => (a.resource || "").localeCompare(b.resource || ""));
   }, [tasks]);
@@ -19,9 +19,11 @@ const TankTimeline = ({ tasks = [] }) => {
   const {
     tasksWithLanes,
     timeLabels,
+    timelineStart,
+    timelineEnd,
     totalDurationHrs,
     getPosition,
-  } = useTimeline(sortedTasks);
+  } = useTimeline(sortedTasks, filterRange);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-fade-in mb-10">

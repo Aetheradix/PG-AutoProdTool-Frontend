@@ -12,7 +12,7 @@ const statusColors = {
     warning: 'bg-gradient-to-r from-amber-500 to-amber-600',
 };
 
-const DraggableGanttChart = ({ tasks = [] }) => {
+const DraggableGanttChart = ({ tasks = [], filterRange = null }) => {
     const {
         tasksWithLanes,
         timeLabels,
@@ -20,7 +20,7 @@ const DraggableGanttChart = ({ tasks = [] }) => {
         timelineEnd,
         totalDurationHrs,
         getPosition,
-    } = useTimeline(tasks);
+    } = useTimeline(tasks, filterRange);
 
     const [updateTimelineData] = useUpdateTimelineDataMutation();
     const [draggingItem, setDraggingItem] = useState(null);
@@ -57,7 +57,7 @@ const DraggableGanttChart = ({ tasks = [] }) => {
             const percentDelta = (deltaX / draggingItem.containerWidth) * 100;
             const timeDelta = (percentDelta / 100) * (timelineEnd - timelineStart);
 
-            // Round to nearest 5 minutes for usability
+            // nearest 5 minutes for usability
             const MS_PER_5_MIN = 5 * 60 * 1000;
             const newStartTime = new Date(Math.round((draggingItem.originalStart + timeDelta) / MS_PER_5_MIN) * MS_PER_5_MIN);
             const newEndTime = new Date(Math.round((draggingItem.originalEnd + timeDelta) / MS_PER_5_MIN) * MS_PER_5_MIN);
