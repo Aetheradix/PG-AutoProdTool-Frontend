@@ -22,7 +22,18 @@ export const statusApi = apiSlice.injectEndpoints({
             query: () => '/v1/rm-data',
             providesTags: ['Status'],
         }),
+        getGhanttChart: builder.query({
+            query: (limit = 100) => `/v1/ghantt-chart?limit=${limit}`,
+            providesTags: ['Status'],
+        }),
     }),
 });
 
-export const { useGetTankStatusQuery, useGetBatchStatusQuery, useGetRecentDataQuery, useGetStatusQuery, useGetRmStatusQuery } = statusApi;
+export const {
+    useGetTankStatusQuery,
+    useGetBatchStatusQuery,
+    useGetRecentDataQuery,
+    useGetStatusQuery,
+    useGetRmStatusQuery,
+    useGetGhanttChartQuery
+} = statusApi;

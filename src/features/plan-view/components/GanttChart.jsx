@@ -1,84 +1,224 @@
-import React from 'react';
-import { Typography } from 'antd';
+import React, { useMemo } from 'react';
+import { Typography, Tooltip } from 'antd';
 
 const { Text } = Typography;
 
-const hours = Array.from({ length: 24 }, (_, i) => {
-    const h = (i + 5) % 24;
-    return `${h}:00`;
-});
-
 const statusColors = {
-    ready: 'bg-blue-500',
-    running: 'bg-emerald-500',
-    conflict: 'bg-rose-500',
-    warning: 'bg-amber-500',
+  ready: 'bg-gradient-to-r from-blue-500 to-blue-600',
+  running: 'bg-gradient-to-r from-emerald-500 to-emerald-600',
+  conflict: 'bg-gradient-to-r from-rose-500 to-rose-600',
+  warning: 'bg-gradient-to-r from-amber-500 to-amber-600',
 };
 
 const GanttChart = ({ tasks }) => {
-    return (
-        <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden animate-fade-in">
-            <div className="overflow-x-auto">
-                <div className="min-w-[1200px]">
-                    {/* Time Header */}
-                    <div className="flex border-b border-slate-100">
-                        <div className="w-20 shrink-0 border-r border-slate-100 bg-slate-50"></div>
-                        {hours.map((hour, i) => (
-                            <div key={i} className="flex-1 py-3 text-center text-xs font-semibold text-slate-400 border-r border-slate-50 last:border-r-0">
-                                {hour}
-                            </div>
-                        ))}
-                    </div>
+  const { timelineItems, timelineStart, timelineEnd, timeLabels, totalDurationHrs } =
+    useMemo(() => {
+      let minTime = Infinity;
+      let maxTime = -Infinity;
+      const allItems = [];
 
-                    {/* Grid Area */}
-                    <div className="relative bg-slate-50/30">
-                        {tasks.map((resourceRow, rowIndex) => (
-                            <div key={rowIndex} className="flex border-b border-slate-100 last:border-b-0 min-h-[100px] group">
-                                {/* Resource Label */}
-                                <div className="w-20 shrink-0 flex items-center justify-center font-bold text-slate-700 border-r border-slate-100 bg-slate-50 group-hover:bg-slate-100 transition-colors">
-                                    {resourceRow.resource}
-                                </div>
+      tasks.forEach((resource) => {
+        resource.items.forEach((item) => {
+          const start = new Date(item.start_time).getTime();
+          const end = new Date(item.end_time).getTime();
+          if (start < minTime) minTime = start;
+          if (end > maxTime) maxTime = end;
+          allItems.push({ ...item, start, end });
+        });
+      });
 
-                                {/* Timeline Row */}
-                                <div className="flex-1 relative p-2">
-                                    {/* Placeholder Grid Lines */}
-                                    <div className="absolute inset-0 flex">
-                                        {hours.map((_, i) => (
-                                            <div key={i} className="flex-1 border-r border-slate-100/50 last:border-r-0"></div>
-                                        ))}
-                                    </div>
+      if (allItems.length === 0) {
+        return {
+          timelineItems: [],
+          timelineStart: 0,
+          timelineEnd: 0,
+          timeLabels: [],
+          totalDurationHrs: 1,
+        };
+      }
 
-                                    {/* Task Items */}
-                                    <div className="relative h-full">
-                                        {resourceRow.items.map((item) => (
-                                            <div
-                                                key={item.id}
-                                                className={`absolute top-0 bottom-0 rounded-lg p-3 text-white shadow-sm flex flex-col justify-center transition-transform hover:scale-[1.02] cursor-pointer z-10 ${statusColors[item.status]}`}
-                                                style={{
-                                                    left: `${(item.start / 24) * 100}%`,
-                                                    width: `${(item.duration / 24) * 100}%`,
-                                                }}
-                                            >
-                                                <div className="flex items-center justify-between gap-1">
-                                                    <Text className="text-white font-bold leading-tight truncate text-xs shrink">
-                                                        {item.title}
-                                                    </Text>
-                                                    {item.icon && <span className="text-white/80 text-xs">{item.icon}</span>}
-                                                </div>
-                                                <Text className="text-white/80 text-[10px] truncate">
-                                                    {item.batch}
-                                                </Text>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+      const start = new Date(minTime);
+      start.setMinutes(0, 0, 0);
+      const timelineStart = start.getTime();
+
+      const end = new Date(maxTime);
+      end.setMinutes(0, 0, 0);
+      if (end.getTime() < maxTime) {
+        end.setHours(end.getHours() + 1);
+      }
+      const timelineEnd = end.getTime();
+
+      const durationMs = timelineEnd - timelineStart;
+      const totalDurationHrs = durationMs / (1000 * 60 * 60);
+
+      const labels = [];
+      for (let i = 0; i <= totalDurationHrs; i++) {
+        const time = new Date(timelineStart + i * 3600000);
+        labels.push({
+          label: `${time.getHours()}:00`,
+          fullDate: time.toLocaleString(),
+          isNewDay: time.getHours() === 0 && i !== 0,
+        });
+      }
+
+      return {
+        timelineItems: allItems,
+        timelineStart,
+        timelineEnd,
+        timeLabels: labels,
+        totalDurationHrs,
+      };
+    }, [tasks]);
+
+  const tasksWithLanes = useMemo(() => {
+    return tasks.map((resourceRow) => {
+      const resourceItems = timelineItems
+        .filter((item) => resourceRow.items.some((ri) => ri.id === item.id))
+        .sort((a, b) => a.start - b.start);
+
+      const lanes = [];
+      const itemsWithLanes = resourceItems.map((item) => {
+        let laneIndex = 0;
+        const itemEnd = item.end;
+
+        while (laneIndex < lanes.length && lanes[laneIndex] > item.start) {
+          laneIndex++;
+        }
+
+        if (laneIndex === lanes.length) {
+          lanes.push(itemEnd);
+        } else {
+          lanes[laneIndex] = itemEnd;
+        }
+
+        return { ...item, laneIndex };
+      });
+
+      return { ...resourceRow, items: itemsWithLanes, totalLanes: Math.max(lanes.length, 1) };
+    });
+  }, [tasks, timelineItems]);
+
+  const getPosition = (time) => {
+    return ((time - timelineStart) / (timelineEnd - timelineStart)) * 100;
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-fade-in mb-10">
+      <div className="overflow-x-auto custom-scrollbar">
+        <div style={{ minWidth: `${Math.max(totalDurationHrs * 120, 1200)}px` }}>
+          {/* Time Header */}
+          <div className="flex border-b border-slate-100 bg-slate-50/80 backdrop-blur-sm sticky top-0 z-20">
+            <div className="w-24 shrink-0 border-r border-slate-200 bg-slate-100/50 flex items-center justify-center font-bold text-slate-500 text-xs tracking-wider">
+              RESOURCE
             </div>
+            {timeLabels.slice(0, -1).map((time, i) => (
+              <div
+                key={i}
+                className={`flex-1 py-4 text-center text-[11px] font-bold text-slate-500 border-r border-slate-200/50 last:border-r-0 ${time.isNewDay ? 'bg-blue-50/50' : ''}`}
+                title={time.fullDate}
+              >
+                {time.label}
+                {time.isNewDay && (
+                  <div className="text-[9px] text-blue-400 opacity-70">
+                    {new Date(timelineStart + i * 3600000).toLocaleDateString(undefined, {
+                      day: 'numeric',
+                      month: 'short',
+                    })}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Grid Area */}
+          <div className="relative bg-white">
+            {tasksWithLanes.map((resourceRow, rowIndex) => (
+              <div
+                key={rowIndex}
+                className="flex border-b border-slate-100 last:border-b-0 min-h-[140px] group"
+                style={{ height: `${Math.max(resourceRow.totalLanes * 80 + 40, 140)}px` }}
+              >
+                {/* Resource Label */}
+                <div className="w-24 shrink-0 flex items-center justify-center font-black text-slate-600 border-r border-slate-200 bg-slate-50 group-hover:bg-blue-50 transition-colors duration-300">
+                  <div className="bg-white shadow-sm border border-slate-200 rounded-lg px-3 py-2 text-sm sticky top-20">
+                    {resourceRow.resource}
+                  </div>
+                </div>
+
+                {/* Timeline Row */}
+                <div className="flex-1 relative p-4">
+                  {/* Grid Lines */}
+                  <div className="absolute inset-0 flex pointer-events-none">
+                    {timeLabels.slice(0, -1).map((time, i) => (
+                      <div
+                        key={i}
+                        className={`flex-1 border-r border-slate-100/80 last:border-r-0 ${time.isNewDay ? 'border-l-2 border-l-blue-100' : ''}`}
+                      ></div>
+                    ))}
+                  </div>
+
+                  {/* Task Items */}
+                  <div className="relative h-full">
+                    {resourceRow.items.map((item) => (
+                      <Tooltip
+                        key={item.id}
+                        title={
+                          <div className="p-1">
+                            <div className="font-bold border-b border-white/20 mb-1">
+                              {item.title}
+                            </div>
+                            <div className="text-[10px] opacity-90">
+                              {new Date(item.start).toLocaleTimeString()} -{' '}
+                              {new Date(item.end).toLocaleTimeString()}
+                            </div>
+                            <div className="text-[10px] opacity-90">
+                              {new Date(item.start).toDateString()} -{' '}
+                              {new Date(item.end).toLocaleTimeString()}
+                            </div>
+                          </div>
+                        }
+                        placement="top"
+                        color="#1e293b"
+                      >
+                        <div
+                          className={`absolute rounded-xl p-3 text-white shadow-lg flex flex-col justify-center transition-all duration-300 hover:scale-[1.01] hover:shadow-2xl cursor-pointer z-10 border border-white/20 ${statusColors[item.status] || statusColors.ready}`}
+                          style={{
+                            left: `${getPosition(item.start)}%`,
+                            width: `${getPosition(item.end) - getPosition(item.start)}%`,
+                            top: `${item.laneIndex * 80}px`,
+                            height: '70px',
+                          }}
+                        >
+                          <div className="flex items-center justify-between gap-2 overflow-hidden">
+                            <Text className="text-white font-extrabold leading-tight truncate text-[13px] shrink shadow-sm">
+                              {item.title}
+                            </Text>
+                            {item.icon && (
+                              <span className="text-white/90 text-sm animate-pulse">
+                                {item.icon}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 opacity-90">
+                            <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter">
+                              {item.batch}
+                            </span>
+                            <Text className="text-white/80 text-[11px] font-medium truncate">
+                              {((item.end - item.start) / 3600000).toFixed(1)}h
+                            </Text>
+                          </div>
+                        </div>
+                      </Tooltip>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-    );
+      </div>
+    </div>
+  );
 };
 
 export default GanttChart;
