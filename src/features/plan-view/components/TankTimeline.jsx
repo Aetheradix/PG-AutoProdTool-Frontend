@@ -4,9 +4,9 @@ import { Typography, Space, Tooltip } from 'antd';
 const { Text } = Typography;
 
 const productColors = {
-  shampoo: 'bg-gradient-to-r from-blue-600 to-blue-700',
-  conditioner: 'bg-gradient-to-r from-emerald-500 to-emerald-600',
-  premix: 'bg-gradient-to-r from-amber-500 to-amber-600',
+  shampoo: 'bg-linear-to-r from-blue-600 to-blue-700',
+  conditioner: 'bg-linear-to-r from-emerald-500 to-emerald-600',
+  premix: 'bg-linear-to-r from-amber-500 to-amber-600',
   washout: 'bg-slate-500',
 };
 
@@ -122,7 +122,7 @@ const TankTimeline = ({ tasks = [] }) => {
             {tasksWithLanes.map((resourceRow, rowIndex) => (
               <div
                 key={rowIndex}
-                className="flex border-b border-slate-100 last:border-b-0 min-h-[80px] group"
+                className="flex border-b border-slate-100 last:border-b-0 min-h-20 group"
                 style={{ height: `${Math.max(resourceRow.totalLanes * 50 + 30, 80)}px` }}
               >
                 {/* Resource Label */}
@@ -170,7 +170,7 @@ const TankTimeline = ({ tasks = [] }) => {
                           }}
                         >
                           <Text
-                            className="font-extrabold truncate text-[11px] !text-white"
+                            className="font-extrabold truncate text-[11px] text-white!"
                           >
                             {item.title}
                           </Text>
@@ -188,15 +188,15 @@ const TankTimeline = ({ tasks = [] }) => {
       {/* Legend */}
       <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-center gap-10">
         <div className="flex items-center gap-3">
-          <div className="w-5 h-5 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-md"></div>
+          <div className="w-5 h-5 rounded-lg bg-linear-to-br from-blue-600 to-blue-700 shadow-md"></div>
           <Text className="text-sm font-semibold text-slate-700 uppercase tracking-tight">Shampoo</Text>
         </div>
         <div className="flex items-center gap-3">
-          <div className="w-5 h-5 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-md"></div>
+          <div className="w-5 h-5 rounded-lg bg-linear-to-br from-emerald-500 to-emerald-600 shadow-md"></div>
           <Text className="text-sm font-semibold text-slate-700 uppercase tracking-tight">Conditioner</Text>
         </div>
         <div className="flex items-center gap-3">
-          <div className="w-5 h-5 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 shadow-md"></div>
+          <div className="w-5 h-5 rounded-lg bg-linear-to-br from-amber-500 to-amber-600 shadow-md"></div>
           <Text className="text-sm font-semibold text-slate-700 uppercase tracking-tight">Premix</Text>
         </div>
         <div className="flex items-center gap-3">

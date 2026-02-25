@@ -1,15 +1,13 @@
-import React from 'react';
 import { Card, Tabs } from 'antd';
+import { AiOutlineStock } from "react-icons/ai";
+import { FiDatabase, FiPackage, FiUpload } from 'react-icons/fi';
 import { useExcelUpload } from '../excel-upload/hooks/useExcelUpload';
+import { BulkDetailTable } from './components/BulkDetailTable';
+import RMStatusDeadStock from './components/RMStatusDeadStock';
+import { SKUMasterTable } from './components/SKUMasterTable';
 import { UploadActionButtons } from './components/UploadActionButtons';
 import { UploadDataTable } from './components/UploadDataTable';
-import { SKUMasterTable } from './components/SKUMasterTable';
-import { BulkDetailTable } from './components/BulkDetailTable';
 import { getUploadColumns } from './utils/uploadColumns';
-import { FiUpload, FiDatabase, FiPackage, FiGrid } from 'react-icons/fi';
-import { AiOutlineStock } from "react-icons/ai";
-import RMStatusDeadStock from './components/RMStatusDeadStock';
-import { EABNAATable } from './components/EABNAATable';
 
 
 export function MasterDataPage() {

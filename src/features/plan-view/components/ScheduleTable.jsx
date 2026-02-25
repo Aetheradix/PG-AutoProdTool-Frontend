@@ -10,13 +10,16 @@ const ScheduleTable = () => {
   const [pageSize, setPageSize] = useState(10);
   const [searchText, setSearchText] = useState('');
 
-  const { data: responseData, isLoading, isError } = useGetProductionScheduleQuery({
-    page: currentPage,
-    limit: pageSize
+  const {
+    data: responseData,
+    isLoading,
+    isError,
+  } = useGetProductionScheduleQuery({
+    page: 1,
+    limit: 1000,
   });
 
   const scheduleItems = responseData?.data ?? [];
-  const totalCount = responseData?.pagination?.total || scheduleItems.length;
 
   const formatTime = (isoString) => {
     if (!isoString) return 'N/A';
@@ -31,26 +34,26 @@ const ScheduleTable = () => {
   };
 
   const processedData = useMemo(() => {
-    return scheduleItems.map((item, index) => ({
-      ...item,
-      key: item.id || index,
-      title: item.description,
-      batch: item.batch_id,
-      resource: item.system,
-      startTime: formatTime(item.mkg_start_time),
-      endTime: formatTime(item.pkg_end_time),
-      duration: calculateDuration(item.mkg_start_time, item.pkg_end_time),
-      status: 'ready',
-    })).sort((a, b) => new Date(a.mkg_start_time) - new Date(b.mkg_start_time));
+    return scheduleItems
+      .map((item, index) => ({
+        ...item,
+        key: item.id || index,
+        title: item.description,
+        batch: item.batch_id,
+        resource: item.system,
+        startTime: formatTime(item.mkg_start_time),
+        endTime: formatTime(item.pkg_end_time),
+        duration: calculateDuration(item.mkg_start_time, item.pkg_end_time),
+        status: 'ready',
+      }))
+      .sort((a, b) => new Date(a.mkg_start_time) - new Date(b.mkg_start_time));
   }, [scheduleItems]);
 
   const filteredData = useMemo(() => {
     if (!searchText) return processedData;
     const lowerSearch = searchText.toLowerCase();
-    return processedData.filter(item =>
-      Object.values(item).some(val =>
-        val?.toString().toLowerCase().includes(lowerSearch)
-      )
+    return processedData.filter((item) =>
+      Object.values(item).some((val) => val?.toString().toLowerCase().includes(lowerSearch))
     );
   }, [processedData, searchText]);
 
@@ -116,13 +119,16 @@ const ScheduleTable = () => {
             Production Schedule Table
           </Title>
           <Text type="secondary" className="text-sm">
-            Total {totalCount} items found
+            Total {filteredData.length} items found
           </Text>
         </div>
         <Input
           placeholder="Search items..."
           prefix={<FiSearch className="text-slate-400" />}
-          onChange={e => setSearchText(e.target.value)}
+          onChange={(e) => {
+            setSearchText(e.target.value);
+            setCurrentPage(1);
+          }}
           value={searchText}
           allowClear
           className="max-w-xs h-10 rounded-lg border-slate-200 shadow-xs focus:border-blue-500 transition-all font-medium"
@@ -134,14 +140,16 @@ const ScheduleTable = () => {
         pagination={{
           current: currentPage,
           pageSize: pageSize,
-          total: totalCount,
           showSizeChanger: true,
           showTotal: (total) => `Total ${total} items`,
           onChange: (page, size) => {
             setCurrentPage(page);
             setPageSize(size);
           },
-          className: "px-6 py-4"
+          onShowSizeChange: (current, size) => {
+            setPageSize(size);
+          },
+          className: 'px-6 py-4',
         }}
         loading={isLoading}
         className="modern-table"
