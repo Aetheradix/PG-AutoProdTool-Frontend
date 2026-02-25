@@ -46,15 +46,17 @@ export function MasterDataPage() {
       ),
       children: (
         <div className="flex flex-col gap-6">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h3 className="text-lg font-semibold text-slate-700">Upload Data</h3>
-            <UploadActionButtons
-              handleFileUpload={handleFileUpload}
-              handleSubmit={handleSubmit}
-              clearData={clearData}
-              isUploading={isUploading}
-              hasData={uploadData.length > 0}
-            />
+            <div className="w-full sm:w-auto overflow-x-auto custom-scrollbar">
+              <UploadActionButtons
+                handleFileUpload={handleFileUpload}
+                handleSubmit={handleSubmit}
+                clearData={clearData}
+                isUploading={isUploading}
+                hasData={uploadData.length > 0}
+              />
+            </div>
           </div>
           <UploadDataTable
             uploadData={uploadData}

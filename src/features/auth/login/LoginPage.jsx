@@ -1,5 +1,6 @@
 import React from 'react';
 import { LoginForm } from './LoginForm';
+import Logo from '../../../components/Logo';
 
 export function LoginPage() {
   return (
@@ -8,7 +9,7 @@ export function LoginPage() {
       <div className="auth-form-side">
         <div className="auth-form-wrapper">
           <div className="space-y-6">
-            <div className="auth-header-logo">P&G</div>
+            <Logo size="large" />
             <h1 className="auth-title">
               Automated <br />
               <span className="text-primary">Production Planning</span>

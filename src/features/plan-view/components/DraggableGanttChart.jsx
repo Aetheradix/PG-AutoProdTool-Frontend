@@ -94,7 +94,7 @@ const DraggableGanttChart = ({ tasks = [], filterRange = null }) => {
                 <Text className="font-bold text-slate-700">Draggable Timeline (timeline_data)</Text>
                 <Text type="secondary" className="text-xs">Drag bars to adjust schedule</Text>
             </div>
-            <div className="overflow-auto custom-scrollbar max-h-[70vh]" ref={chartRef}>
+            <div className="overflow-auto custom-scrollbar max-h-[calc(100vh-350px)] sm:max-h-[60vh] lg:max-h-[70vh]" ref={chartRef}>
                 <div style={{ minWidth: `${Math.max(totalDurationHrs * 120, 1200)}px` }} className="relative">
                     {/* Time Header */}
                     <div className="flex border-b border-slate-100 bg-slate-50/80 backdrop-blur-sm sticky top-0 z-20">

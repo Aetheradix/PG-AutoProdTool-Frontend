@@ -4,7 +4,7 @@ import { Card, Typography } from 'antd';
 const { Text } = Typography;
 
 const StatusCard = ({ title, value, hexCode, unit, status }) => {
-  console.log('Rendering StatusCard:', { title, value, hexCode, unit });
+ 
 
   const normalizedHex = hexCode?.toLowerCase();
   const isDarkBackground =

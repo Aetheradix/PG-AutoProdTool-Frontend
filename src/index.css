@@ -23,6 +23,20 @@
   /* Slate 500 */
 
   --radius: 0.5rem;
+  
+  /* Fluid Typography & Spacing Scale */
+  --font-size-xs: clamp(0.7rem, 0.65rem + 0.25vw, 0.8rem);
+  --font-size-sm: clamp(0.8rem, 0.75rem + 0.25vw, 0.9rem);
+  --font-size-base: clamp(0.9rem, 0.85rem + 0.25vw, 1rem);
+  --font-size-lg: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  --font-size-xl: clamp(1.125rem, 1.05rem + 0.5vw, 1.25rem);
+  --font-size-2xl: clamp(1.25rem, 1.15rem + 0.75vw, 1.5rem);
+  --font-size-3xl: clamp(1.5rem, 1.35rem + 1vw, 1.875rem);
+  --font-size-4xl: clamp(1.875rem, 1.65rem + 1.5vw, 2.25rem);
+  
+  --spacing-fluid-sm: clamp(0.5rem, 0.4rem + 0.5vw, 0.75rem);
+  --spacing-fluid-md: clamp(1rem, 0.8rem + 1vw, 1.5rem);
+  --spacing-fluid-lg: clamp(1.5rem, 1.2rem + 2vw, 2.5rem);
 }
 
 @theme {
@@ -51,6 +65,7 @@ body {
   background-color: var(--color-background);
   color: var(--color-text);
   font-family: var(--font-sans);
+  font-size: var(--font-size-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   user-select: none;
@@ -106,11 +121,11 @@ textarea {
    ========================================================================== */
 
 .app-layout {
-  @apply min-h-screen bg-[#F8FAFC];
+  @apply min-h-screen bg-[#F8FAFC] flex flex-col;
 }
 
 .main-content {
-  @apply w-full px-6 py-8;
+  @apply w-full max-w-(--breakpoint-2xl) mx-auto px-[var(--spacing-fluid-md)] py-[var(--spacing-fluid-lg)];
 }
 
 /* Header & Navigation Classes */

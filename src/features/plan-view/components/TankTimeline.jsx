@@ -27,7 +27,7 @@ const TankTimeline = ({ tasks = [], filterRange = null }) => {
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-fade-in mb-10">
-      <div className="overflow-auto custom-scrollbar max-h-[70vh]">
+      <div className="overflow-auto custom-scrollbar max-h-[calc(100vh-350px)] sm:max-h-[60vh] lg:max-h-[70vh]">
         <div style={{ minWidth: `${Math.max(totalDurationHrs * 120, 1200)}px` }}>
           {/* Time Header */}
           <div className="flex border-b border-slate-100 bg-slate-50/80 backdrop-blur-sm sticky top-0 z-20">

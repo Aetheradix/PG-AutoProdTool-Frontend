@@ -56,7 +56,7 @@ const mapToTankFormat = (tanksData) => {
 };
 
 const PlanView = () => {
-  const [activeTab, setActiveTab] = useState('tank');
+  const [activeTab, setActiveTab] = useState('gantt');
   const [activeFilter, setActiveFilter] = useState(null);
 
   const { data: apiResponse, isLoading, error } = useGetGhanttChartQuery(100);
@@ -65,7 +65,7 @@ const PlanView = () => {
   const filterRange = useMemo(() => {
     if (!activeFilter || !apiResponse?.data) return null;
 
-   
+
     let minDate = null;
     Object.values(apiResponse.data).forEach(list => {
       list.forEach(item => {

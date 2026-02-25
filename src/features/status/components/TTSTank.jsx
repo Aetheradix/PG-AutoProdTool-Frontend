@@ -3,7 +3,6 @@ import BatchCard from './BatchCard';
 import { ResourceStatusGrid } from './ResourceStatusGrid';
 
 const TTSTank = ({ isLoading, lastRefreshTTS, productionData, getLatestDate, error, isError }) => {
-  console.log('TTSTank component', productionData);
   return (
     <ResourceStatusGrid
       title="LIVE PRODUCTION DATA (RECENT)"

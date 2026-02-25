@@ -12,6 +12,7 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom';
 import DesktopMenu from '../DesktopMenu';
 import DesktopUserDropdown from '../DesktopUserDropdown';
+import Logo from '../Logo';
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
@@ -60,8 +61,9 @@ const Header = () => {
         width: '100%',
         display: 'flex',
         alignItems: 'center',
-        background: '#fff',
-        padding: '0 16px',
+        background: 'rgba(255, 255, 255, 0.8)',
+        backdropFilter: 'blur(8px)',
+        padding: '0 clamp(1rem, 5vw, 2rem)',
         boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
         borderBottom: '1px solid #f0f0f0',
         height: '64px',
@@ -77,14 +79,7 @@ const Header = () => {
         }}
       >
         {/* Logo Section */}
-        <h1
-          className="logo-text"
-          style={{ fontWeight: 'bold', margin: 0, cursor: 'pointer', flexShrink: 0 }}
-          onClick={() => navigate('/')}
-        >
-          <span style={{ color: '#0f172a' }}>Production </span>
-          <span style={{ color: '#3b82f6' }}>Planning</span>
-        </h1>
+        <Logo size="medium" />
 
         {/* Desktop Menu */}
         <DesktopMenu menuItems={menuItems} onMenuClick={onMenuClick} location={location} />
