@@ -3,7 +3,8 @@ import GanttChart from './components/GanttChart';
 import PlanHeader from './components/PlanHeader';
 import ScheduleTable from './components/ScheduleTable';
 import TankTimeline from './components/TankTimeline';
-import { useGetGhanttChartQuery } from '../../store/api/statusApi';
+import DraggableGanttChart from './components/DraggableGanttChart';
+import { useGetGhanttChartQuery, useGetTimelineDataQuery } from '../../store/api/statusApi';
 import { Spin, Empty } from 'antd';
 
 const mapToGanttFormat = (groupedData) => {
@@ -19,7 +20,7 @@ const mapToGanttFormat = (groupedData) => {
         batch: item.event_type,
         start_time: item.start_time,
         end_time: item.end_time,
-        status: item.event_type.includes('WASH') ? 'warning' : 'ready',
+        status: (item.event_type.includes('WASH') || item.event_type.includes('COND')) ? 'warning' : 'ready',
       };
     }),
   }));
@@ -57,6 +58,7 @@ const mapToTankFormat = (tanksData) => {
 const PlanView = () => {
   const [activeTab, setActiveTab] = useState('tank');
   const { data: apiResponse, isLoading, error } = useGetGhanttChartQuery(100);
+  const { data: timelineResponse, isLoading: isTimelineLoading } = useGetTimelineDataQuery(100);
 
   const { tasks, tankTasks } = useMemo(() => {
     if (!apiResponse?.data) return { tasks: [], tankTasks: [] };
@@ -66,6 +68,11 @@ const PlanView = () => {
       tankTasks: mapToTankFormat(apiResponse.data.Tanks),
     };
   }, [apiResponse]);
+
+  const draggableTasks = useMemo(() => {
+    if (!timelineResponse?.data) return [];
+    return mapToGanttFormat(timelineResponse.data);
+  }, [timelineResponse]);
 
   const renderContent = () => {
     if (isLoading)
@@ -101,6 +108,13 @@ const PlanView = () => {
     <div className="space-y-6">
       <PlanHeader activeTab={activeTab} onTabChange={setActiveTab} />
       {renderContent()}
+
+      {/* Draggable Gantt Chart Section */}
+      {activeTab === 'gantt' && (
+        <div className="mt-12">
+          <DraggableGanttChart tasks={draggableTasks} />
+        </div>
+      )}
     </div>
   );
 };

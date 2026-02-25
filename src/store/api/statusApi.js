@@ -26,6 +26,18 @@ export const statusApi = apiSlice.injectEndpoints({
             query: (limit = 100) => `/v1/ghantt-chart?limit=${limit}`,
             providesTags: ['Status'],
         }),
+        getTimelineData: builder.query({
+            query: (limit = 100) => `/v1/timeline-data?limit=${limit}`,
+            providesTags: ['Status'],
+        }),
+        updateTimelineData: builder.mutation({
+            query: ({ id, ...data }) => ({
+                url: `/v1/timeline-data/${id}`,
+                method: 'PUT',
+                body: data,
+            }),
+            invalidatesTags: ['Status'],
+        }),
     }),
 });
 
@@ -35,5 +47,7 @@ export const {
     useGetRecentDataQuery,
     useGetStatusQuery,
     useGetRmStatusQuery,
-    useGetGhanttChartQuery
+    useGetGhanttChartQuery,
+    useGetTimelineDataQuery,
+    useUpdateTimelineDataMutation
 } = statusApi;
