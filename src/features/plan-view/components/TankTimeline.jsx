@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Typography, Space, Tooltip } from 'antd';
+import { useTimeline } from '@/hooks/useTimeline';
 
 const { Text } = Typography;
 
@@ -11,86 +12,16 @@ const productColors = {
 };
 
 const TankTimeline = ({ tasks = [] }) => {
-  const { timelineItems, timelineStart, timelineEnd, timeLabels, totalDurationHrs } = useMemo(() => {
-    let minTime = Infinity;
-    let maxTime = -Infinity;
-    const allItems = [];
-
-  
-
-    tasks.sort((a, b) => (a.resource || "").localeCompare(b.resource || "")).forEach(resource => {
-      resource.items.forEach(item => {
-        const start = new Date(item.start_time).getTime();
-        const end = new Date(item.end_time).getTime();
-        if (start < minTime) minTime = start;
-        if (end > maxTime) maxTime = end;
-        allItems.push({ ...item, start, end });
-      });
-    });
-
-    if (allItems.length === 0) {
-      return { timelineItems: [], timelineStart: 0, timelineEnd: 0, timeLabels: [], totalDurationHrs: 1 };
-    }
-
-    const start = new Date(minTime);
-    start.setMinutes(0, 0, 0);
-    const timelineStart = start.getTime();
-
-    const end = new Date(maxTime);
-    end.setMinutes(0, 0, 0);
-    if (end.getTime() < maxTime) {
-      end.setHours(end.getHours() + 1);
-    }
-    const timelineEnd = end.getTime();
-
-    const durationMs = timelineEnd - timelineStart;
-    const totalDurationHrs = durationMs / (1000 * 60 * 60);
-
-    const labels = [];
-    for (let i = 0; i <= totalDurationHrs; i++) {
-      const time = new Date(timelineStart + i * 3600000);
-      labels.push({
-        label: `${time.getHours()}:00`,
-        fullDate: time.toLocaleString(),
-        isNewDay: time.getHours() === 0 && i !== 0
-      });
-    }
-
-    return { timelineItems: allItems, timelineStart, timelineEnd, timeLabels: labels, totalDurationHrs };
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => (a.resource || "").localeCompare(b.resource || ""));
   }, [tasks]);
 
-  const tasksWithLanes = useMemo(() => {
-    return tasks.map(resourceRow => {
-      const resourceItems = timelineItems
-        .filter(item => resourceRow.items.some(ri => ri.id === item.id))
-        .sort((a, b) => a.start - b.start);
-
-      const lanes = [];
-
-      const itemsWithLanes = resourceItems.map(item => {
-        let laneIndex = 0;
-        const itemEnd = item.end;
-
-        while (laneIndex < lanes.length && lanes[laneIndex] > item.start) {
-          laneIndex++;
-        }
-
-        if (laneIndex === lanes.length) {
-          lanes.push(itemEnd);
-        } else {
-          lanes[laneIndex] = itemEnd;
-        }
-
-        return { ...item, laneIndex };
-      });
-
-      return { ...resourceRow, items: itemsWithLanes, totalLanes: Math.max(lanes.length, 1) };
-    });
-  }, [tasks, timelineItems]);
-
-  const getPosition = (time) => {
-    return ((time - timelineStart) / (timelineEnd - timelineStart)) * 100;
-  };
+  const {
+    tasksWithLanes,
+    timeLabels,
+    totalDurationHrs,
+    getPosition,
+  } = useTimeline(sortedTasks);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-fade-in mb-10">
@@ -110,7 +41,7 @@ const TankTimeline = ({ tasks = [] }) => {
                 {time.label}
                 {time.isNewDay && (
                   <div className="text-[9px] text-blue-400 opacity-70">
-                    {new Date(timelineStart + i * 3600000).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                    {new Date(time.timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
                   </div>
                 )}
               </div>

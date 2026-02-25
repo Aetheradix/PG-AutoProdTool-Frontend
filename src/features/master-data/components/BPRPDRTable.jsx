@@ -1,5 +1,5 @@
 import React from 'react';
-import { GenericMasterTable } from './GenericMasterTable';
+import { StandardDataTable } from './StandardDataTable';
 import {
     useGetBprPdrQuery,
     useUpdateBprPdrMutation,
@@ -9,7 +9,7 @@ import {
 
 export function BPRPDRTable() {
     return (
-        <GenericMasterTable
+        <StandardDataTable
             useGetQuery={useGetBprPdrQuery}
             title="BPR-PDR"
             searchPlaceholder="Search BPR-PDR..."

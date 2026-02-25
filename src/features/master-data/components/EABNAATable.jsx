@@ -1,5 +1,5 @@
 import React from 'react';
-import { GenericMasterTable } from './GenericMasterTable';
+import { StandardDataTable } from './StandardDataTable';
 import {
     useGetEaBnaaQuery,
     useUpdateEaBnaaMutation,
@@ -15,7 +15,7 @@ const DUMMY_EA_BNAA = [
 
 export function EABNAATable() {
     return (
-        <GenericMasterTable
+        <StandardDataTable
             useGetQuery={useGetEaBnaaQuery}
             title="EA BNAA"
             searchPlaceholder="Search EA BNAA..."

@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Table, DatePicker, Button, Space, Typography, Card, Tag } from 'antd';
 import { FiEye, FiDownload } from 'react-icons/fi';
+import { useArchivedPlans } from '@/hooks/useArchivedPlans';
 
 const { Title, Text } = Typography;
 
 export function ArchivedPlansView() {
-    const [selectedDate, setSelectedDate] = useState(null);
+    const { archivedPlans, handleDateChange } = useArchivedPlans();
 
     const columns = [
         { title: 'Plan ID', dataIndex: 'id', key: 'id' },
@@ -22,11 +23,6 @@ export function ArchivedPlansView() {
         },
     ];
 
-    const data = [
-        { key: '1', id: 'PLN-001', version: 'V1.0', date: '2023-12-25' },
-        { key: '2', id: 'PLN-002', version: 'V1.1', date: '2023-12-26' },
-    ];
-
     return (
         <div className="space-y-6">
             <header className="flex justify-between items-center">
@@ -34,11 +30,11 @@ export function ArchivedPlansView() {
                     <Title level={4} className="m-0!">Archived Production Plans</Title>
                     <Text type="secondary">Review historical schedules and versions.</Text>
                 </div>
-                <DatePicker onChange={(d) => setSelectedDate(d)} placeholder="Select Date" className="rounded-xl h-10" />
+                <DatePicker onChange={handleDateChange} placeholder="Select Date" className="rounded-xl h-10" />
             </header>
 
             <Card className="rounded-3xl border-slate-100 shadow-sm overflow-hidden" styles={{ body: { padding: 0 } }}>
-                <Table columns={columns} dataSource={data} pagination={false} />
+                <Table columns={columns} dataSource={archivedPlans} pagination={false} />
             </Card>
         </div>
     );
