@@ -3,6 +3,7 @@ import BatchCard from './BatchCard';
 import { ResourceStatusGrid } from './ResourceStatusGrid';
 
 const TTSTank = ({ isLoading, lastRefreshTTS, productionData, getLatestDate, error, isError }) => {
+  console.log('TTSTank component', productionData);
   return (
     <ResourceStatusGrid
       title="LIVE PRODUCTION DATA (RECENT)"
@@ -11,7 +12,7 @@ const TTSTank = ({ isLoading, lastRefreshTTS, productionData, getLatestDate, err
       isError={isError}
       error={error}
       data={productionData}
-      columns={{ xs: 12, sm: 8, md: 4.8 }}
+      columns={{ xs: 24, sm: 12, md: 8 }}
       titleColor="bg-amber-400"
       renderItem={(item, index) => {
         const latestTimestamp = getLatestDate(item);
@@ -20,13 +21,12 @@ const TTSTank = ({ isLoading, lastRefreshTTS, productionData, getLatestDate, err
         const colorName =
           item.color_name || item.colour_name || item.COLOR_NAME || item.COLOUR_NAME;
         return (
-          <div className="w-full h-full flex!">
+          <div className="w-full h-full flex">
             <BatchCard
+              id={item.ID || 'N/A'}
               batchId={item.BATCH_NO || 'N/A'}
               brand={item.BRAND_NAME || 'N/A'}
-              date={
-                latestTimestamp > 0 ? new Date(latestTimestamp).toLocaleDateString() : 'N/A'
-              }
+              date={latestTimestamp > 0 ? new Date(latestTimestamp).toLocaleDateString() : 'N/A'}
               color={colorName}
               status={statusName}
               hexCode={hexCode}

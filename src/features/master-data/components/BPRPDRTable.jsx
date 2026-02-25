@@ -1,11 +1,7 @@
-import React from 'react';
-import { StandardDataTable } from './StandardDataTable';
 import {
-    useGetBprPdrQuery,
-    useUpdateBprPdrMutation,
-    useCreateBprPdrMutation,
-    useDeleteBprPdrMutation
+    useGetBprPdrQuery
 } from '../../../store/api/masterDataApi';
+import { StandardDataTable } from './StandardDataTable';
 
 export function BPRPDRTable() {
     return (

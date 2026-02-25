@@ -3,32 +3,57 @@ import { Card, Typography } from 'antd';
 
 const { Text } = Typography;
 
-const StatusCard = ({ title, value, hexCode, unit }) => {
+const StatusCard = ({ title, value, hexCode, unit, status }) => {
+  console.log('Rendering StatusCard:', { title, value, hexCode, unit });
+
+  const normalizedHex = hexCode?.toLowerCase();
+  const isDarkBackground =
+    normalizedHex === '#000000' ||
+    normalizedHex === '#c00000' ||
+    normalizedHex === '#1a1a1a' ||
+    normalizedHex === '#ff00ff';
+
+  const textColor = isDarkBackground ? '#ffffff' : '#0f172a';
+  const secondaryTextColor = isDarkBackground
+    ? 'rgba(255, 255, 255, 0.6)'
+    : 'rgba(15, 23, 42, 0.5)';
+
   return (
     <Card
-      className="border-none transition-transform hover:scale-[1.02] cursor-pointer shadow-sm"
+      className="border border-zinc-800 shadow-lg relative overflow-hidden h-full transform transition-all hover:scale-[1.02] duration-300"
+      style={{
+        backgroundColor: hexCode || '#1a1a1a',
+        borderRadius: '40px',
+        color: textColor,
+        border: `2px solid black`,
+      }}
       styles={{
         body: {
-          padding: '16px',
-          background: hexCode,
-          height: '120px',
+          padding: '24px',
+          height: '320px',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'space-between',
+          alignItems: 'center',
+          textAlign: 'center',
+          justifyContent: 'center'
         },
       }}
     >
-      <h1 className=" text-xl font-semibold uppercase tracking-wider truncate">
-        {title}
-      </h1>
-      <div className="flex justify-end">
-        <h2 className=" text-2xl font-bold">
-          {value?.toFixed(2) || 0} <span className="text-2xl align-baseline ml-1">{unit}</span>
-        </h2>
+      <div className="w-full flex flex-col items-center justify-center h-full">
+        <div className="w-full">
+          <h1 className="text-2xl font-extrabold uppercase leading-tight px-2 truncate w-full">
+            {title}
+          </h1>
+        </div>
+
+        <div className="mt-2">
+          <h2 className="text-2xl font-black">
+            {value} <span className="text-3xl align-baseline ml-1">{unit}</span>
+          </h2>
+        </div>
       </div>
     </Card>
   );
 };
-
 
 export default StatusCard;

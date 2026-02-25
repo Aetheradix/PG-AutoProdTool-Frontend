@@ -11,7 +11,7 @@ export const statusApi = apiSlice.injectEndpoints({
             providesTags: ['Status'],
         }),
         getStatus: builder.query({
-            query: () => '/v1/status',
+            query: () => '/v1/tank-status',
             providesTags: ['Status'],
         }),
         getRecentData: builder.query({

@@ -1,11 +1,7 @@
-import React from 'react';
-import { StandardDataTable } from './StandardDataTable';
 import {
-    useGetEaBnaaQuery,
-    useUpdateEaBnaaMutation,
-    useCreateEaBnaaMutation,
-    useDeleteEaBnaaMutation
+    useGetEaBnaaQuery
 } from '../../../store/api/masterDataApi';
+import { StandardDataTable } from './StandardDataTable';
 
 const DUMMY_EA_BNAA = [
     { id: 1, region: 'North', category: 'Category A', target_value: 15000, current_value: 12000, gap: -3000 },

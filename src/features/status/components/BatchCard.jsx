@@ -3,7 +3,7 @@ import { Card, Typography } from 'antd';
 
 const { Text } = Typography;
 
-const BatchCard = ({ batchId, brand, date, status, color, index, hexCode }) => {
+const BatchCard = ({ id, batchId, brand, date, status, color, index, hexCode }) => {
   const normalizedHex = hexCode?.toLowerCase();
   const normalizedColor = color?.toLowerCase() || '';
   const isDarkBackground =
@@ -29,7 +29,7 @@ const BatchCard = ({ batchId, brand, date, status, color, index, hexCode }) => {
         backgroundColor: hexCode || (color ? undefined : '#1a1a1a'),
         borderRadius: '40px',
         color: textColor,
-        border:`2px solid black`
+        border: `2px solid black`
       }}
       styles={{
         body: {
@@ -45,7 +45,7 @@ const BatchCard = ({ batchId, brand, date, status, color, index, hexCode }) => {
       <div
         className="absolute top-0 right-8 px-3 py-2 rounded-b-lg shadow-sm font-bold text-lg leading-none border border-zinc-700 border-top none bg-white text-black z-10"
       >
-        {index}
+        {id}
       </div>
 
       <div className="w-full flex flex-col items-center justify-between h-full space-y-4">
