@@ -32,7 +32,7 @@ export function ProductionDashboard() {
             </Title>
 
             <p className="text-slate-400 text-lg lg:text-xl max-w-2xl leading-relaxed">
-              Streamline your production workflow with AI-driven insights,
+              Streamline your production workflow with automation driven insights,
               real-time Gantt tracking, and automated tank resource management.
             </p>
 

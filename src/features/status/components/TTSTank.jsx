@@ -14,21 +14,16 @@ const TTSTank = ({ isLoading, lastRefreshTTS, productionData, getLatestDate, err
       columns={{ xs: 24, sm: 12, md: 4 }}
       titleColor="bg-amber-400"
       renderItem={(item, index) => {
-        const latestTimestamp = getLatestDate(item);
-        const statusName = item.status || item.STATUS || 'Active';
-        const hexCode = item.hex_code || item.HEX_CODE;
-        const colorName =
-          item.color_name || item.colour_name || item.COLOR_NAME || item.COLOUR_NAME;
         return (
           <div className="w-full h-full flex">
             <BatchCard
-              id={item.ID || 'N/A'}
-              batchId={item.BATCH_NO || 'N/A'}
-              brand={item.BRAND_NAME || 'N/A'}
-              date={latestTimestamp > 0 ? new Date(latestTimestamp).toLocaleDateString() : 'N/A'}
-              color={colorName}
-              status={statusName}
-              hexCode={hexCode}
+              id={item.id}
+              batchId={item.batchId}
+              brand={item.brand}
+              date={item.timestamp > 0 ? new Date(item.timestamp).toLocaleDateString() : 'N/A'}
+              color={item.colorName}
+              status={item.status}
+              hexCode={item.hexCode}
               index={index + 1}
             />
           </div>

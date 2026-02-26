@@ -21,6 +21,7 @@ const RMTank = ({ lastRefreshRM }) => {
           hexCode={tank.hexCode}
           status={tank.status}
           unit={tank.unit}
+          deadStock={tank.dead_stock}
         />
       )}
     />
