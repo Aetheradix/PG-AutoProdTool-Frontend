@@ -59,7 +59,7 @@ export function ProductionDashboard() {
           <div className="flex-1 w-full lg:max-w-md hidden lg:block">
             <div className="relative group">
               <div className="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full group-hover:bg-blue-500/30 transition-colors" />
-              <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-[2rem] p-8 shadow-3xl relative overflow-hidden group-hover:-translate-y-2 transition-transform duration-500">
+              <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-4xl p-8 shadow-3xl relative overflow-hidden group-hover:-translate-y-2 transition-transform duration-500">
                 <div className="flex items-center gap-2 mb-8">
                   <div className="w-3 h-3 rounded-full bg-rose-500" />
                   <div className="w-3 h-3 rounded-full bg-amber-500" />
