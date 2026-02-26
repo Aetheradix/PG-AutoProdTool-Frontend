@@ -47,7 +47,7 @@ const StatusCard = ({ title, value, hexCode, unit, status }) => {
 
         <div className="mt-2">
           <h2 className="text-2xl font-black">
-            {value} <span className="text-3xl align-baseline ml-1">{unit}</span>
+            {value.toFixed(2)} <span className="text-3xl align-baseline ml-1">{unit}</span>
           </h2>
         </div>
       </div>
