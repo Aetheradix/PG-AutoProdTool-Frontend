@@ -54,7 +54,7 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
             {tasksWithLanes.map((resourceRow, rowIndex) => (
               <div
                 key={rowIndex}
-                className="flex border-b border-slate-100 last:border-b-0 min-h-[140px] group"
+                className="flex border-b border-slate-100 last:border-b-0 min-h-35 group"
                 style={{ height: `${Math.max(resourceRow.totalLanes * 80 + 40, 140)}px` }}
               >
                 {/* Resource Label */}
