@@ -27,7 +27,7 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
         <div style={{ minWidth: `${Math.max(totalDurationHrs * 120, 1200)}px` }}>
           {/* Time Header */}
           <div className="flex border-b border-slate-100 bg-slate-50/80 backdrop-blur-sm sticky top-0 z-20">
-            <div className="w-24 shrink-0 border-r border-slate-200 bg-slate-200 flex items-center justify-center font-bold text-slate-500 text-xs tracking-wider sticky left-0 z-30">
+            <div className="w-32 shrink-0 border-r border-slate-200 bg-slate-200 flex items-center justify-center font-bold text-slate-500 text-xs tracking-wider sticky left-0 z-30">
               RESOURCE
             </div>
             {timeLabels.slice(0, -1).map((time, i) => (
@@ -58,8 +58,8 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
                 style={{ height: `${Math.max(resourceRow.totalLanes * 80 + 40, 140)}px` }}
               >
                 {/* Resource Label */}
-                <div className="w-24 shrink-0 flex items-center justify-center font-black text-slate-600 border-r border-slate-200 bg-slate-100 group-hover:bg-blue-50 transition-colors duration-300 sticky left-0 z-20">
-                  <div className="bg-white shadow-sm border border-slate-200 rounded-lg px-3 py-2 text-sm">
+                <div className="w-32 shrink-0 flex items-center justify-center font-black text-slate-600 border-r border-slate-200 bg-slate-100 group-hover:bg-blue-50 transition-colors duration-300 sticky left-0 z-20">
+                  <div className="bg-white shadow-sm border border-slate-200 rounded-lg px-3 py-2 text-sm w-[90%] text-center truncate">
                     {resourceRow.resource}
                   </div>
                 </div>
