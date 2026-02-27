@@ -79,12 +79,17 @@ const PlanView = () => {
     const start = new Date(minDate);
     const end = new Date(minDate);
 
-    if (activeFilter === 'morning') {
-      start.setHours(8, 0, 0, 0);
-      end.setHours(16, 0, 0, 0);
-    } else {
-      start.setHours(16, 0, 0, 0);
-      end.setHours(23, 59, 59, 999);
+    const parts = activeFilter.split('-');
+    if (parts.length === 2) {
+      const startHour = parseInt(parts[0], 10);
+      const endHour = parseInt(parts[1], 10);
+
+      start.setHours(startHour, 0, 0, 0);
+      if (endHour === 24) {
+        end.setHours(23, 59, 59, 999);
+      } else {
+        end.setHours(endHour, 0, 0, 0);
+      }
     }
 
     return { start, end };

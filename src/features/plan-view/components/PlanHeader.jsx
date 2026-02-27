@@ -29,34 +29,29 @@ const PlanHeader = ({ activeTab, onTabChange, activeFilter, onFilterChange }) =>
         </Button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 bg-slate-50 p-1 rounded-lg shrink-0">
-        <span className="text-xs font-bold text-slate-400 px-2 uppercase tracking-wider">
-          Shift Filter
+      <div className="flex flex-wrap items-center gap-1 sm:gap-2 bg-slate-50 p-1 rounded-lg shrink-0 overflow-x-auto max-w-full">
+        <span className="text-[10px] font-bold text-slate-400 px-2 uppercase tracking-wider hidden sm:inline">
+          Time Filter
         </span>
         <Button
           size="small"
           type={!activeFilter ? 'primary' : 'text'}
-          className="text-[11px] rounded-md h-7"
+          className="text-[10px] sm:text-[11px] rounded-md h-7 px-2"
           onClick={() => onFilterChange(null)}
         >
           Full
         </Button>
-        <Button
-          size="small"
-          type={activeFilter === 'morning' ? 'primary' : 'text'}
-          className="text-[11px] rounded-md h-7"
-          onClick={() => onFilterChange('morning')}
-        >
-          Morning (8-16)
-        </Button>
-        <Button
-          size="small"
-          type={activeFilter === 'evening' ? 'primary' : 'text'}
-          className="text-[11px] rounded-md h-7"
-          onClick={() => onFilterChange('evening')}
-        >
-          Evening (16-24)
-        </Button>
+        {['00-04', '04-08', '08-12', '12-16', '16-20', '20-24'].map((interval) => (
+          <Button
+            key={interval}
+            size="small"
+            type={activeFilter === interval ? 'primary' : 'text'}
+            className="text-[10px] sm:text-[11px] rounded-md h-7 px-2"
+            onClick={() => onFilterChange(interval)}
+          >
+            {interval}
+          </Button>
+        ))}
       </div>
 
       <div className="flex flex-wrap sm:flex-nowrap gap-3 shrink-0">
