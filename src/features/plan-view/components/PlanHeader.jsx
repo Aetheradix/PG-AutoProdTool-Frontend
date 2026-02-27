@@ -29,35 +29,32 @@ const PlanHeader = ({ activeTab, onTabChange, activeFilter, onFilterChange }) =>
         </Button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 bg-slate-50 p-1 rounded-lg shrink-0">
-        <span className="text-xs font-bold text-slate-400 px-2 uppercase tracking-wider">
-          Shift Filter
-        </span>
-        <Button
-          size="small"
-          type={!activeFilter ? 'primary' : 'text'}
-          className="text-[11px] rounded-md h-7"
-          onClick={() => onFilterChange(null)}
-        >
-          Full
-        </Button>
-        <Button
-          size="small"
-          type={activeFilter === 'morning' ? 'primary' : 'text'}
-          className="text-[11px] rounded-md h-7"
-          onClick={() => onFilterChange('morning')}
-        >
-          Morning (8-16)
-        </Button>
-        <Button
-          size="small"
-          type={activeFilter === 'evening' ? 'primary' : 'text'}
-          className="text-[11px] rounded-md h-7"
-          onClick={() => onFilterChange('evening')}
-        >
-          Evening (16-24)
-        </Button>
-      </div>
+      {activeTab !== 'table' && (
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 bg-slate-50 p-2 rounded-lg shrink-0 overflow-x-auto max-w-full shadow-inner border border-slate-100">
+          <span className="text-xs font-black text-slate-500 px-2 uppercase tracking-widest hidden sm:inline">
+            Time Filter
+          </span>
+          <Button
+            size="middle"
+            type={!activeFilter ? 'primary' : 'text'}
+            className="text-xs sm:text-sm rounded-md h-9 px-4 font-bold"
+            onClick={() => onFilterChange(null)}
+          >
+            Full
+          </Button>
+          {['00-04', '04-08', '08-12', '12-16', '16-20', '20-24'].map((interval) => (
+            <Button
+              key={interval}
+              size="middle"
+              type={activeFilter === interval ? 'primary' : 'text'}
+              className="text-xs sm:text-sm rounded-md h-9 px-4 font-bold"
+              onClick={() => onFilterChange(interval)}
+            >
+              {interval}
+            </Button>
+          ))}
+        </div>
+      )}
 
       <div className="flex flex-wrap sm:flex-nowrap gap-3 shrink-0">
         <Button icon={<FiDownload />} className="rounded-lg border-slate-200 flex-1 sm:flex-none">

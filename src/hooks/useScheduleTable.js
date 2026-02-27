@@ -1,13 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useGetProductionScheduleQuery } from '@/store/api/planApi';
 
-/**
- * Hook to manage production schedule table logic
- */
 export const useScheduleTable = () => {
-    const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
     const [searchText, setSearchText] = useState('');
+    const [systemFilter, setSystemFilter] = useState('All');
 
     const {
         data: responseData,
@@ -19,63 +15,122 @@ export const useScheduleTable = () => {
         limit: 1000,
     });
 
-    const scheduleItems = responseData?.data ?? [];
-
     const formatTime = (isoString) => {
         if (!isoString) return 'N/A';
         const date = new Date(isoString);
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+        return date.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+        });
     };
 
-    const calculateDuration = (start, end) => {
-        if (!start || !end) return 0;
-        const diff = new Date(end) - new Date(start);
-        return (diff / (1000 * 60 * 60)).toFixed(1);
+    const formatDate = (isoString) => {
+        if (!isoString) return null;
+        const date = new Date(isoString);
+        return date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+        });
     };
 
-    const processedData = useMemo(() => {
-        return scheduleItems
-            .map((item, index) => ({
-                ...item,
-                key: item.id || index,
-                title: item.description,
-                batch: item.batch_id,
-                resource: item.system,
-                startTime: formatTime(item.mkg_start_time),
-                endTime: formatTime(item.pkg_end_time),
-                duration: calculateDuration(item.mkg_start_time, item.pkg_end_time),
-                status: 'ready',
-            }))
-            .sort((a, b) => new Date(a.mkg_start_time) - new Date(b.mkg_start_time));
-    }, [scheduleItems]);
+    const getDateKey = (isoString) => {
+        if (!isoString) return 'unknown';
+        const date = new Date(isoString);
+        return date.toISOString().split('T')[0];
+    };
 
-    const filteredData = useMemo(() => {
-        if (!searchText) return processedData;
+    const processBatch = (batch, index) => ({
+        ...batch,
+        key: batch.batch_id || `batch-${index}`,
+        startTime: formatTime(batch.mkg_start_time),
+        endTime: formatTime(batch.mkg_end_time),
+        dateLabel: formatDate(batch.mkg_start_time),
+        dateKey: getDateKey(batch.mkg_start_time),
+        sn: index + 1,
+    });
+
+    // Restructure: System → Shift → DateKey → { label, batches }
+    // API returns: Shift → System → batches[]
+    // We flip to: System → Shift → DateKey → { label, batches[] }
+    const { groupedData, sortedDates } = useMemo(() => {
+        if (!responseData?.data) return { groupedData: {}, sortedDates: [] };
+
         const lowerSearch = searchText.toLowerCase();
-        return processedData.filter((item) =>
-            Object.values(item).some((val) => val?.toString().toLowerCase().includes(lowerSearch))
-        );
-    }, [processedData, searchText]);
+        const allDates = new Set();
+
+        // result: { "12T": { "A": { "2025-12-07": { label, batches } }, "B": {...}, "C": {...} }, "6T": {...} }
+        const result = {};
+
+        Object.entries(responseData.data).forEach(([shift, systems]) => {
+            Object.entries(systems).forEach(([system, batches]) => {
+                if (systemFilter !== 'All' && system !== systemFilter) return;
+
+                const filteredBatches = batches
+                    .filter(batch => {
+                        if (!searchText) return true;
+                        return Object.values(batch).some(val =>
+                            val?.toString().toLowerCase().includes(lowerSearch)
+                        );
+                    })
+                    .map((batch, index) => processBatch(batch, index));
+
+                if (filteredBatches.length === 0) return;
+
+                if (!result[system]) result[system] = {};
+                if (!result[system][shift]) result[system][shift] = {};
+
+                filteredBatches.forEach(batch => {
+                    const dk = batch.dateKey;
+                    allDates.add(dk);
+                    if (!result[system][shift][dk]) {
+                        result[system][shift][dk] = { label: batch.dateLabel, batches: [] };
+                    }
+                    result[system][shift][dk].batches.push(batch);
+                });
+            });
+        });
+
+        // Sort systems: 12T first, then 6T
+        const systemOrder = ['12T', '6T'];
+        const sorted = {};
+        systemOrder.forEach(sys => {
+            if (result[sys]) {
+                // Sort shifts: A, B, C
+                const shiftOrder = ['A', 'B', 'C'];
+                const sortedShifts = {};
+                shiftOrder.forEach(s => {
+                    if (result[sys][s]) sortedShifts[s] = result[sys][s];
+                });
+                sorted[sys] = sortedShifts;
+            }
+        });
+        // Add any remaining systems
+        Object.keys(result).forEach(sys => {
+            if (!sorted[sys]) sorted[sys] = result[sys];
+        });
+
+        const sortedDates = Array.from(allDates).sort();
+        return { groupedData: sorted, sortedDates };
+    }, [responseData, searchText, systemFilter]);
 
     const handleSearchChange = (value) => {
         setSearchText(value);
-        setCurrentPage(1);
-    };
-
-    const handlePaginationChange = (page, size) => {
-        setCurrentPage(page);
-        setPageSize(size);
     };
 
     return {
-        filteredData,
+        groupedData,
+        sortedDates,
+        rawData: responseData?.data,
         isLoading,
         isError,
         error,
         searchText,
-        currentPage,
-        pageSize,
+        systemFilter,
         handleSearchChange,
-        handlePaginationChange,
+        handleSystemFilterChange: (val) => {
+            setSystemFilter(val);
+        },
     };
 };
