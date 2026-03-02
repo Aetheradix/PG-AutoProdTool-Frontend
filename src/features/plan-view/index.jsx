@@ -65,7 +65,6 @@ const PlanView = () => {
   const filterRange = useMemo(() => {
     if (!activeFilter || !apiResponse?.data) return null;
 
-
     let minDate = null;
     Object.values(apiResponse.data).forEach(list => {
       list.forEach(item => {
@@ -79,16 +78,18 @@ const PlanView = () => {
     const start = new Date(minDate);
     const end = new Date(minDate);
 
+    // Parse HH:MM-HH:MM format (e.g. "07:30-11:30", "23:30-03:30")
     const parts = activeFilter.split('-');
     if (parts.length === 2) {
-      const startHour = parseInt(parts[0], 10);
-      const endHour = parseInt(parts[1], 10);
+      const [startH, startM] = parts[0].split(':').map(Number);
+      const [endH, endM] = parts[1].split(':').map(Number);
 
-      start.setHours(startHour, 0, 0, 0);
-      if (endHour === 24) {
-        end.setHours(23, 59, 59, 999);
-      } else {
-        end.setHours(endHour, 0, 0, 0);
+      start.setHours(startH, startM, 0, 0);
+      end.setHours(endH, endM, 0, 0);
+
+      // Handle overnight crossing (e.g. 23:30-03:30)
+      if (endH < startH || (endH === startH && endM <= startM)) {
+        end.setDate(end.getDate() + 1);
       }
     }
 

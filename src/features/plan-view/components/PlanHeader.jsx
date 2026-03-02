@@ -42,7 +42,7 @@ const PlanHeader = ({ activeTab, onTabChange, activeFilter, onFilterChange }) =>
           >
             Full
           </Button>
-          {['00-04', '04-08', '08-12', '12-16', '16-20', '20-24'].map((interval) => (
+          {['07:30-11:30', '11:30-15:30', '15:30-19:30', '19:30-23:30', '23:30-03:30', '03:30-07:30'].map((interval) => (
             <Button
               key={interval}
               size="middle"
@@ -56,7 +56,7 @@ const PlanHeader = ({ activeTab, onTabChange, activeFilter, onFilterChange }) =>
         </div>
       )}
 
-      <div className="flex flex-wrap sm:flex-nowrap gap-3 shrink-0">
+      {/* <div className="flex flex-wrap sm:flex-nowrap gap-3 shrink-0">
         <Button icon={<FiDownload />} className="rounded-lg border-slate-200 flex-1 sm:flex-none">
           Export PDF
         </Button>
@@ -66,7 +66,7 @@ const PlanHeader = ({ activeTab, onTabChange, activeFilter, onFilterChange }) =>
         >
           Lock & Release Plan
         </Button>
-      </div>
+      </div> */}
     </div>
   );
 };
