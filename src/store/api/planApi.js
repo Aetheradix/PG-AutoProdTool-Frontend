@@ -12,9 +12,18 @@ export const planApi = apiSlice.injectEndpoints({
             }),
             providesTags: ['Plan'],
         }),
+        runSimulation: builder.mutation({
+            query: (body) => ({
+                url: '/v1/simulation/run',
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['Plan'],
+        }),
     }),
 });
 
 export const {
     useGetProductionScheduleQuery,
+    useRunSimulationMutation,
 } = planApi;

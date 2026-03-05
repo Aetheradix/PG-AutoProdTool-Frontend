@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Form, notification } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import { useRunSimulationMutation } from '@/store/api/planApi';
 
 /**
  * Hook to manage create plan form logic and downtime sub-form.
@@ -8,18 +10,47 @@ export const useCreatePlanForm = () => {
     const [form] = Form.useForm();
     const [downtimeForm] = Form.useForm();
     const [downtimes, setDowntimes] = useState([]);
+    const navigate = useNavigate();
+    const [runSimulation, { isLoading }] = useRunSimulationMutation();
 
-    const onFinish = (values) => {
-        const finalData = {
-            ...values,
-            plannedDowntimes: downtimes,
-        };
-        notification.success({
-            message: 'Plan Generated',
-            description: `Production plan has been generated with ${downtimes.length} downtimes.`,
-            placement: 'topRight',
-        });
-        return finalData;
+    const onFinish = async (values) => {
+        const targetDate = values.planningDate
+            ? values.planningDate.format('YYYY-MM-DD')
+            : null;
+
+        if (!targetDate) {
+            notification.error({
+                message: 'Invalid Date',
+                description: 'Please select a valid planning date.',
+                placement: 'topRight',
+            });
+            return;
+        }
+
+        try {
+            const result = await runSimulation({
+                target_date: targetDate,
+            }).unwrap();
+
+            notification.success({
+                message: 'Plan Generated',
+                description:
+                    result.message ||
+                    `Simulation complete! Generated ${result.total_batches ?? 0} batches.`,
+                placement: 'topRight',
+            });
+
+            // Navigate to plan-view after successful generation
+            navigate('/plan-view');
+        } catch (error) {
+            notification.error({
+                message: 'Simulation Failed',
+                description:
+                    error?.data?.detail ||
+                    'An error occurred while running the simulation.',
+                placement: 'topRight',
+            });
+        }
     };
 
     const addDowntime = async () => {
@@ -47,6 +78,7 @@ export const useCreatePlanForm = () => {
         form,
         downtimeForm,
         downtimes,
+        isLoading,
         onFinish,
         addDowntime,
         removeDowntime,

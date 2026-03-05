@@ -44,7 +44,7 @@ export function CreatePlanForm() {
               format="DD/MM/YYYY"
               icon={<FiCalendar />}
             />
-            <FormSelect
+            {/* <FormSelect
               name="system"
               label="Select System"
               rules={[{ required: true, message: 'Required' }]}
@@ -53,7 +53,7 @@ export function CreatePlanForm() {
                 { value: 'system1', label: 'System 1' },
                 { value: 'system2', label: 'System 2' },
               ]}
-            />
+            /> */}
           </div>
 
           <Divider className="my-8" />
@@ -148,7 +148,7 @@ export function CreatePlanForm() {
             <Button size="large" className="rounded-lg px-8 border-slate-200">
               Cancel
             </Button>
-            <Link to="/plan-view">
+            {/* <Link to="/plan-view"> */}
               <Button
                 type="primary"
                 htmlType="submit"
@@ -157,7 +157,7 @@ export function CreatePlanForm() {
               >
                 Generate Plan
               </Button>
-            </Link>
+            {/* </Link> */}
           </div>
         </div>
       </Form>
