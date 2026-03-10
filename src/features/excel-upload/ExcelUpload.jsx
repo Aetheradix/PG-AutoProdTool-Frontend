@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button, Table, Card, Upload, Space, Form } from 'antd';
 import { UploadOutlined, SaveOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PermissionGate, AdminGate } from '@/components/shared/PermissionGate';
 import EditableCell from './components/EditableCell';
 import { useExcelUpload } from './hooks/useExcelUpload';
 
@@ -45,19 +46,23 @@ export const ExcelUpload = () => {
     width: 120,
     render: (_, record) => {
       const editable = isEditing(record);
-      return editable ? (
-        <Space>
-          <Button type="link" onClick={() => save(record.key)}>
-            Save
-          </Button>
-          <Button type="link" onClick={cancel}>
-            Cancel
-          </Button>
-        </Space>
-      ) : (
-        <Button type="link" disabled={editingKey !== ''} onClick={() => edit(record)}>
-          Edit
-        </Button>
+      return (
+        <AdminGate>
+          {editable ? (
+            <Space>
+              <Button type="link" onClick={() => save(record.key)}>
+                Save
+              </Button>
+              <Button type="link" onClick={cancel}>
+                Cancel
+              </Button>
+            </Space>
+          ) : (
+            <Button type="link" disabled={editingKey !== ''} onClick={() => edit(record)}>
+              Edit
+            </Button>
+          )}
+        </AdminGate>
       );
     },
   };
@@ -68,28 +73,30 @@ export const ExcelUpload = () => {
     <Card
       title="Excel Data Upload"
       extra={
-        <Space>
-          <Upload beforeUpload={handleFileUpload} showUploadList={false} accept=".xlsx, .xls">
-            <Button icon={<UploadOutlined />}>Click to Upload Excel</Button>
-          </Upload>
-          <Button
-            type="primary"
-            icon={<SaveOutlined />}
-            onClick={handleSubmit}
-            loading={isUploading}
-            disabled={data.length === 0}
-          >
-            Submit
-          </Button>
-          <Button
-            danger
-            icon={<DeleteOutlined />}
-            onClick={clearData}
-            disabled={data.length === 0}
-          >
-            Clear
-          </Button>
-        </Space>
+        <AdminGate>
+          <Space>
+            <Upload beforeUpload={handleFileUpload} showUploadList={false} accept=".xlsx, .xls">
+              <Button icon={<UploadOutlined />}>Click to Upload Excel</Button>
+            </Upload>
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              onClick={handleSubmit}
+              loading={isUploading}
+              disabled={data.length === 0}
+            >
+              Submit
+            </Button>
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              onClick={clearData}
+              disabled={data.length === 0}
+            >
+              Clear
+            </Button>
+          </Space>
+        </AdminGate>
       }
     >
       <Form form={form} component={false}>

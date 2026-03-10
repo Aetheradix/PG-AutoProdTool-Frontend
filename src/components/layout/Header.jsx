@@ -13,6 +13,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import DesktopMenu from '../DesktopMenu';
 import DesktopUserDropdown from '../DesktopUserDropdown';
 import Logo from '../Logo';
+import { AdminGate } from '../shared/PermissionGate';
+import { FiShield } from 'react-icons/fi';
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
@@ -30,7 +32,13 @@ const Header = () => {
     { key: '/master-data', icon: <FiDatabase />, label: 'Master Data' },
     { key: '/status', icon: <FiActivity />, label: 'Current Status' },
     { key: '/kpi', icon: <FiPieChart />, label: 'KPI Dashboard' },
+    { key: '/admin/users', icon: <FiShield />, label: 'Manage Users', isAdmin: true },
   ];
+
+  const filteredMenuItems = menuItems.filter(item => {
+    if (item.isAdmin && user?.role !== 'admin') return false;
+    return true;
+  });
 
   const onMenuClick = (e) => {
     navigate(e.key);
@@ -82,7 +90,7 @@ const Header = () => {
         <Logo size="medium" />
 
         {/* Desktop Menu */}
-        <DesktopMenu menuItems={menuItems} onMenuClick={onMenuClick} location={location} />
+        <DesktopMenu menuItems={filteredMenuItems} onMenuClick={onMenuClick} location={location} />
 
         {/* Right Section */}
         <DesktopUserDropdown
@@ -122,7 +130,7 @@ const Header = () => {
         <Menu
           mode="vertical"
           selectedKeys={[location.pathname]}
-          items={menuItems}
+          items={filteredMenuItems}
           onClick={onMenuClick}
           style={{ border: 'none', padding: '12px 0' }}
         />

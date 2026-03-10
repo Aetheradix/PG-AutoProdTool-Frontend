@@ -1,8 +1,21 @@
 import React from 'react';
 import { Button } from 'antd';
-import { FiDownload } from 'react-icons/fi';
+import { FiDownload, FiPlay } from 'react-icons/fi';
+import { AdminGate } from '@/components/shared/PermissionGate';
+import { useRunSimulationMutation } from '@/store/api/planApi';
+import { message } from 'antd';
 
-const PlanHeader = ({ activeTab, onTabChange, activeFilter, onFilterChange }) => {
+const PlanHeader = ({ activeTab, onTabChange, activeFilter, onFilterChange, targetDate = '2026-03-09' }) => {
+  const [runSimulation, { isLoading }] = useRunSimulationMutation();
+
+  const handleRunSimulation = async () => {
+    try {
+      await runSimulation({ target_date: targetDate }).unwrap();
+      message.success('Simulation started successfully!');
+    } catch (err) {
+      message.error(err.data?.detail || 'Failed to start simulation');
+    }
+  };
   return (
     <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
       <div className="flex bg-slate-50 gap-2 sm:gap-4 p-1 rounded-lg overflow-x-auto custom-scrollbar shrink-0">
@@ -56,8 +69,19 @@ const PlanHeader = ({ activeTab, onTabChange, activeFilter, onFilterChange }) =>
         </div>
       )}
 
-      {/* <div className="flex flex-wrap sm:flex-nowrap gap-3 shrink-0">
-        <Button icon={<FiDownload />} className="rounded-lg border-slate-200 flex-1 sm:flex-none">
+      <div className="flex flex-wrap sm:flex-nowrap gap-3 shrink-0">
+        <AdminGate>
+          <Button
+            type="primary"
+            icon={<FiPlay />}
+            loading={isLoading}
+            onClick={handleRunSimulation}
+            className="bg-blue-600 hover:bg-blue-700 border-none rounded-lg font-bold flex-1 sm:flex-none"
+          >
+            Run Simulation
+          </Button>
+        </AdminGate>
+        {/* <Button icon={<FiDownload />} className="rounded-lg border-slate-200 flex-1 sm:flex-none">
           Export PDF
         </Button>
         <Button
@@ -65,8 +89,8 @@ const PlanHeader = ({ activeTab, onTabChange, activeFilter, onFilterChange }) =>
           className="bg-emerald-600 hover:bg-emerald-700 border-none rounded-lg font-bold flex-1 sm:flex-none"
         >
           Lock & Release Plan
-        </Button>
-      </div> */}
+        </Button> */}
+      </div>
     </div>
   );
 };

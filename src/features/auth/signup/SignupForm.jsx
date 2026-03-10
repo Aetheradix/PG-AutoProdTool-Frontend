@@ -12,13 +12,22 @@ export function SignupForm() {
   const [form] = Form.useForm();
   const navigate = useNavigate();
 
-  const onFinish = (values) => {
-    const success = signup(values);
-    if (success) {
-      message.success('Account created successfully!');
-      navigate('/');
-    } else {
-      message.error('Signup failed. Please try again.');
+  const onFinish = async (values) => {
+    try {
+      const signupData = {
+        username: values.email,
+        password: values.password,
+        role: 'user' 
+      };
+
+      const success = await signup(signupData);
+      if (success) {
+        message.success('Account created successfully! Please sign in.');
+        navigate('/login');
+      }
+    } catch (err) {
+      console.error('Signup error:', err);
+      message.error(err.message || 'Signup failed. Please try again.');
     }
   };
 

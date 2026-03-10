@@ -7,7 +7,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check localStorage on mount
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
@@ -15,31 +14,67 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = (credentials) => {
-    // Fixed credentials check
-    if (credentials.email === 'admin@admin.com' && credentials.password === 'admin123') {
+  const login = async (credentials) => {
+    try {
+
+      const formData = new URLSearchParams();
+
+      formData.append('username', credentials.email || credentials.username);
+      formData.append('password', credentials.password);
+
+      const response = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Login failed');
+      }
+
+      const data = await response.json();
+
       const userData = {
-        name: 'Admin User',
+        name: credentials.email.split('@')[0],
         email: credentials.email,
-        role: 'admin'
+        role: data.role,
+        access_token: data.access_token
       };
+
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
       return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
-
-    return false;
   };
 
-  const signup = (userData) => {
-    const user = {
-      name: userData.name || 'New User',
-      email: userData.email,
-      role: 'user'
-    };
-    setUser(user);
-    localStorage.setItem('user', JSON.stringify(user));
-    return true;
+  const signup = async (userData) => {
+    try {
+      const response = await fetch('/api/v1/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Signup failed');
+      }
+
+      // After successful signup, we'll let them login manually or auto-login
+      // For now, let's just return success
+      return true;
+    } catch (error) {
+      console.error('Signup error:', error);
+      throw error;
+    }
   };
 
   const logout = () => {

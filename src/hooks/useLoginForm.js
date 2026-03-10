@@ -11,16 +11,14 @@ export const useLoginForm = () => {
 
     const onFinish = async (values) => {
         try {
-            const success = login(values);
+            const success = await login(values);
             if (success) {
                 message.success('Login successful!');
                 navigate('/');
-            } else {
-                message.error('Invalid email or password. Use admin@admin.com / admin123');
             }
         } catch (err) {
             console.error('Login error:', err);
-            message.error('Failed to login. Please try again.');
+            message.error(err.message || 'Invalid email or password.');
         }
     };
 
