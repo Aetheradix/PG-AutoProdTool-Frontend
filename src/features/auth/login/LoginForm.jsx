@@ -3,7 +3,7 @@ import { Form, Button, Typography } from 'antd';
 import { FiMail, FiLock, FiLogIn } from 'react-icons/fi';
 import { FormInput } from '@/components/shared/FormInput';
 import { Link } from 'react-router-dom';
-import { useLoginForm } from '@/hooks/useLoginForm';
+import { useLoginForm } from './hooks/useLoginForm';
 
 const { Text } = Typography;
 
@@ -60,7 +60,10 @@ export function LoginForm() {
         <div className="text-center mt-6">
           <Text className="text-text-muted">
             Don't have an account?{' '}
-            <Link to="/signup" className="text-primary font-semibold hover:text-primary/80 transition-colors">
+            <Link
+              to="/signup"
+              className="text-primary font-semibold hover:text-primary/80 transition-colors"
+            >
               Sign Up
             </Link>
           </Text>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Form, Input, Button, Avatar, Typography, Divider, Badge } from 'antd';
 import { FiUser, FiMail, FiShield, FiEdit2, FiSave, FiX } from 'react-icons/fi';
-import { useProfile } from '@/hooks/useProfile';
+import { useProfile } from './hooks/useProfile';
 
 const { Title, Text } = Typography;
 

@@ -2,9 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import { useAuth } from '@/context/AuthContext';
 
-/**
- * Hook to manage login form logic.
- */
+
 export const useLoginForm = () => {
     const { login } = useAuth();
     const navigate = useNavigate();

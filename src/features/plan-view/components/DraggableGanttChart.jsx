@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Typography, Tooltip, message } from 'antd';
-import { useTimeline } from '@/hooks/useTimeline';
+import { useTimeline } from '../hooks/useTimeline';
 import { useUpdateTimelineDataMutation } from '@/store/api/statusApi';
 
 const { Text } = Typography;

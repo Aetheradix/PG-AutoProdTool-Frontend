@@ -1,7 +1,7 @@
 import React from 'react';
 import { Table, Typography, Input, ConfigProvider } from 'antd';
 import { FiSearch, FiActivity, FiCalendar } from 'react-icons/fi';
-import { useScheduleTable } from '@/hooks/useScheduleTable';
+import { useScheduleTable } from '../hooks/useScheduleTable';
 
 const { Title, Text } = Typography;
 

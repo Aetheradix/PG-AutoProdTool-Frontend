@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Typography, Space, Tooltip } from 'antd';
-import { useTimeline } from '@/hooks/useTimeline';
+import { useTimeline } from '../hooks/useTimeline';
 
 const { Text } = Typography;
 

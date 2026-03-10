@@ -3,8 +3,7 @@ import { FormInput } from '@/components/shared/FormInput';
 import { FormSelect } from '@/components/shared/FormSelect';
 import { Button, Divider, Form, Typography } from 'antd';
 import { FiCalendar, FiClock, FiTrash2 } from 'react-icons/fi';
-import { Link } from 'react-router-dom';
-import { useCreatePlanForm } from '@/hooks/useCreatePlanForm';
+import { useCreatePlanForm } from '../features/create-production-plan/hooks/useCreatePlanForm';
 
 const { Title, Text } = Typography;
 
@@ -44,16 +43,6 @@ export function CreatePlanForm() {
               format="DD/MM/YYYY"
               icon={<FiCalendar />}
             />
-            {/* <FormSelect
-              name="system"
-              label="Select System"
-              rules={[{ required: true, message: 'Required' }]}
-              placeholder="Select System"
-              options={[
-                { value: 'system1', label: 'System 1' },
-                { value: 'system2', label: 'System 2' },
-              ]}
-            /> */}
           </div>
 
           <Divider className="my-8" />

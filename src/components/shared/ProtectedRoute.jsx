@@ -29,12 +29,11 @@ const ProtectedRoute = ({
         );
     }
 
-    // Check authentication
     if (!isAuthenticated) {
         return <Navigate to={redirectTo} state={{ from: location }} replace />;
     }
 
-    // Check role-based authorization if roles are specified
+  
     if (allowedRoles && !allowedRoles.includes(user?.role)) {
         console.warn(`User ${user?.username} with role ${user?.role} attempted to access unauthorized route: ${location.pathname}`);
         return <Navigate to={unauthorizedRedirect} replace />;

@@ -7,14 +7,13 @@ import {
   FiHome,
   FiLogOut,
   FiPieChart,
+  FiShield,
   FiUser
 } from 'react-icons/fi';
 import { useLocation, useNavigate } from 'react-router-dom';
 import DesktopMenu from '../DesktopMenu';
 import DesktopUserDropdown from '../DesktopUserDropdown';
 import Logo from '../Logo';
-import { AdminGate } from '../shared/PermissionGate';
-import { FiShield } from 'react-icons/fi';
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
