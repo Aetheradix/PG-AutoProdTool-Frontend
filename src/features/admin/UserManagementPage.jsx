@@ -94,7 +94,6 @@ export function UserManagementPage() {
           onChange={(checked) => handleUpdateField(record.id, 'is_admin', checked)}
           loading={isUpdating}
           size="small"
-          unCheckedChildren={<FiX />}
         />
       ),
     },

@@ -3,22 +3,15 @@ import { Routes, Route, Navigate, BrowserRouter } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import AppFeature from "./features";
 import AppLayout from "./components/layout/AppLayout";
+import ProtectedRoute from "./components/shared/ProtectedRoute";
 import { ConfigProvider, Spin } from 'antd';
 
 const Login = lazy(() => import("./features/auth/login/LoginPage").then(module => ({ default: module.LoginPage })));
 const Signup = lazy(() => import("./features/auth/signup/SignupPage").then(module => ({ default: module.SignupPage })));
 const UserManagement = lazy(() => import("./features/admin/UserManagementPage").then(module => ({ default: module.UserManagementPage })));
-
 const ProtectedApp = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated,user } = useAuth();
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spin size="large" />
-      </div>
-    );
-  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -27,7 +20,14 @@ const ProtectedApp = () => {
   return (
     <AppLayout>
       <Routes>
-        <Route path="/admin/users" element={<UserManagement />} />
+        <Route 
+          path="/admin/users" 
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <UserManagement />
+            </ProtectedRoute>
+          } 
+        />
         <Route path="*" element={<AppFeature />} />
       </Routes>
     </AppLayout>
@@ -76,7 +76,14 @@ const App = () => {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
-              <Route path="/*" element={<ProtectedApp />} />
+              <Route 
+                path="/*" 
+                element={
+                  <ProtectedRoute>
+                    <ProtectedApp />
+                  </ProtectedRoute>
+                } 
+              />
             </Routes>
           </Suspense>
         </BrowserRouter>

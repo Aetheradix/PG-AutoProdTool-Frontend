@@ -4,6 +4,7 @@ import { FiEdit2, FiSearch, FiPlus, FiTrash2 } from 'react-icons/fi';
 import EditableCell from '../../excel-upload/components/EditableCell';
 import { useEditableTable } from '../../../hooks/useEditableTable';
 import { buildDynamicColumns } from '../../../utils/tableUtils';
+import { useAuth } from '@/context/AuthContext';
 
 /**
  * GenericMasterTable Component
@@ -19,6 +20,9 @@ import { buildDynamicColumns } from '../../../utils/tableUtils';
  */
 export function StandardDataTable(props) {
   const { title = 'Item', searchPlaceholder = 'Search...' } = props;
+  const { user } = useAuth();
+
+  const isAdmin = user?.role === 'admin';
 
   const table = useEditableTable(props);
 
@@ -27,58 +31,59 @@ export function StandardDataTable(props) {
 
     const dynamicCols = buildDynamicColumns(table.dataSource, table.rowKey);
 
-    dynamicCols.push({
-      title: 'ACTIONS',
-      dataIndex: 'operation',
-      fixed: 'right',
-      width: 150,
-      render: (_, record) => {
-        const editable = table.isEditing(record);
-        return editable ? (
-          <Space size="middle">
-            <Button
-              type="link"
-              onClick={() => table.save(record[table.rowKey])}
-              className="text-blue-600 font-bold p-0"
-              loading={table.isUpdating}
-            >
-              Save
-            </Button>
-            <Button type="link" onClick={table.cancel} className="font-bold p-0">
-              Cancel
-            </Button>
-          </Space>
-        ) : (
-          <Space size="middle">
-            <Button
-              type="link"
-              disabled={table.editingKey !== ''}
-              onClick={() => table.edit(record)}
-              className="text-blue-600 font-bold p-0 flex items-center gap-1"
-            >
-              <FiEdit2 size={14} /> Edit
-            </Button>
-            <Popconfirm
-              title={`Delete this ${title.toLowerCase()}?`}
-              description={`Are you sure you want to delete this record?`}
-              onConfirm={() => table.handleDelete(record)}
-              okText="Yes"
-              cancelText="No"
-              disabled={table.editingKey !== ''}
-            >
+    isAdmin &&
+      dynamicCols.push({
+        title: 'ACTIONS',
+        dataIndex: 'operation',
+        fixed: 'right',
+        width: 150,
+        render: (_, record) => {
+          const editable = table.isEditing(record);
+          return editable ? (
+            <Space size="middle">
               <Button
                 type="link"
-                danger
-                disabled={table.editingKey !== ''}
-                className="font-bold p-0 flex items-center gap-1"
+                onClick={() => table.save(record[table.rowKey])}
+                className="text-blue-600 font-bold p-0"
+                loading={table.isUpdating}
               >
-                <FiTrash2 size={14} /> Delete
+                Save
               </Button>
-            </Popconfirm>
-          </Space>
-        );
-      },
-    });
+              <Button type="link" onClick={table.cancel} className="font-bold p-0">
+                Cancel
+              </Button>
+            </Space>
+          ) : (
+            <Space size="middle">
+              <Button
+                type="link"
+                disabled={table.editingKey !== ''}
+                onClick={() => table.edit(record)}
+                className="text-blue-600 font-bold p-0 flex items-center gap-1"
+              >
+                <FiEdit2 size={14} /> Edit
+              </Button>
+              <Popconfirm
+                title={`Delete this ${title.toLowerCase()}?`}
+                description={`Are you sure you want to delete this record?`}
+                onConfirm={() => table.handleDelete(record)}
+                okText="Yes"
+                cancelText="No"
+                disabled={table.editingKey !== ''}
+              >
+                <Button
+                  type="link"
+                  danger
+                  disabled={table.editingKey !== ''}
+                  className="font-bold p-0 flex items-center gap-1"
+                >
+                  <FiTrash2 size={14} /> Delete
+                </Button>
+              </Popconfirm>
+            </Space>
+          );
+        },
+      });
 
     return dynamicCols.map((col) => {
       if (!col.editable) {
@@ -100,15 +105,17 @@ export function StandardDataTable(props) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex justify-between px-1">
-        <Button
-          type="primary"
-          onClick={table.handleAdd}
-          disabled={table.editingKey !== ''}
-          icon={<FiPlus />}
-          className="bg-blue-600 hover:bg-blue-700 font-medium"
-        >
-          Add {title}
-        </Button>
+        {isAdmin && (
+          <Button
+            type="primary"
+            onClick={table.handleAdd}
+            disabled={table.editingKey !== ''}
+            icon={<FiPlus />}
+            className="bg-blue-600 hover:bg-blue-700 font-medium"
+          >
+            Add {title}
+          </Button>
+        )}
         <Input
           placeholder={searchPlaceholder}
           prefix={<FiSearch className="text-slate-400" />}

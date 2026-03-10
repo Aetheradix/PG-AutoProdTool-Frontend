@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const signup = async (userData) => {
+  const signup = async (userData) => {z
     try {
       await signupMutation(userData).unwrap();
       return true;
@@ -62,6 +62,8 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
+    isAdmin: user?.role === 'admin',
+    isUser: user?.role === 'user',
     isAuthenticated: !!user,
     isLoading: loading,
     login,
