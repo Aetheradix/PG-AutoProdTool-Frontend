@@ -9,7 +9,6 @@ export const useLoginForm = () => {
 
     const onFinish = async (values) => {
         try {
-            console.log('Login form submitted with values:', values);
             const success = await login(values);
             if (success) {
                 message.success('Login successful!');
