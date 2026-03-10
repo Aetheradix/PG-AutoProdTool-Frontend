@@ -15,9 +15,10 @@ export function SignupForm() {
   const onFinish = async (values) => {
     try {
       const signupData = {
-        username: values.email,
+        username: values.username,
+        email: values.email,
+        full_name: values.name,
         password: values.password,
-        role: 'user' 
       };
 
       const success = await signup(signupData);
@@ -41,6 +42,14 @@ export function SignupForm() {
         size="large"
         requiredMark={false}
       >
+        <FormInput
+          name="username"
+          label="Username"
+          rules={[{ required: true, message: 'Please input your username!' }]}
+          prefix={<FiUser className="form-input-prefix" />}
+          placeholder="johndoe"
+        />
+
         <FormInput
           name="name"
           label="Full Name"

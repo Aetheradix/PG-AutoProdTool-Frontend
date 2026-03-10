@@ -6,11 +6,11 @@ export const userApi = apiSlice.injectEndpoints({
             query: () => '/v1/auth/users',
             providesTags: ['Users'],
         }),
-        updateUserRole: builder.mutation({
-            query: ({ userId, role }) => ({
-                url: `/v1/auth/users/${userId}/role`,
+        updateUser: builder.mutation({
+            query: ({ userId, ...userData }) => ({
+                url: `/v1/auth/users/${userId}`,
                 method: 'PATCH',
-                body: { role },
+                body: userData,
             }),
             invalidatesTags: ['Users'],
         }),
@@ -26,6 +26,6 @@ export const userApi = apiSlice.injectEndpoints({
 
 export const {
     useGetUsersQuery,
-    useUpdateUserRoleMutation,
+    useUpdateUserMutation,
     useDeleteUserMutation,
 } = userApi;

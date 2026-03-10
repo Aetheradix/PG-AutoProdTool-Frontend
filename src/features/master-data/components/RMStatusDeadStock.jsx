@@ -9,7 +9,7 @@ const RMStatusDeadStock = () => {
       useUpdateMutation={useUpdateDeadstockMutation}
       title="Deadstock"
       searchPlaceholder="Search Deadstock..."
-      readOnly={false} // Allowing editing as per original file which had an Edit button
+
     />
   );
 };

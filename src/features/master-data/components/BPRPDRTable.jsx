@@ -9,7 +9,6 @@ export function BPRPDRTable() {
             useGetQuery={useGetBprPdrQuery}
             title="BPR-PDR"
             searchPlaceholder="Search BPR-PDR..."
-            readOnly={true}
         />
     );
 }

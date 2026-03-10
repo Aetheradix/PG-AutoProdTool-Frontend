@@ -1,10 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useLoginMutation, useSignupMutation } from '@/store/api/authApi';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loginMutation] = useLoginMutation();
+  const [signupMutation] = useSignupMutation();
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -16,32 +19,14 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-
-      const formData = new URLSearchParams();
-
-      formData.append('username', credentials.email || credentials.username);
-      formData.append('password', credentials.password);
-
-      const response = await fetch('/api/v1/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Login failed');
-      }
-
-      const data = await response.json();
+      const result = await loginMutation(credentials).unwrap();
 
       const userData = {
-        name: credentials.email.split('@')[0],
-        email: credentials.email,
-        role: data.role,
-        access_token: data.access_token
+        username: result.username || credentials.username,
+        name: credentials.full_name || result.full_name || credentials.username,
+        email: result.email || credentials.email,
+        role: result.role,
+        access_token: result.access_token
       };
 
       setUser(userData);
@@ -55,21 +40,7 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (userData) => {
     try {
-      const response = await fetch('/api/v1/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Signup failed');
-      }
-
-      // After successful signup, we'll let them login manually or auto-login
-      // For now, let's just return success
+      await signupMutation(userData).unwrap();
       return true;
     } catch (error) {
       console.error('Signup error:', error);
@@ -106,6 +77,6 @@ export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
-  }
+}
   return context;
 };

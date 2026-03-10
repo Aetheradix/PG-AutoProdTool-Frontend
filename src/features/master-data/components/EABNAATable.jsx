@@ -15,7 +15,6 @@ export function EABNAATable() {
             useGetQuery={useGetEaBnaaQuery}
             title="EA BNAA"
             searchPlaceholder="Search EA BNAA..."
-            readOnly={true}
             mockData={DUMMY_EA_BNAA}
         />
     );
