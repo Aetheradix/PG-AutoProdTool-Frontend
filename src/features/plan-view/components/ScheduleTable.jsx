@@ -31,7 +31,7 @@ const COLUMN_CONFIG = [
   { title: 'Remarks', dataIndex: 'remarks', width: 160, bg: 'YELLOW', type: 'remarks' },
 ];
 
-// ─── Utilities ───
+
 const renderTruncatedText = (text) => (
   <Tooltip title={text} placement="topLeft">
     <div className="truncate w-full cursor-default">
