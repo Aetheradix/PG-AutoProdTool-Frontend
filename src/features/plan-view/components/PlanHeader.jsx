@@ -1,7 +1,7 @@
 import { Button } from 'antd';
-import { FiDownload } from 'react-icons/fi';
+import { FiFileText } from 'react-icons/fi';
 
-const PlanHeader = ({ activeTab, onTabChange, activeFilter, onFilterChange, onExportPDF, isExporting }) => {
+const PlanHeader = ({ activeTab, onTabChange, activeFilter, onFilterChange, onExportPDF, onExportExcel, isExporting }) => {
 
   return (
     <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
@@ -57,31 +57,13 @@ const PlanHeader = ({ activeTab, onTabChange, activeFilter, onFilterChange, onEx
       )}
 
       <div className="flex flex-wrap sm:flex-nowrap gap-3 shrink-0">
-        {/* <AdminGate>
-          <Button
-            type="primary"
-            icon={<FiPlay />}
-            loading={isLoading}
-            onClick={handleRunSimulation}
-            className="bg-blue-600 hover:bg-blue-700 border-none rounded-lg font-bold flex-1 sm:flex-none"
-          >
-            Run Simulation
-          </Button>
-        </AdminGate> */}
         <Button 
-          icon={<FiDownload />} 
-          className="rounded-lg border-slate-200 flex-1 sm:flex-none"
-          onClick={onExportPDF}
-          loading={isExporting}
+          icon={<FiFileText className="text-emerald-600" />} 
+          className="rounded-lg border-slate-200 flex-1 sm:flex-none font-bold hover:text-emerald-600 hover:border-emerald-600"
+          onClick={onExportExcel}
         >
-          Export PDF
+          Export Excel
         </Button>
-        {/* <Button
-          type="primary"
-          className="bg-emerald-600 hover:bg-emerald-700 border-none rounded-lg font-bold flex-1 sm:flex-none"
-        >
-          Lock & Release Plan
-        </Button> */}
       </div>
     </div>
   );

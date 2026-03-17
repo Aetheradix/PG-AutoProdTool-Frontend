@@ -4,52 +4,69 @@ import PlanHeader from './components/PlanHeader';
 import ScheduleTable from './components/ScheduleTable';
 import TankTimeline from './components/TankTimeline';
 import DraggableGanttChart from './components/DraggableGanttChart';
-import { useGetGhanttChartQuery, useGetTimelineDataQuery } from '../../store/api/statusApi';
+import { exportGanttToExcel } from '../../utils/exportUtils';
+import {
+  useGetProductionScheduleGanttQuery,
+} from '../../store/api/statusApi';
 import { Spin, Empty } from 'antd';
 
-const mapToGanttFormat = (groupedData) => {
-  if (!groupedData) return [];
 
-  const resources = ['6T', '12T'];
-  return resources.map((res) => ({
-    resource: res,
-    items: (groupedData[res] || []).map((item) => {
-      return {
-        id: item.id,
-        title: item.description,
-        batch: item.event_type,
-        start_time: item.start_time,
-        end_time: item.end_time,
-        status: (item.event_type.includes('WASH') || item.event_type.includes('COND')) ? 'warning' : 'ready',
-      };
-    }),
-  }));
+const mapScheduleToGanttFormat = (ganttData) => {
+  if (!ganttData) return [];
+  const rows = [];
+
+ 
+  ['6T', '12T'].forEach((system) => {
+    const configs = ganttData[system] || {};
+    Object.entries(configs).forEach(([tankConfig, batches]) => {
+      rows.push({
+        resource: `${system} / ${tankConfig}`,
+        system,
+        tankConfig,
+        items: (batches || []).map((b) => ({
+          id: b.batch_id,
+          title: b.description,
+          batch: b.batch_id,
+          start_time: b.mkg_start_time,
+          end_time: b.mkg_end_time,
+          tech_type: b.tech_type, // 'Single' or 'Dual'
+          system: b.system,
+          status: b.tech_type === 'Dual' ? 'warning' : 'ready',
+        })),
+      });
+    });
+  });
+
+  return rows;
 };
 
-const mapToTankFormat = (tanksData) => {
-  if (!tanksData) return [];
-
-  const groupedByTank = tanksData.reduce((acc, item) => {
-    const res = item.resource_name || 'Unknown';
+const mapScheduleToTankFormat = (tanksData) => {
+  if (!tanksData || !Array.isArray(tanksData)) return [];
+  
+  // Group the flat list by resource_name (tank id)
+  const grouped = tanksData.reduce((acc, b) => {
+    const res = b.resource_name || 'Unknown';
     if (!acc[res]) acc[res] = [];
-
     acc[res].push({
-      id: item.id,
-      title: item.description,
-      type: item.event_type.includes('WASH')
+      id: b.id,
+      title: b.description,
+      batch: b.description, // For tooltip/display
+      start_time: b.start_time,
+      end_time: b.end_time,
+      type: b.description.toLowerCase().includes('wash')
         ? 'washout'
-        : item.description.toLowerCase().includes('cond')
+        : b.description.toLowerCase().includes('cond')
           ? 'conditioner'
-          : item.description.toLowerCase().includes('shm')
+          : b.description.toLowerCase().includes('shm') || b.description.toLowerCase().includes('h&s')
             ? 'shampoo'
-            : 'shampoo',
-      start_time: item.start_time,
-      end_time: item.end_time,
+            : b.description.toLowerCase().includes('base')
+              ? 'premix'
+              : 'shampoo',
     });
     return acc;
   }, {});
 
-  return Object.entries(groupedByTank).map(([resource, items]) => ({
+  return Object.entries(grouped).map(([resource, items]) => ({
     resource,
     items,
   }));
@@ -59,68 +76,86 @@ const PlanView = () => {
   const [activeTab, setActiveTab] = useState('gantt');
   const [activeFilter, setActiveFilter] = useState(null);
 
-  const { data: apiResponse, isLoading, error } = useGetGhanttChartQuery(100);
-  const { data: timelineResponse, isLoading: isTimelineLoading } = useGetTimelineDataQuery(100);
+  // New API for GanttChart, TankTimeline, and DraggableGanttChart
+  const { data: scheduleGanttResponse, isLoading: isScheduleLoading, error: scheduleError } =
+    useGetProductionScheduleGanttQuery();
+
+  // Tasks for the normal GanttChart — from new API (hierarchical)
+  const tasks = useMemo(() => {
+    if (!scheduleGanttResponse?.data) return [];
+    return mapScheduleToGanttFormat(scheduleGanttResponse.data);
+  }, [scheduleGanttResponse]);
+
+  // Tank tasks — NOW from new API (flat list grouped on fly)
+  const tankTasks = useMemo(() => {
+    if (!scheduleGanttResponse?.data?.Tanks) return [];
+    return mapScheduleToTankFormat(scheduleGanttResponse.data.Tanks);
+  }, [scheduleGanttResponse]);
+
+  // Draggable Gantt — derive from new API by flattening the 6T/12T config groups
+  const draggableTasks = useMemo(() => {
+    if (!scheduleGanttResponse?.data) return [];
+    const data = scheduleGanttResponse.data;
+    
+    return ['6T', '12T'].map(system => {
+      const configs = data[system] || {};
+      // Flatten all batches from different tank_configs into one array for this system
+      const allBatches = Object.values(configs).flat();
+      
+      return {
+        resource: system,
+        items: allBatches.map(b => ({
+          id: b.batch_id,
+          title: b.description,
+          batch: b.batch_id,
+          start_time: b.mkg_start_time,
+          end_time: b.mkg_end_time,
+          status: b.tech_type === 'Dual' ? 'warning' : 'ready',
+        }))
+      };
+    });
+  }, [scheduleGanttResponse]);
 
   const filterRange = useMemo(() => {
-    if (!activeFilter || !apiResponse?.data) return null;
-
+    if (!activeFilter || !scheduleGanttResponse?.data) return null;
     let minDate = null;
-    Object.values(apiResponse.data).forEach(list => {
-      list.forEach(item => {
+    
+    // Check both making (tasks) and tank packaging (tankTasks)
+    [...tasks, ...tankTasks].forEach((row) => {
+      row.items.forEach((item) => {
         const d = new Date(item.start_time);
         if (!minDate || d < minDate) minDate = d;
       });
     });
-
+    
     if (!minDate) return null;
 
     const start = new Date(minDate);
     const end = new Date(minDate);
-
-    // Parse HH:MM-HH:MM format (e.g. "07:30-11:30", "23:30-03:30")
     const parts = activeFilter.split('-');
     if (parts.length === 2) {
       const [startH, startM] = parts[0].split(':').map(Number);
       const [endH, endM] = parts[1].split(':').map(Number);
-
       start.setHours(startH, startM, 0, 0);
       end.setHours(endH, endM, 0, 0);
-
-      // Handle overnight crossing (e.g. 23:30-03:30)
       if (endH < startH || (endH === startH && endM <= startM)) {
         end.setDate(end.getDate() + 1);
       }
     }
-
     return { start, end };
-  }, [activeFilter, apiResponse]);
-
-  const { tasks, tankTasks } = useMemo(() => {
-    if (!apiResponse?.data) return { tasks: [], tankTasks: [] };
-
-    return {
-      tasks: mapToGanttFormat(apiResponse.data),
-      tankTasks: mapToTankFormat(apiResponse.data.Tanks),
-    };
-  }, [apiResponse]);
-
-  const draggableTasks = useMemo(() => {
-    if (!timelineResponse?.data) return [];
-    return mapToGanttFormat(timelineResponse.data);
-  }, [timelineResponse]);
+  }, [activeFilter, scheduleGanttResponse, tasks, tankTasks]);
 
   const renderContent = () => {
-    if (isLoading)
+    if (isScheduleLoading)
       return (
         <div className="flex justify-center p-20">
           <Spin size="large" />
         </div>
       );
-    if (error)
+    if (scheduleError)
       return (
         <div className="p-10">
-          <Empty description="Error loading timeline data" />
+          <Empty description="Error loading Gantt chart data" />
         </div>
       );
     if (!tasks.length && !tankTasks.length)
@@ -140,6 +175,10 @@ const PlanView = () => {
     }
   };
 
+  const handleExportExcel = () => {
+    exportGanttToExcel(tasks, 'Gantt_Chart_Schedule.xlsx');
+  };
+
   return (
     <div className="space-y-6">
       <PlanHeader
@@ -147,10 +186,11 @@ const PlanView = () => {
         onTabChange={setActiveTab}
         activeFilter={activeFilter}
         onFilterChange={setActiveFilter}
+        onExportExcel={handleExportExcel}
       />
       {renderContent()}
 
-      {/* Draggable Gantt Chart Section */}
+      {/* Draggable Gantt Chart Section — still uses old timeline API */}
       {activeTab === 'gantt' && (
         <div className="mt-12">
           <DraggableGanttChart tasks={draggableTasks} filterRange={filterRange} />
@@ -161,3 +201,4 @@ const PlanView = () => {
 };
 
 export default PlanView;
+
