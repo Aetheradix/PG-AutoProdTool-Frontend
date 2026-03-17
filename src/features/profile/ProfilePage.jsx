@@ -3,6 +3,7 @@ import { Card, Form, Input, Button, Avatar, Typography, Divider, Badge } from 'a
 import { FiUser, FiMail, FiShield, FiEdit2, FiSave, FiX } from 'react-icons/fi';
 import { useProfile } from './hooks/useProfile';
 
+
 const { Title, Text } = Typography;
 
 export function ProfilePage() {

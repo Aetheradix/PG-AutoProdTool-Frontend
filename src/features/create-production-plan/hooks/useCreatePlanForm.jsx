@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Form, notification } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useRunSimulationMutation } from '@/store/api/planApi';
+import { DOWNTIME_DURATIONS, REASON_OPTIONS } from '../constants';
 
 /**
  * Hook to manage create plan form logic and downtime sub-form.
@@ -53,6 +54,12 @@ export const useCreatePlanForm = () => {
         }
     };
 
+    const handleReasonChange = (value) => {
+        if (DOWNTIME_DURATIONS[value]) {
+            downtimeForm.setFieldsValue({ duration: DOWNTIME_DURATIONS[value] });
+        }
+    };
+
     const addDowntime = async () => {
         try {
             const values = await downtimeForm.validateFields();
@@ -79,7 +86,9 @@ export const useCreatePlanForm = () => {
         downtimeForm,
         downtimes,
         isLoading,
+        reasonOptions: REASON_OPTIONS,
         onFinish,
+        handleReasonChange,
         addDowntime,
         removeDowntime,
     };

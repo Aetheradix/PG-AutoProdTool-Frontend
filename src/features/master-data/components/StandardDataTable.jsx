@@ -2,9 +2,10 @@ import React, { useMemo } from 'react';
 import { Table, Form, Input, Button, Space, Popconfirm, Modal } from 'antd';
 import { FiEdit2, FiSearch, FiPlus, FiTrash2 } from 'react-icons/fi';
 import EditableCell from '../../excel-upload/components/EditableCell';
-import { useEditableTable } from '../../../hooks/useEditableTable';
+
 import { buildDynamicColumns } from '../../../utils/tableUtils';
 import { useAuth } from '@/context/AuthContext';
+import { useEditableTable } from '@/hooks/useEditableTable';
 
 /**
  * GenericMasterTable Component
