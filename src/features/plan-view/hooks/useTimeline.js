@@ -84,30 +84,34 @@ export const useTimeline = (tasks = [], filterRange = null) => {
      */
     const tasksWithLanes = useMemo(() => {
         return tasks.map((resourceRow) => {
-            const resourceItems = timelineItems
+            const isDualResource = resourceRow.resource && resourceRow.resource.includes('FMT + MMT');
+            
+            const rawItems = timelineItems
                 .filter((item) => resourceRow.items?.some((ri) => ri.id === item.id))
                 .sort((a, b) => a.start - b.start);
 
-            const lanes = []; // Stores the end time of the last item in each lane
-            const itemsWithLanes = resourceItems.map((item) => {
+            const lanes = [];
+            const itemsWithLanes = rawItems.map((item) => {
                 let laneIndex = 0;
-
-                // Find the first lane that ends before this item starts
                 while (laneIndex < lanes.length && lanes[laneIndex] > item.start) {
                     laneIndex++;
                 }
+                if (laneIndex === lanes.length) lanes.push(item.end);
+                else lanes[laneIndex] = item.end;
 
-                if (laneIndex === lanes.length) {
-                    lanes.push(item.end);
-                } else {
-                    lanes[laneIndex] = item.end;
-                }
+                const isDualBlock = item.tech_type === 'Dual' || (item.tech_type !== 'Single' && isDualResource);
 
-                return { ...item, laneIndex };
+                return { 
+                    ...item, 
+                    laneIndex, 
+                    isDualBlock,
+                    isDualRow: isDualResource
+                };
             });
 
             return {
                 ...resourceRow,
+                isDualRow: isDualResource,
                 items: itemsWithLanes,
                 totalLanes: Math.max(lanes.length, 1)
             };

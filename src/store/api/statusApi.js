@@ -26,6 +26,10 @@ export const statusApi = apiSlice.injectEndpoints({
             query: (limit = 100) => `/v1/ghantt-chart?limit=${limit}`,
             providesTags: ['Status'],
         }),
+        getProductionScheduleGantt: builder.query({
+            query: () => '/v1/production-schedule/gantt',
+            providesTags: ['ProductionSchedule'],
+        }),
         getTimelineData: builder.query({
             query: (limit = 100) => `/v1/timeline-data?limit=${limit}`,
             providesTags: ['Status'],
@@ -48,6 +52,7 @@ export const {
     useGetStatusQuery,
     useGetRmStatusQuery,
     useGetGhanttChartQuery,
+    useGetProductionScheduleGanttQuery,
     useGetTimelineDataQuery,
     useUpdateTimelineDataMutation
 } = statusApi;

@@ -10,7 +10,7 @@ const Login = lazy(() => import("./features/auth/login/LoginPage").then(module =
 const Signup = lazy(() => import("./features/auth/signup/SignupPage").then(module => ({ default: module.SignupPage })));
 const UserManagement = lazy(() => import("./features/admin/UserManagementPage").then(module => ({ default: module.UserManagementPage })));
 const ProtectedApp = () => {
-  const { isAuthenticated,user } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
 
   if (!isAuthenticated) {
@@ -20,13 +20,13 @@ const ProtectedApp = () => {
   return (
     <AppLayout>
       <Routes>
-        <Route 
-          path="/admin/users" 
+        <Route
+          path="/admin/users"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <UserManagement />
             </ProtectedRoute>
-          } 
+          }
         />
         <Route path="*" element={<AppFeature />} />
       </Routes>
@@ -76,13 +76,13 @@ const App = () => {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
-              <Route 
-                path="/*" 
+              <Route
+                path="/*"
                 element={
                   <ProtectedRoute>
                     <ProtectedApp />
                   </ProtectedRoute>
-                } 
+                }
               />
             </Routes>
           </Suspense>
