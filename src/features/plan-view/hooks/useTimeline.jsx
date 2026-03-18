@@ -76,8 +76,12 @@ export const useTimeline = (tasks = [], filterRange = null) => {
             });
         }
 
+        const filteredItems = filterRange 
+            ? allItems.filter(item => item.start < timelineEnd && item.end > timelineStart)
+            : allItems;
+
         return {
-            timelineItems: allItems,
+            timelineItems: filteredItems,
             timelineStart,
             timelineEnd,
             timeLabels: labels,
