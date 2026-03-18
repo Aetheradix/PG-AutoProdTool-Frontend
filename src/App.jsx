@@ -6,9 +6,9 @@ import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/shared/ProtectedRoute";
 import { ConfigProvider, Spin } from 'antd';
 
-const Login = lazy(() => import("./features/auth/login/LoginPage").then(module => ({ default: module.LoginPage })));
-const Signup = lazy(() => import("./features/auth/signup/SignupPage").then(module => ({ default: module.SignupPage })));
-const UserManagement = lazy(() => import("./features/admin/UserManagementPage").then(module => ({ default: module.UserManagementPage })));
+const Login = lazy(() => import("./features/auth/login/LoginPage"));
+const Signup = lazy(() => import("./features/auth/signup/SignupPage"));
+const UserManagement = lazy(() => import("./features/admin/UserManagementPage"));
 const ProtectedApp = () => {
   const { isAuthenticated, user } = useAuth();
 

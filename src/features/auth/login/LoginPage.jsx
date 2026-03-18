@@ -1,8 +1,8 @@
 import React from 'react';
-import { LoginForm } from './LoginForm';
+import LoginForm from './LoginForm';
 import Logo from '../../../components/Logo';
 
-export function LoginPage() {
+export default function LoginPage() {
   return (
     <div className="auth-page-container">
       {/* Left side - Login Form */}

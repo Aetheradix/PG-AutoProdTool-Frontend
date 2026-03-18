@@ -6,7 +6,7 @@ import { getUserManagementColumns } from './UserManagementColumns';
 
 const { Title, Text } = Typography;
 
-export function UserManagementPage() {
+export default function UserManagementPage() {
   const {
     users,
     isLoading,

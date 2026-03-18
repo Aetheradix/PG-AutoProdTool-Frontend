@@ -1,7 +1,7 @@
-import { SignupForm } from './SignupForm';
+import SignupForm from './SignupForm';
 import Logo from '../../../components/Logo';
 
-export function SignupPage() {
+export default function SignupPage() {
   return (
     <div className="auth-page-container">
       {/* Left side - Signup Form */}

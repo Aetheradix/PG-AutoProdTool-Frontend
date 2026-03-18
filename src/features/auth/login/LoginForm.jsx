@@ -7,7 +7,7 @@ import { useLoginForm } from './hooks/useLoginForm';
 
 const { Text } = Typography;
 
-export function LoginForm() {
+export default function LoginForm() {
   const [form] = Form.useForm();
   const { onFinish } = useLoginForm();
 

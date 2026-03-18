@@ -7,7 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const { Text } = Typography;
 
-export function SignupForm() {
+export default function SignupForm() {
   const { signup } = useAuth();
   const [form] = Form.useForm();
   const navigate = useNavigate();
