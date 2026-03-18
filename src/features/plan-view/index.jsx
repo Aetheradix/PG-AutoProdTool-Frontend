@@ -4,10 +4,11 @@ import PlanHeader from './components/PlanHeader';
 import ScheduleTable from './components/ScheduleTable';
 import TankTimeline from './components/TankTimeline';
 import DraggableGanttChart from './components/DraggableGanttChart';
-import { exportGanttToExcel } from '../../utils/exportUtils';
+import { exportTableToExcel } from '../../utils/exportUtils';
 import {
   useGetProductionScheduleGanttQuery,
 } from '../../store/api/statusApi';
+import { useScheduleTable } from './hooks/useScheduleTable';
 import { Spin, Empty } from 'antd';
 
 
@@ -93,6 +94,9 @@ const PlanView = () => {
   // New API for GanttChart, TankTimeline, and DraggableGanttChart
   const { data: scheduleGanttResponse, isLoading: isScheduleLoading, error: scheduleError } =
     useGetProductionScheduleGanttQuery();
+    
+  // Added for Excel Export and Table View consistency
+  const { groupedData, sortedDates } = useScheduleTable();
 
   // Tasks for the normal GanttChart — from new API (hierarchical)
   const tasks = useMemo(() => {
@@ -181,7 +185,7 @@ const PlanView = () => {
 
     switch (activeTab) {
       case 'table':
-        return <ScheduleTable tasks={tasks} />;
+        return <ScheduleTable groupedData={groupedData} sortedDates={sortedDates} />;
       case 'tank':
         return <TankTimeline tasks={tankTasks} filterRange={filterRange} />;
       default:
@@ -190,7 +194,7 @@ const PlanView = () => {
   };
 
   const handleExportExcel = () => {
-    exportGanttToExcel(tasks, 'Gantt_Chart_Schedule.xlsx');
+    exportTableToExcel(groupedData, sortedDates, 'production schedule.xlsx');
   };
 
   return (

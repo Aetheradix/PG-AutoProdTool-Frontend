@@ -59,16 +59,18 @@ const padRows = (batches, target = 9) => {
 };
 
 // ─── Main Component ───
-const ScheduleTable = () => {
+const ScheduleTable = ({ groupedData: propsGrouped, sortedDates: propsDates }) => {
+  const hookData = useScheduleTable();
+  
+  const groupedData = propsGrouped || hookData.groupedData;
+  const sortedDates = propsDates || hookData.sortedDates;
   const {
-    groupedData,
-    sortedDates,
     isLoading,
     searchText,
     systemFilter,
     handleSearchChange,
     handleSystemFilterChange,
-  } = useScheduleTable();
+  } = hookData;
 
   // Dynamically build columns based on config
   const columns = useMemo(() => {
