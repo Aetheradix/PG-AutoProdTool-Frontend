@@ -47,7 +47,7 @@ export const ExcelUpload = () => {
     render: (_, record) => {
       const editable = isEditing(record);
       return (
-        <AdminGate>
+        <>
           {editable ? (
             <Space>
               <Button type="link" onClick={() => save(record.key)}>
@@ -62,7 +62,7 @@ export const ExcelUpload = () => {
               Edit
             </Button>
           )}
-        </AdminGate>
+        </>
       );
     },
   };
@@ -73,7 +73,7 @@ export const ExcelUpload = () => {
     <Card
       title="Excel Data Upload"
       extra={
-        <AdminGate>
+        <>
           <Space>
             <Upload beforeUpload={handleFileUpload} showUploadList={false} accept=".xlsx, .xls">
               <Button icon={<UploadOutlined />}>Click to Upload Excel</Button>
@@ -96,7 +96,7 @@ export const ExcelUpload = () => {
               Clear
             </Button>
           </Space>
-        </AdminGate>
+        </>
       }
     >
       <Form form={form} component={false}>
