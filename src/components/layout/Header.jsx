@@ -8,7 +8,12 @@ import {
   FiLogOut,
   FiPieChart,
   FiShield,
-  FiUser
+  FiUser,
+  FiUpload,
+  FiFilePlus,
+  FiLayers,
+  FiTrendingUp,
+  FiUsers
 } from 'react-icons/fi';
 import { useLocation, useNavigate } from 'react-router-dom';
 import DesktopMenu from '../DesktopMenu';
@@ -25,13 +30,14 @@ const Header = () => {
   const [mobileVisible, setMobileVisible] = useState(false);
 
   const menuItems = [
-    { key: '/', icon: <FiHome />, label: 'Home Page' },
-    { key: '/upload', icon: <FiDatabase />, label: 'Upload Data' },
-    { key: '/plan-view', icon: <FiActivity />, label: 'Plan View' },
+
+    { key: '/create-production-plan', icon: <FiFilePlus />, label: 'Create Production Plan' },
+    { key: '/upload', icon: <FiUpload />, label: 'Upload Data' },
+    { key: '/plan-view', icon: <FiLayers />, label: 'Plan View' },
     { key: '/master-data', icon: <FiDatabase />, label: 'Master Data' },
     { key: '/status', icon: <FiActivity />, label: 'Current Status' },
-    { key: '/kpi', icon: <FiPieChart />, label: 'KPI Dashboard' },
-    { key: '/admin/users', icon: <FiShield />, label: 'Manage Users', isAdmin: true },
+    { key: '/kpi', icon: <FiTrendingUp />, label: 'KPI Dashboard' },
+    { key: '/admin/users', icon: <FiUsers />, label: 'Manage Users', isAdmin: true },
   ];
 
   const filteredMenuItems = menuItems.filter(item => {

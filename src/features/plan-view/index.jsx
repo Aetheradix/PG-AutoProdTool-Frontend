@@ -4,10 +4,11 @@ import PlanHeader from './components/PlanHeader';
 import ScheduleTable from './components/ScheduleTable';
 import TankTimeline from './components/TankTimeline';
 import DraggableGanttChart from './components/DraggableGanttChart';
-import { exportGanttToExcel } from '../../utils/exportUtils';
+import { exportTableToExcel } from '../../utils/exportUtils';
 import {
   useGetProductionScheduleGanttQuery,
 } from '../../store/api/statusApi';
+import { useScheduleTable } from './hooks/useScheduleTable';
 import { Spin, Empty } from 'antd';
 
 
@@ -18,7 +19,21 @@ const mapScheduleToGanttFormat = (ganttData) => {
  
   ['6T', '12T'].forEach((system) => {
     const configs = ganttData[system] || {};
-    Object.entries(configs).forEach(([tankConfig, batches]) => {
+    
+    // Create a modified configs object that duplicates Dual batches from FMT+MMT into FMT
+    const processedConfigs = { ...configs };
+    if (processedConfigs['FMT+MMT'] && processedConfigs['FMT']) {
+        // Find dual batches in FMT+MMT
+        const dualBatches = processedConfigs['FMT+MMT'].filter(b => b.tech_type === 'Dual');
+        if (dualBatches.length > 0) {
+            // Append them to FMT (checking for duplicates just in case)
+            const existingFmtIds = new Set(processedConfigs['FMT'].map(b => b.batch_id));
+            const uniqueDuals = dualBatches.filter(b => !existingFmtIds.has(b.batch_id));
+            processedConfigs['FMT'] = [...processedConfigs['FMT'], ...uniqueDuals];
+        }
+    }
+
+    Object.entries(processedConfigs).forEach(([tankConfig, batches]) => {
       rows.push({
         resource: `${system} / ${tankConfig}`,
         system,
@@ -79,6 +94,9 @@ const PlanView = () => {
   // New API for GanttChart, TankTimeline, and DraggableGanttChart
   const { data: scheduleGanttResponse, isLoading: isScheduleLoading, error: scheduleError } =
     useGetProductionScheduleGanttQuery();
+    
+  // Added for Excel Export and Table View consistency
+  const { groupedData, sortedDates } = useScheduleTable();
 
   // Tasks for the normal GanttChart — from new API (hierarchical)
   const tasks = useMemo(() => {
@@ -167,7 +185,7 @@ const PlanView = () => {
 
     switch (activeTab) {
       case 'table':
-        return <ScheduleTable tasks={tasks} />;
+        return <ScheduleTable groupedData={groupedData} sortedDates={sortedDates} />;
       case 'tank':
         return <TankTimeline tasks={tankTasks} filterRange={filterRange} />;
       default:
@@ -176,7 +194,7 @@ const PlanView = () => {
   };
 
   const handleExportExcel = () => {
-    exportGanttToExcel(tasks, 'Gantt_Chart_Schedule.xlsx');
+    exportTableToExcel(groupedData, sortedDates, 'production schedule.xlsx');
   };
 
   return (

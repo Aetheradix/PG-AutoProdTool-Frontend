@@ -8,7 +8,7 @@ export const useTimeline = (tasks = [], filterRange = null) => {
     const { timelineItems, timelineStart, timelineEnd, timeLabels, totalDurationHrs } = useMemo(() => {
         let minTime = Infinity;
         let maxTime = -Infinity;
-        const allItems = [];
+        const allItemsMap = new Map();
 
         // Extract all items and find global time range
         tasks.forEach((resource) => {
@@ -18,9 +18,15 @@ export const useTimeline = (tasks = [], filterRange = null) => {
                 const end = new Date(item.end_time).getTime();
                 if (start < minTime) minTime = start;
                 if (end > maxTime) maxTime = end;
-                allItems.push({ ...item, start, end });
+                
+                // Only add to global units list once per ID
+                if (!allItemsMap.has(item.id)) {
+                    allItemsMap.set(item.id, { ...item, start, end });
+                }
             });
         });
+
+        const allItems = Array.from(allItemsMap.values());
 
         if (allItems.length === 0 && !filterRange) {
             return {
@@ -70,8 +76,12 @@ export const useTimeline = (tasks = [], filterRange = null) => {
             });
         }
 
+        const filteredItems = filterRange 
+            ? allItems.filter(item => item.start < timelineEnd && item.end > timelineStart)
+            : allItems;
+
         return {
-            timelineItems: allItems,
+            timelineItems: filteredItems,
             timelineStart,
             timelineEnd,
             timeLabels: labels,
@@ -84,7 +94,7 @@ export const useTimeline = (tasks = [], filterRange = null) => {
      */
     const tasksWithLanes = useMemo(() => {
         return tasks.map((resourceRow) => {
-            const isDualResource = resourceRow.resource && resourceRow.resource.includes('FMT + MMT');
+            const isDualResource = resourceRow.resource && /FMT\s*\+\s*MMT/.test(resourceRow.resource);
             
             const rawItems = timelineItems
                 .filter((item) => resourceRow.items?.some((ri) => ri.id === item.id))
