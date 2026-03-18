@@ -18,7 +18,21 @@ const mapScheduleToGanttFormat = (ganttData) => {
  
   ['6T', '12T'].forEach((system) => {
     const configs = ganttData[system] || {};
-    Object.entries(configs).forEach(([tankConfig, batches]) => {
+    
+    // Create a modified configs object that duplicates Dual batches from FMT+MMT into FMT
+    const processedConfigs = { ...configs };
+    if (processedConfigs['FMT+MMT'] && processedConfigs['FMT']) {
+        // Find dual batches in FMT+MMT
+        const dualBatches = processedConfigs['FMT+MMT'].filter(b => b.tech_type === 'Dual');
+        if (dualBatches.length > 0) {
+            // Append them to FMT (checking for duplicates just in case)
+            const existingFmtIds = new Set(processedConfigs['FMT'].map(b => b.batch_id));
+            const uniqueDuals = dualBatches.filter(b => !existingFmtIds.has(b.batch_id));
+            processedConfigs['FMT'] = [...processedConfigs['FMT'], ...uniqueDuals];
+        }
+    }
+
+    Object.entries(processedConfigs).forEach(([tankConfig, batches]) => {
       rows.push({
         resource: `${system} / ${tankConfig}`,
         system,
