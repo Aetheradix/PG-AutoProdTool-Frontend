@@ -4,7 +4,7 @@ const baseQuery = fetchBaseQuery({
     baseUrl: '/api',
     prepareHeaders: (headers) => {
         try {
-            const storedUser = localStorage.getItem('user');
+            const storedUser = sessionStorage.getItem('user');
             if (storedUser) {
                 const user = JSON.parse(storedUser);
                 if (user && user.access_token) {
@@ -12,7 +12,7 @@ const baseQuery = fetchBaseQuery({
                 }
             }
         } catch (e) {
-            console.error('Failed to parse user from localStorage', e);
+            console.error('Failed to parse user from sessionStorage', e);
         }
         return headers;
     },

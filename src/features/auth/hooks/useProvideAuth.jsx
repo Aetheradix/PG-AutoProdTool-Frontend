@@ -8,7 +8,7 @@ export const useProvideAuth = () => {
   const [signupMutation] = useSignupMutation();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
+    const storedUser = sessionStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
@@ -28,7 +28,7 @@ export const useProvideAuth = () => {
       };
 
       setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
+      sessionStorage.setItem('user', JSON.stringify(userData));
       return true;
     } catch (error) {
       console.error('Login error:', error);
@@ -48,13 +48,13 @@ export const useProvideAuth = () => {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('user');
   };
 
   const updateUser = (updatedData) => {
     const newUser = { ...user, ...updatedData };
     setUser(newUser);
-    localStorage.setItem('user', JSON.stringify(newUser));
+    sessionStorage.setItem('user', JSON.stringify(newUser));
     return true;
   };
 
