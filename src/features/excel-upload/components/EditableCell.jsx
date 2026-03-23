@@ -1,5 +1,6 @@
-import { Form, Input } from 'antd';
+import { Form, Input, DatePicker } from 'antd';
 import React from 'react';
+import dayjs from 'dayjs';
 
 const EditableCell = ({
   editing,
@@ -11,6 +12,19 @@ const EditableCell = ({
   children,
   ...restProps
 }) => {
+  const isDatetime = inputType === 'datetime';
+
+  const inputNode = isDatetime ? (
+    <DatePicker
+      showTime
+      format="YYYY-MM-DD HH:mm:ss"
+      className="w-full"
+      needConfirm={false}
+    />
+  ) : (
+    <Input />
+  );
+
   return (
     <td {...restProps}>
       {editing ? (
@@ -23,8 +37,15 @@ const EditableCell = ({
               message: `Please Input ${title}!`,
             },
           ]}
+          {...(isDatetime && {
+            getValueProps: (value) => ({
+              value: value ? dayjs(value) : null,
+            }),
+            normalize: (value) =>
+              value ? value.format('YYYY-MM-DD HH:mm:ss') : null,
+          })}
         >
-          <Input />
+          {inputNode}
         </Form.Item>
       ) : (
         children

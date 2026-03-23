@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { Table, Form, Input, Button, Space, Popconfirm, Modal } from 'antd';
+import { Table, Form, Input, Button, Space, Popconfirm, Modal, DatePicker } from 'antd';
 import { FiEdit2, FiSearch, FiPlus, FiTrash2 } from 'react-icons/fi';
+import dayjs from 'dayjs';
 import EditableCell from '../../excel-upload/components/EditableCell';
 
 import { buildDynamicColumns } from '../../../utils/tableUtils';
@@ -94,7 +95,7 @@ export function StandardDataTable(props) {
         ...col,
         onCell: (record) => ({
           record,
-          inputType: 'text',
+          inputType: col.inputType || 'text',
           dataIndex: col.dataIndex,
           title: col.title,
           editing: table.isEditing(record),
@@ -168,23 +169,40 @@ export function StandardDataTable(props) {
           layout="vertical"
           className="grid grid-cols-4 gap-x-6 gap-y-2 py-4"
         >
-          {table.addModalFields.map((key) => (
-            <Form.Item
-              key={key}
-              name={key}
-              label={
-                <span className="font-semibold text-slate-700 uppercase text-xs tracking-wider">
-                  {key.replace(/_/g, ' ')}
-                </span>
-              }
-              rules={[{ required: true, message: `Please input ${key.replace(/_/g, ' ')}` }]}
-            >
-              <Input
-                placeholder={`Enter ${key.replace(/_/g, ' ')}`}
-                className="rounded-lg border-slate-200 h-10"
-              />
-            </Form.Item>
-          ))}
+          {table.addModalFields.map((key) => {
+            const isDatetime = key.toLowerCase().includes('datetime') || key.toLowerCase().endsWith('_date');
+            return (
+              <Form.Item
+                key={key}
+                name={key}
+                label={
+                  <span className="font-semibold text-slate-700 uppercase text-xs tracking-wider">
+                    {key.replace(/_/g, ' ')}
+                  </span>
+                }
+                rules={[{ required: true, message: `Please input ${key.replace(/_/g, ' ')}` }]}
+                {...(isDatetime && {
+                  getValueProps: (value) => ({ value: value ? dayjs(value) : null }),
+                  normalize: (value) => (value ? value.format('YYYY-MM-DD HH:mm:ss') : null),
+                })}
+              >
+                {isDatetime ? (
+                  <DatePicker
+                    showTime
+                    format="YYYY-MM-DD HH:mm:ss"
+                    className="w-full rounded-lg border-slate-200 h-10"
+                    placeholder={`Select ${key.replace(/_/g, ' ')}`}
+                    needConfirm={false}
+                  />
+                ) : (
+                  <Input
+                    placeholder={`Enter ${key.replace(/_/g, ' ')}`}
+                    className="rounded-lg border-slate-200 h-10"
+                  />
+                )}
+              </Form.Item>
+            );
+          })}
         </Form>
       </Modal>
     </div>

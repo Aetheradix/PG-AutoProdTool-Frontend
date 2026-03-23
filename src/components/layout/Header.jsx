@@ -12,6 +12,7 @@ import {
   FiUpload,
   FiFilePlus,
   FiLayers,
+  FiPackage,
   FiTrendingUp,
   FiUsers
 } from 'react-icons/fi';
@@ -34,6 +35,7 @@ const Header = () => {
     { key: '/create-production-plan', icon: <FiFilePlus />, label: 'Create Production Plan' },
     { key: '/upload', icon: <FiUpload />, label: 'Upload Data' },
     { key: '/plan-view', icon: <FiLayers />, label: 'Plan View' },
+    { key: '/packing-plan', icon: <FiPackage />, label: 'Packing Plan' },
     { key: '/master-data', icon: <FiDatabase />, label: 'Master Data' },
     { key: '/status', icon: <FiActivity />, label: 'Current Status' },
     { key: '/kpi', icon: <FiTrendingUp />, label: 'KPI Dashboard' },

@@ -9,6 +9,7 @@ import PlanView from './plan-view';
 import ProfilePage from './profile/ProfilePage';
 import { ExcelUpload } from './excel-upload/ExcelUpload';
 import BPRPDR from './bpr-pdr';
+import PackingPlanPage from './packing-plan/PackingPlanPage';
 
 export default function AppFeature() {
   return (
@@ -16,6 +17,7 @@ export default function AppFeature() {
       <Route index element={<Dashboard />} />
       <Route path="create-production-plan" element={<CreateProductionPlan />} />
       <Route path="plan-view" element={<PlanView />} />
+      <Route path="packing-plan" element={<PackingPlanPage />} />
       <Route path="master-data" element={<MasterDataPage />} />
       <Route path="status" element={<StatusPage />} />
       <Route path="kpi" element={<KPIPage />} />

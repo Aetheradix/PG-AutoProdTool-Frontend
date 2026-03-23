@@ -2,6 +2,7 @@
  * tableUtils.js
  * Pure utility functions shared by all editable table components.
  */
+import dayjs from 'dayjs';
 
 /**
  * Normalises various API response shapes into a plain array.
@@ -32,29 +33,47 @@ export function detectRowKey(data) {
  * @param {string} rowKey  - The primary key field name (pinned left)
  * @returns {Array} column definitions (without the Actions column)
  */
+/**
+ * Checks whether a column key represents a datetime field.
+ */
+function isDatetimeField(key) {
+    const lower = key.toLowerCase();
+    return lower.includes('datetime') || lower.endsWith('_date');
+}
+
 export function buildDynamicColumns(data, rowKey) {
     if (!data || data.length === 0) return [];
 
-    return Object.keys(data[0]).map((key) => ({
-        title: key.toUpperCase().replace(/_/g, ' '),
-        dataIndex: key,
-        key,
-        editable: true,
-        width:
-            key === 'id' || key === 'bulk_id'
-                ? 100
-                : key === 'description' || key === 'name'
-                    ? 300
-                    : 200,
-        ellipsis: true,
-        fixed: key === rowKey ? 'left' : undefined,
-        sorter: (a, b) => {
-            const valA = a[key] ?? '';
-            const valB = b[key] ?? '';
-            if (typeof valA === 'number' && typeof valB === 'number') return valA - valB;
-            return String(valA).localeCompare(String(valB));
-        },
-    }));
+    return Object.keys(data[0]).map((key) => {
+        const isDatetime = isDatetimeField(key);
+
+        return {
+            title: key.toUpperCase().replace(/_/g, ' '),
+            dataIndex: key,
+            key,
+            editable: true,
+            inputType: isDatetime ? 'datetime' : 'text',
+            width:
+                key === 'id' || key === 'bulk_id'
+                    ? 100
+                    : key === 'description' || key === 'name'
+                        ? 300
+                        : isDatetime
+                            ? 200
+                            : 200,
+            ellipsis: true,
+            fixed: key === rowKey ? 'left' : undefined,
+            sorter: (a, b) => {
+                const valA = a[key] ?? '';
+                const valB = b[key] ?? '';
+                if (typeof valA === 'number' && typeof valB === 'number') return valA - valB;
+                return String(valA).localeCompare(String(valB));
+            },
+            ...(isDatetime && {
+                render: (val) => (val ? dayjs(val).format('YYYY-MM-DD HH:mm:ss') : '—'),
+            }),
+        };
+    });
 }
 
 /**

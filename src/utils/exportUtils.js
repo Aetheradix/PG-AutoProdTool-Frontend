@@ -212,3 +212,112 @@ export const exportGanttToExcel = (tasks, fileName = 'production schedule.xlsx')
   // For now, let's keep it but ideally PlanView should call exportTableToExcel
   console.log('Old export function called');
 };
+
+/**
+ * Generic utility to export a flat data array (e.g. from StandardDataTable) to a styled Excel file.
+ * @param {Array<Object>} dataSource - Array of row objects
+ * @param {Object} options
+ * @param {string}   [options.fileName]       - Output file name (default: 'export.xlsx')
+ * @param {string}   [options.sheetName]      - Worksheet name (default: 'Sheet1')
+ * @param {string}   [options.title]          - Optional title row at the top
+ * @param {string[]} [options.excludeFields]  - Keys to exclude from output
+ */
+export const exportDataTableToExcel = async (dataSource, options = {}) => {
+  const {
+    fileName = 'export.xlsx',
+    sheetName = 'Sheet1',
+    title = '',
+    excludeFields = ['id', 'created_at', 'updated_at'],
+  } = options;
+
+  if (!dataSource || dataSource.length === 0) {
+    console.warn('No data to export');
+    return;
+  }
+
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet(sheetName);
+
+  // Determine visible columns
+  const allKeys = Object.keys(dataSource[0]);
+  const visibleKeys = allKeys.filter((k) => !excludeFields.includes(k));
+
+  // --- Styles ---
+  const headerStyle = {
+    font: { bold: true, size: 11, color: { argb: 'FFFFFFFF' } },
+    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } },
+    alignment: { horizontal: 'center', vertical: 'middle', wrapText: true },
+    border: {
+      top: { style: 'thin', color: { argb: 'FF94A3B8' } },
+      left: { style: 'thin', color: { argb: 'FF94A3B8' } },
+      bottom: { style: 'thin', color: { argb: 'FF94A3B8' } },
+      right: { style: 'thin', color: { argb: 'FF94A3B8' } },
+    },
+  };
+
+  const cellBorder = {
+    top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+    left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+    bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+    right: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+  };
+
+  const evenRowFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+  const oddRowFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+
+  let currentRow = 1;
+
+  // Optional title row
+  if (title) {
+    worksheet.mergeCells(currentRow, 1, currentRow, visibleKeys.length);
+    const tCell = worksheet.getCell(currentRow, 1);
+    tCell.value = title;
+    tCell.style = {
+      font: { bold: true, size: 14, color: { argb: 'FF1E293B' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } },
+      alignment: { horizontal: 'center', vertical: 'middle' },
+    };
+    worksheet.getRow(currentRow).height = 30;
+    currentRow += 1;
+  }
+
+  // Header row
+  const headerRow = worksheet.getRow(currentRow);
+  visibleKeys.forEach((key, idx) => {
+    const cell = headerRow.getCell(idx + 1);
+    cell.value = key.replace(/_/g, ' ').toUpperCase();
+    cell.style = headerStyle;
+  });
+  headerRow.height = 24;
+  currentRow += 1;
+
+  // Data rows
+  dataSource.forEach((record, rowIdx) => {
+    const row = worksheet.getRow(currentRow);
+    visibleKeys.forEach((key, colIdx) => {
+      const cell = row.getCell(colIdx + 1);
+      cell.value = record[key] ?? '';
+      cell.border = cellBorder;
+      cell.alignment = { vertical: 'middle', wrapText: true };
+      cell.fill = rowIdx % 2 === 0 ? oddRowFill : evenRowFill;
+      cell.font = { size: 10, color: { argb: 'FF334155' } };
+    });
+    currentRow += 1;
+  });
+
+  // Auto-fit column widths (approximate)
+  visibleKeys.forEach((key, idx) => {
+    const maxLen = Math.max(
+      key.length,
+      ...dataSource.map((r) => String(r[key] ?? '').length)
+    );
+    worksheet.getColumn(idx + 1).width = Math.min(Math.max(maxLen + 4, 12), 40);
+  });
+
+  // Export
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  saveAs(blob, fileName);
+};
