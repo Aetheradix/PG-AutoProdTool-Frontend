@@ -1,18 +1,47 @@
-import React from 'react';
-import { Card, Button, message } from 'antd';
-import { FiDownload } from 'react-icons/fi';
-import { StandardDataTable } from '../master-data/components/StandardDataTable';
+import React, { useMemo } from 'react';
+import { message, Tabs, Button } from 'antd';
+import { FiBarChart, FiPackage } from 'react-icons/fi';
 import {
-  useGetPackingPlanQuery,
   useCreatePackingPlanMutation,
-  useUpdatePackingPlanMutation,
   useDeletePackingPlanMutation,
+  useGetPackingPlanQuery,
+  useUpdatePackingPlanMutation,
 } from '../../store/api/packingPlanApi';
-import { extractApiData } from '../../utils/tableUtils';
 import { exportDataTableToExcel } from '../../utils/exportUtils';
+import { extractApiData } from '../../utils/tableUtils';
+import PackingPlanTable from './components/packing-plan-table';
+import PackingPlanGantt from './components/PackingPlanGantt';
 
 export default function PackingPlanPage() {
   const { data: apiData } = useGetPackingPlanQuery({ page: 1, limit: 1000 });
+  const [activeFilter, setActiveFilter] = React.useState(null);
+
+  const filterRange = useMemo(() => {
+    if (!activeFilter || !apiData?.data) return null;
+    
+    // Find the min date in the data to anchor the filter
+    let minDate = null;
+    apiData.data.forEach((item) => {
+      const d = new Date(item.start_datetime);
+      if (!minDate || d < minDate) minDate = d;
+    });
+    
+    if (!minDate) return null;
+
+    const start = new Date(minDate);
+    const end = new Date(minDate);
+    const parts = activeFilter.split('-');
+    if (parts.length === 2) {
+      const [startH, startM] = parts[0].split(':').map(Number);
+      const [endH, endM] = parts[1].split(':').map(Number);
+      start.setHours(startH, startM, 0, 0);
+      end.setHours(endH, endM, 0, 0);
+      if (endH < startH || (endH === startH && endM <= startM)) {
+        end.setDate(end.getDate() + 1);
+      }
+    }
+    return { start, end };
+  }, [activeFilter, apiData]);
 
   const handleExport = async () => {
     const dataSource = extractApiData(apiData, []);
@@ -33,46 +62,78 @@ export default function PackingPlanPage() {
       message.error('Failed to export Packing Plan');
     }
   };
+  const tabItems = [
+    {
+      key: 'packing-plan',
+      label: (
+        <span className="flex items-center gap-2 px-1">
+          <FiPackage /> Packing Plan
+        </span>
+      ),
+      children: (
+        <PackingPlanTable
+          handleExport={handleExport}
+          useGetPackingPlanQuery={useGetPackingPlanQuery}
+          useCreatePackingPlanMutation={useCreatePackingPlanMutation}
+          useUpdatePackingPlanMutation={useUpdatePackingPlanMutation}
+          useDeletePackingPlanMutation={useDeletePackingPlanMutation}
+        />
+      ),
+    },
+    {
+      key: 'dead-stock',
+      label: (
+        <span className="flex items-center gap-2 px-1">
+          <FiBarChart /> Packing Plan Gantt Chart
+        </span>
+      ),
+      children: (
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-50 p-2 rounded-lg text-blue-600">
+                <FiBarChart size={20} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 m-0 leading-tight">Packing Plan Timeline</h3>
+                <p className="text-[11px] text-slate-500 m-0 uppercase tracking-tighter font-semibold">Production Line Efficiency View</p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 bg-slate-50 p-2 rounded-lg shadow-inner border border-slate-100">
+              <span className="text-[10px] font-black text-slate-400 px-2 uppercase tracking-widest hidden sm:inline">
+                Time Filter
+              </span>
+              <Button
+                size="middle"
+                type={!activeFilter ? 'primary' : 'text'}
+                className="text-xs rounded-md h-9 px-4 font-bold"
+                onClick={() => setActiveFilter(null)}
+              >
+                Full
+              </Button>
+              {['07:30-11:30', '11:30-15:30', '15:30-19:30', '19:30-23:30', '23:30-03:30', '03:30-07:30'].map((interval) => (
+                <Button
+                  key={interval}
+                  size="middle"
+                  type={activeFilter === interval ? 'primary' : 'text'}
+                  className="text-xs rounded-md h-9 px-4 font-bold"
+                  onClick={() => setActiveFilter(interval)}
+                >
+                  {interval}
+                </Button>
+              ))}
+            </div>
+          </div>
+          <PackingPlanGantt filterRange={filterRange} />
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="fade-in pb-10">
-      <div className="flex flex-col items-start w-full">
-        <div className="flex-1 w-full">
-          <Card
-            title={
-              <div className="flex items-center gap-2 py-1">
-                <span className="text-xl font-bold bg-linear-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-                  Packing Plan Management
-                </span>
-              </div>
-            }
-            extra={
-              <Button
-                icon={<FiDownload />}
-                onClick={handleExport}
-                className="flex items-center gap-1.5 font-medium text-slate-600 border-slate-300 hover:text-blue-600 hover:border-blue-400 transition-all"
-              >
-                Export Excel
-              </Button>
-            }
-            className="border-none shadow-md rounded-2xl overflow-hidden min-h-125"
-            styles={{
-              header: { borderBottom: '1px solid #f1f5f9', padding: '16px 24px' },
-              body: { padding: '24px' },
-            }}
-          >
-            <StandardDataTable
-              useGetQuery={useGetPackingPlanQuery}
-              useUpdateMutation={useUpdatePackingPlanMutation}
-              useCreateMutation={useCreatePackingPlanMutation}
-              useDeleteMutation={useDeletePackingPlanMutation}
-              title="Packing Plan"
-              searchPlaceholder="Search PO number, SKU, description..."
-              excludeFields={['id', 'created_at', 'updated_at']}
-            />
-          </Card>
-        </div>
-      </div>
+    <div className="p-4 bg-slate-50/30 min-h-screen">
+      <Tabs defaultActiveKey="packing-plan" items={tabItems} className="premium-tabs" />
     </div>
   );
 }

@@ -15,7 +15,7 @@ export default function AppFeature() {
   return (
     <Routes>
       <Route index element={<Dashboard />} />
-      <Route path="create-production-plan" element={<CreateProductionPlan />} />
+      <Route path="create-making-plan" element={<CreateProductionPlan />} />
       <Route path="plan-view" element={<PlanView />} />
       <Route path="packing-plan" element={<PackingPlanPage />} />
       <Route path="master-data" element={<MasterDataPage />} />

@@ -4,7 +4,7 @@ import { useMemo } from 'react';
  * Shared hook for timeline-based visualizations (Gantt, Tank Timeline).
  * Handles time range calculation, label generation, and lane assignment.
  */
-export const useTimeline = (tasks = [], filterRange = null) => {
+export const useTimeline = (tasks = [], filterRange = null, stepMinutes = 60) => {
     const { timelineItems, timelineStart, timelineEnd, timeLabels, totalDurationHrs } = useMemo(() => {
         let minTime = Infinity;
         let maxTime = -Infinity;
@@ -64,14 +64,16 @@ export const useTimeline = (tasks = [], filterRange = null) => {
         const durationMs = timelineEnd - timelineStart;
         const totalDurationHrs = durationMs / (1000 * 60 * 60);
 
-        // Generate labels for each hour
+        // Generate labels for each step (default 60 mins)
+        const stepMs = stepMinutes * 60 * 1000;
+        const totalSteps = durationMs / stepMs;
         const labels = [];
-        for (let i = 0; i <= totalDurationHrs; i++) {
-            const time = new Date(timelineStart + i * 3600000);
+        for (let i = 0; i <= totalSteps; i++) {
+            const time = new Date(timelineStart + i * stepMs);
             labels.push({
-                label: `${time.getHours()}:00`,
+                label: `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`,
                 fullDate: time.toLocaleString(),
-                isNewDay: time.getHours() === 0 && i !== 0,
+                isNewDay: time.getHours() === 0 && time.getMinutes() === 0 && i !== 0,
                 timestamp: time.getTime(),
             });
         }
@@ -87,7 +89,7 @@ export const useTimeline = (tasks = [], filterRange = null) => {
             timeLabels: labels,
             totalDurationHrs,
         };
-    }, [tasks, filterRange]);
+    }, [tasks, filterRange, stepMinutes]);
 
     /**
      * Assigns lanes to items within a resource to prevent visual overlapping.

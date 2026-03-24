@@ -1,7 +1,5 @@
-import React from 'react';
-import { Button, Table, Card, Upload, Space, Form } from 'antd';
-import { UploadOutlined, SaveOutlined, DeleteOutlined } from '@ant-design/icons';
-import { PermissionGate, AdminGate } from '@/components/shared/PermissionGate';
+import { DeleteOutlined, SaveOutlined, UploadOutlined } from '@ant-design/icons';
+import { Button, Card, Form, Space, Table, Upload } from 'antd';
 import EditableCell from './components/EditableCell';
 import { useExcelUpload } from './hooks/useExcelUpload';
 
