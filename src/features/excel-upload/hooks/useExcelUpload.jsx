@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { Form, message } from 'antd';
-import * as XLSX from 'xlsx';
 import { useUploadExcelDataMutation } from '@/store/api/excelApi';
+import { Form, message } from 'antd';
+import { useState } from 'react';
+import * as XLSX from 'xlsx';
 
 export const useExcelUpload = () => {
     const [data, setData] = useState([]);
@@ -9,7 +9,9 @@ export const useExcelUpload = () => {
     const [form] = Form.useForm();
     const [editingKey, setEditingKey] = useState('');
     const [uploadExcelData, { isLoading: isUploading }] = useUploadExcelDataMutation();
+  
 
+    
     const isEditing = (record) => record.key === editingKey;
 
     const edit = (record) => {
@@ -82,7 +84,7 @@ export const useExcelUpload = () => {
         return false;
     };
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (onSuccess) => {
         if (data.length === 0) {
             message.warning('No data to upload');
             return;
@@ -91,6 +93,7 @@ export const useExcelUpload = () => {
             const cleanedData = data.map(({ key, ...rest }) => rest);
             const response = await uploadExcelData(cleanedData).unwrap();
             message.success(response.message || 'Data sent to backend successfully');
+            if (onSuccess && typeof onSuccess === 'function') onSuccess(response);
         } catch (err) {
             message.error(err.data?.detail || 'Failed to send data to backend');
             console.error(err);

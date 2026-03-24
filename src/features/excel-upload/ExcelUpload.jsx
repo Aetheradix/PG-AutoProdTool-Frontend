@@ -2,9 +2,10 @@ import { DeleteOutlined, SaveOutlined, UploadOutlined } from '@ant-design/icons'
 import { Button, Card, Form, Space, Table, Upload } from 'antd';
 import EditableCell from './components/EditableCell';
 import { useExcelUpload } from './hooks/useExcelUpload';
-
+import { Link, useNavigate } from 'react-router-dom';
 
 export const ExcelUpload = () => {
+  const navigate = useNavigate();
   const {
     data,
     columns,
@@ -35,7 +36,6 @@ export const ExcelUpload = () => {
       }),
     };
   });
-
 
   const actionColumn = {
     title: 'Actions',
@@ -76,15 +76,17 @@ export const ExcelUpload = () => {
             <Upload beforeUpload={handleFileUpload} showUploadList={false} accept=".xlsx, .xls">
               <Button icon={<UploadOutlined />}>Click to Upload Excel</Button>
             </Upload>
+
             <Button
               type="primary"
               icon={<SaveOutlined />}
-              onClick={handleSubmit}
+              onClick={() => handleSubmit(() => navigate('/plan-view'))}
               loading={isUploading}
               disabled={data.length === 0}
             >
-              Submit
+              Submit and Create Plan
             </Button>
+
             <Button
               danger
               icon={<DeleteOutlined />}
