@@ -17,8 +17,18 @@ const uiSlice = createSlice({
       state.activeTabs[view] = tab;
       sessionStorage.setItem(`${view}ActiveTab`, tab);
     },
+    resetTabs: (state) => {
+      state.activeTabs = {
+        planView: 'gantt',
+        packingPlan: 'packing-plan',
+        masterData: 'sku-master',
+      };
+      sessionStorage.removeItem('planViewActiveTab');
+      sessionStorage.removeItem('packingPlanActiveTab');
+      sessionStorage.removeItem('masterDataActiveTab');
+    },
   },
 });
 
-export const { setActiveTab } = uiSlice.actions;
+export const { setActiveTab, resetTabs } = uiSlice.actions;
 export default uiSlice.reducer;

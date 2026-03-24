@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useLoginMutation, useSignupMutation } from '@/store/api/authApi';
+import { useDispatch } from 'react-redux';
+import { resetTabs } from '@/store/slices/uiSlice';
 
 export const useProvideAuth = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loginMutation] = useLoginMutation();
   const [signupMutation] = useSignupMutation();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const storedUser = sessionStorage.getItem('user');
@@ -49,6 +52,7 @@ export const useProvideAuth = () => {
   const logout = () => {
     setUser(null);
     sessionStorage.removeItem('user');
+    dispatch(resetTabs());
   };
 
   const updateUser = (updatedData) => {
