@@ -1,4 +1,7 @@
 import React, { useState, useMemo } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { setActiveTab } from '../../store/slices/uiSlice';
+import dayjs from 'dayjs';
 import GanttChart from './components/GanttChart';
 import PlanHeader from './components/PlanHeader';
 import ScheduleTable from './components/ScheduleTable';
@@ -88,7 +91,8 @@ const mapScheduleToTankFormat = (tanksData) => {
 };
 
 const PlanView = () => {
-  const [activeTab, setActiveTab] = useState('gantt');
+  const dispatch = useDispatch();
+  const activeTab = useSelector(state => state.ui.activeTabs.planView);
   const [activeFilter, setActiveFilter] = useState(null);
 
   // New API for GanttChart, TankTimeline, and DraggableGanttChart
@@ -136,31 +140,36 @@ const PlanView = () => {
 
   const filterRange = useMemo(() => {
     if (!activeFilter || !scheduleGanttResponse?.data) return null;
+
     let minDate = null;
-    
-    // Check both making (tasks) and tank packaging (tankTasks)
     [...tasks, ...tankTasks].forEach((row) => {
       row.items.forEach((item) => {
-        const d = new Date(item.start_time);
-        if (!minDate || d < minDate) minDate = d;
+        const d = dayjs(item.start_time);
+        if (d.isValid() && (!minDate || d.isBefore(minDate))) minDate = d;
       });
     });
-    
-    if (!minDate) return null;
 
-    const start = new Date(minDate);
-    const end = new Date(minDate);
+    if (!minDate) return null;
+    
+    if (activeFilter === '24h') {
+        const start = minDate.startOf('day');
+        return { start: start.toDate(), end: start.add(24, 'hour').toDate() };
+    }
+
     const parts = activeFilter.split('-');
     if (parts.length === 2) {
       const [startH, startM] = parts[0].split(':').map(Number);
       const [endH, endM] = parts[1].split(':').map(Number);
-      start.setHours(startH, startM, 0, 0);
-      end.setHours(endH, endM, 0, 0);
-      if (endH < startH || (endH === startH && endM <= startM)) {
-        end.setDate(end.getDate() + 1);
+      
+      let start = minDate.hour(startH).minute(startM).second(0).millisecond(0);
+      let end = minDate.hour(endH).minute(endM).second(0).millisecond(0);
+      
+      if (end.isBefore(start) || end.isSame(start)) {
+        end = end.add(1, 'day');
       }
+      return { start: start.toDate(), end: end.toDate() };
     }
-    return { start, end };
+    return null;
   }, [activeFilter, scheduleGanttResponse, tasks, tankTasks]);
 
   const renderContent = () => {
@@ -201,7 +210,7 @@ const PlanView = () => {
     <div className="space-y-6">
       <PlanHeader
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(tab) => dispatch(setActiveTab({ view: 'planView', tab }))}
         activeFilter={activeFilter}
         onFilterChange={setActiveFilter}
         onExportExcel={handleExportExcel}

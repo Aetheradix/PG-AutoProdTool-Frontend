@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { message, Tabs, Button } from 'antd';
 import { FiBarChart, FiPackage } from 'react-icons/fi';
+import { useSelector, useDispatch } from 'react-redux';
+import { setActiveTab } from '../../store/slices/uiSlice';
 import {
   useCreatePackingPlanMutation,
   useDeletePackingPlanMutation,
@@ -13,6 +15,8 @@ import PackingPlanTable from './components/packing-plan-table';
 import PackingPlanGantt from './components/PackingPlanGantt';
 
 export default function PackingPlanPage() {
+  const dispatch = useDispatch();
+  const activeTab = useSelector((state) => state.ui.activeTabs.packingPlan);
   const { data: apiData } = useGetPackingPlanQuery({ page: 1, limit: 1000 });
   const [activeFilter, setActiveFilter] = React.useState(null);
 
@@ -133,7 +137,12 @@ export default function PackingPlanPage() {
 
   return (
     <div className="p-4 bg-slate-50/30 min-h-screen">
-      <Tabs defaultActiveKey="packing-plan" items={tabItems} className="premium-tabs" />
+      <Tabs 
+        activeKey={activeTab} 
+        onChange={(key) => dispatch(setActiveTab({ view: 'packingPlan', tab: key }))} 
+        items={tabItems} 
+        className="premium-tabs" 
+      />
     </div>
   );
 }

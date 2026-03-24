@@ -8,9 +8,12 @@ import { SKUMasterTable } from './components/SKUMasterTable';
 import { UploadActionButtons } from './components/UploadActionButtons';
 import { UploadDataTable } from './components/UploadDataTable';
 import { getUploadColumns } from './utils/uploadColumns';
-
+import { useSelector, useDispatch } from 'react-redux';
+import { setActiveTab } from '../../store/slices/uiSlice';
 
 export function MasterDataPage() {
+  const dispatch = useDispatch();
+  const activeTab = useSelector((state) => state.ui.activeTabs.masterData);
   // Excel upload hook
   const {
     data: uploadData,
@@ -134,7 +137,12 @@ export function MasterDataPage() {
               body: { padding: '24px' }
             }}
           >
-            <Tabs defaultActiveKey="sku-master" items={tabItems} className="custom-tabs" />
+            <Tabs 
+              activeKey={activeTab} 
+              onChange={(key) => dispatch(setActiveTab({ view: 'masterData', tab: key }))} 
+              items={tabItems} 
+              className="custom-tabs" 
+            />
           </Card>
         </div>
       </div>
