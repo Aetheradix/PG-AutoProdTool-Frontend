@@ -447,39 +447,3 @@ textarea {
 .ant-card.rounded-3xl {
   @apply rounded-3xl;
 }
-
-/* ==========================================================================
-   Custom Tabs Styling (Premium)
-   ========================================================================== */
-
-.custom-tabs .ant-tabs-nav {
-  @apply !mb-8 !border-b !border-slate-100;
-}
-
-.custom-tabs .ant-tabs-nav::before {
-  @apply !border-none;
-}
-
-.custom-tabs .ant-tabs-tab {
-  @apply !py-3 !px-4 !mx-1 !rounded-xl !transition-all !duration-300;
-}
-
-.custom-tabs .ant-tabs-tab:hover {
-  @apply !bg-blue-50 !text-blue-600;
-}
-
-.custom-tabs .ant-tabs-tab-active {
-  @apply !bg-blue-50/50;
-}
-
-.custom-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
-  @apply !text-blue-600 !font-bold;
-}
-
-.custom-tabs .ant-tabs-ink-bar {
-  @apply !h-1 !bg-linear-to-r !from-blue-600 !to-blue-400 !rounded-t-full;
-}
-
-.custom-tabs .ant-tabs-tabpane {
-  @apply !fade-in;
-}
