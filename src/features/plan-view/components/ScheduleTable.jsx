@@ -59,18 +59,16 @@ const padRows = (batches, target = 9) => {
 };
 
 // ─── Main Component ───
-const ScheduleTable = ({ groupedData: propsGrouped, sortedDates: propsDates }) => {
-  const hookData = useScheduleTable();
-  
-  const groupedData = propsGrouped || hookData.groupedData;
-  const sortedDates = propsDates || hookData.sortedDates;
-  const {
-    isLoading,
-    searchText,
-    systemFilter,
-    handleSearchChange,
-    handleSystemFilterChange,
-  } = hookData;
+const ScheduleTable = ({ 
+  groupedData, 
+  sortedDates,
+  isLoading,
+  searchText,
+  systemFilter,
+  onSearchChange,
+  onSystemFilterChange
+}) => {
+  console.log('ScheduleTable Rendered with groupedData:', groupedData);
 
   // Dynamically build columns based on config
   const columns = useMemo(() => {
@@ -120,7 +118,7 @@ const ScheduleTable = ({ groupedData: propsGrouped, sortedDates: propsDates }) =
           <Input
             placeholder="Search GCAS, Batch, Line..."
             prefix={<FiSearch className="text-gray-400 mr-1" />}
-            onChange={(e) => handleSearchChange(e.target.value)}
+            onChange={(e) => onSearchChange(e.target.value)}
             value={searchText}
             allowClear
             className="h-9 rounded border-[#444] text-white lg:w-72 text-sm"
@@ -130,7 +128,7 @@ const ScheduleTable = ({ groupedData: propsGrouped, sortedDates: propsDates }) =
               {['All', '6T', '12T'].map((f) => (
                 <button
                   key={f}
-                  onClick={() => handleSystemFilterChange(f)}
+                  onClick={() => onSystemFilterChange(f)}
                   className={`px-3 py-1 rounded text-xs font-black transition-all cursor-pointer ${
                     systemFilter === f ? 'bg-[#FFC000] text-black shadow' : 'text-gray-400'
                   }`}

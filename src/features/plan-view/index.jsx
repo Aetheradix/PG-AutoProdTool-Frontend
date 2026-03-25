@@ -100,7 +100,15 @@ const PlanView = () => {
     useGetProductionScheduleGanttQuery();
     
   // Added for Excel Export and Table View consistency
-  const { groupedData, sortedDates } = useScheduleTable();
+  const { 
+    groupedData, 
+    sortedDates,
+    isLoading: isTableLoading,
+    searchText,
+    systemFilter,
+    handleSearchChange,
+    handleSystemFilterChange,
+  } = useScheduleTable();
 
   // Tasks for the normal GanttChart — from new API (hierarchical) Only for GHANTT,not tanks
   const tasks = useMemo(() => {
@@ -195,7 +203,17 @@ const PlanView = () => {
 
     switch (activeTab) {
       case 'table':
-        return <ScheduleTable groupedData={groupedData} sortedDates={sortedDates} />;
+        return (
+          <ScheduleTable 
+            groupedData={groupedData} 
+            sortedDates={sortedDates}
+            isLoading={isTableLoading}
+            searchText={searchText}
+            systemFilter={systemFilter}
+            onSearchChange={handleSearchChange}
+            onSystemFilterChange={handleSystemFilterChange}
+          />
+        );
       case 'tank':
         return <TankTimeline tasks={tankTasks} filterRange={filterRange} />;
       default:
