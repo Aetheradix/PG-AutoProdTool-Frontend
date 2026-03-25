@@ -1,8 +1,15 @@
 import { Button } from 'antd';
 import { FiFileText } from 'react-icons/fi';
 
-const PlanHeader = ({ activeTab, onTabChange, activeFilter, onFilterChange, onExportPDF, onExportExcel, isExporting }) => {
-
+const PlanHeader = ({
+  activeTab,
+  onTabChange,
+  activeFilter,
+  onFilterChange,
+  onExportPDF,
+  onExportExcel,
+  isExporting,
+}) => {
   return (
     <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
       <div className="flex bg-slate-50 gap-2 sm:gap-4 p-1 rounded-lg overflow-x-auto custom-scrollbar shrink-0">
@@ -42,7 +49,14 @@ const PlanHeader = ({ activeTab, onTabChange, activeFilter, onFilterChange, onEx
           >
             Full
           </Button>
-          {['07:30-11:30', '11:30-15:30', '15:30-19:30', '19:30-23:30', '23:30-03:30', '03:30-07:30'].map((interval) => (
+          {[
+            '07:30-11:30',
+            '11:30-15:30',
+            '15:30-19:30',
+            '19:30-23:30',
+            '23:30-03:30',
+            '03:30-07:30',
+          ].map((interval) => (
             <Button
               key={interval}
               size="middle"
@@ -56,9 +70,10 @@ const PlanHeader = ({ activeTab, onTabChange, activeFilter, onFilterChange, onEx
         </div>
       )}
 
+     
       <div className="flex flex-wrap sm:flex-nowrap gap-3 shrink-0">
-        <Button 
-          icon={<FiFileText className="text-emerald-600" />} 
+        <Button
+          icon={<FiFileText className="text-emerald-600" />}
           className="rounded-lg border-slate-200 flex-1 sm:flex-none font-bold hover:text-emerald-600 hover:border-emerald-600"
           onClick={onExportExcel}
         >

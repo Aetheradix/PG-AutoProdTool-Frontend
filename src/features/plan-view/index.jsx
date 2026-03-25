@@ -1,18 +1,18 @@
-import React, { useState, useMemo } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { setActiveTab } from '../../store/slices/uiSlice';
+import { Empty, Spin } from 'antd';
 import dayjs from 'dayjs';
+import { useMemo, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  useGetProductionScheduleGanttQuery,
+} from '../../store/api/statusApi';
+import { setActiveTab } from '../../store/slices/uiSlice';
+import { exportTableToExcel } from '../../utils/exportUtils';
+import DraggableGanttChart from './components/DraggableGanttChart';
 import GanttChart from './components/GanttChart';
 import PlanHeader from './components/PlanHeader';
 import ScheduleTable from './components/ScheduleTable';
 import TankTimeline from './components/TankTimeline';
-import DraggableGanttChart from './components/DraggableGanttChart';
-import { exportTableToExcel } from '../../utils/exportUtils';
-import {
-  useGetProductionScheduleGanttQuery,
-} from '../../store/api/statusApi';
 import { useScheduleTable } from './hooks/useScheduleTable';
-import { Spin, Empty } from 'antd';
 
 
 const mapScheduleToGanttFormat = (ganttData) => {
@@ -102,12 +102,13 @@ const PlanView = () => {
   // Added for Excel Export and Table View consistency
   const { groupedData, sortedDates } = useScheduleTable();
 
-  // Tasks for the normal GanttChart — from new API (hierarchical)
+  // Tasks for the normal GanttChart — from new API (hierarchical) Only for GHANTT,not tanks
   const tasks = useMemo(() => {
     if (!scheduleGanttResponse?.data) return [];
     return mapScheduleToGanttFormat(scheduleGanttResponse.data);
   }, [scheduleGanttResponse]);
 
+ 
   // Tank tasks — NOW from new API (flat list grouped on fly)
   const tankTasks = useMemo(() => {
     if (!scheduleGanttResponse?.data?.Tanks) return [];

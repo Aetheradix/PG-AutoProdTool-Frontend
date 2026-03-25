@@ -4,6 +4,7 @@ export const planApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         getProductionSchedule: builder.query({
             query: (params = { page: 1, limit: 100 }) => ({
+                // API endpoint updated to /ghantt
                 url: '/v1/production-schedule',
                 params: {
                     page: params.page,
