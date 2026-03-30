@@ -31,6 +31,8 @@ export const useCreatePlanForm = () => {
         try {
             const result = await runSimulation({
                 target_date: targetDate,
+                start_date: targetDate, // Added this just in case backend prefers it!
+                downtimes: downtimes
             }).unwrap();
 
             notification.success({
