@@ -21,7 +21,7 @@ import { useEditableTable } from '@/hooks/useEditableTable';
  * @param {Array} props.excludeFields - Fields to exclude from the Add Modal form
  */
 export function StandardDataTable(props) {
-  const { title = 'Item', searchPlaceholder = 'Search...' } = props;
+  const { title = 'Item', searchPlaceholder = 'Search...', className } = props;
   const { user } = useAuth();
 
   const isAdmin = user?.role === 'admin';
@@ -150,7 +150,7 @@ export function StandardDataTable(props) {
             onChange: table.onPageChange,
           }}
           scroll={{ x: 'max-content', y: 600 }}
-          className="premium-table border-slate-100 shadow-sm rounded-lg overflow-hidden"
+          className={`premium-table border-slate-100 shadow-sm rounded-lg overflow-hidden ${className || ''}`}
         />
       </Form>
 

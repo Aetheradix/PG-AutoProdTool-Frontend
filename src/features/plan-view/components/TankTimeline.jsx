@@ -14,17 +14,15 @@ const productColors = {
 const TankTimeline = ({ tasks = [], filterRange = null }) => {
   const sortedTasks = useMemo(() => {
     return [...tasks].sort((a, b) =>
-      (a.resource || "").localeCompare(b.resource || "", undefined, { numeric: true, sensitivity: 'base' })
+      (a.resource || '').localeCompare(b.resource || '', undefined, {
+        numeric: true,
+        sensitivity: 'base',
+      })
     );
   }, [tasks]);
-  const {
-    tasksWithLanes,
-    timeLabels,
-    timelineStart,
-    timelineEnd,
-    totalDurationHrs,
-    getPosition,
-  } = useTimeline(sortedTasks, filterRange);
+  
+  const { tasksWithLanes, timeLabels, timelineStart, timelineEnd, totalDurationHrs, getPosition } =
+    useTimeline(sortedTasks, filterRange);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-fade-in mb-10">
@@ -44,7 +42,10 @@ const TankTimeline = ({ tasks = [], filterRange = null }) => {
                 {time.label}
                 {time.isNewDay && (
                   <div className="text-[9px] text-blue-400 opacity-70">
-                    {new Date(time.timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                    {new Date(time.timestamp).toLocaleDateString(undefined, {
+                      day: 'numeric',
+                      month: 'short',
+                    })}
                   </div>
                 )}
               </div>
@@ -85,9 +86,12 @@ const TankTimeline = ({ tasks = [], filterRange = null }) => {
                         key={item.id}
                         title={
                           <div className="p-1">
-                            <div className="font-bold border-b border-white/20 mb-1">{item.title}</div>
+                            <div className="font-bold border-b border-white/20 mb-1">
+                              {item.title}
+                            </div>
                             <div className="text-[10px] opacity-90">
-                              {new Date(item.start).toLocaleTimeString()} - {new Date(item.end).toLocaleTimeString()}
+                              {new Date(item.start).toLocaleTimeString()} -{' '}
+                              {new Date(item.end).toLocaleTimeString()}
                             </div>
                           </div>
                         }
@@ -100,12 +104,10 @@ const TankTimeline = ({ tasks = [], filterRange = null }) => {
                             left: `${getPosition(item.start)}%`,
                             width: `${getPosition(item.end) - getPosition(item.start)}%`,
                             top: `${item.laneIndex * 50}px`,
-                            height: '40px'
+                            height: '40px',
                           }}
                         >
-                          <Text
-                            className="font-extrabold truncate text-[11px] text-white!"
-                          >
+                          <Text className="font-extrabold truncate text-[11px] text-white!">
                             {item.title}
                           </Text>
                         </div>
@@ -123,19 +125,27 @@ const TankTimeline = ({ tasks = [], filterRange = null }) => {
       <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-center gap-10">
         <div className="flex items-center gap-3">
           <div className="w-5 h-5 rounded-lg bg-linear-to-br from-blue-600 to-blue-700 shadow-md"></div>
-          <Text className="text-sm font-semibold text-slate-700 uppercase tracking-tight">Shampoo</Text>
+          <Text className="text-sm font-semibold text-slate-700 uppercase tracking-tight">
+            Shampoo
+          </Text>
         </div>
         <div className="flex items-center gap-3">
           <div className="w-5 h-5 rounded-lg bg-linear-to-br from-emerald-500 to-emerald-600 shadow-md"></div>
-          <Text className="text-sm font-semibold text-slate-700 uppercase tracking-tight">Conditioner</Text>
+          <Text className="text-sm font-semibold text-slate-700 uppercase tracking-tight">
+            Conditioner
+          </Text>
         </div>
         <div className="flex items-center gap-3">
           <div className="w-5 h-5 rounded-lg bg-linear-to-br from-amber-500 to-amber-600 shadow-md"></div>
-          <Text className="text-sm font-semibold text-slate-700 uppercase tracking-tight">Premix</Text>
+          <Text className="text-sm font-semibold text-slate-700 uppercase tracking-tight">
+            Premix
+          </Text>
         </div>
         <div className="flex items-center gap-3">
           <div className="w-5 h-5 rounded-lg bg-slate-200 border border-slate-300 shadow-inner"></div>
-          <Text className="text-sm font-semibold text-slate-700 uppercase tracking-tight">Washout</Text>
+          <Text className="text-sm font-semibold text-slate-700 uppercase tracking-tight">
+            Washout
+          </Text>
         </div>
       </div>
     </div>
