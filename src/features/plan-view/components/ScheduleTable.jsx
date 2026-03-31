@@ -109,7 +109,7 @@ const ScheduleTable = ({
     >
       <div className=" p-3 lg:p-5 flex flex-col h-full gap-3 overflow-hidden mt-20">
         {/* Title */}
-        <div className="bg-[#8FA8C8] text-black text-center py-3 rounded font-black uppercase tracking-widest text-sm border border-[#666]">
+        <div className="bg-[#8FA8C8] text-black text-center py-3 rounded-none font-black uppercase tracking-widest text-sm border border-[#666]">
           DAILY PRODUCTION PLAN FOR HAIR CARE MAKING
         </div>
 
@@ -121,16 +121,16 @@ const ScheduleTable = ({
             onChange={(e) => onSearchChange(e.target.value)}
             value={searchText}
             allowClear
-            className="h-9 rounded border-[#444] text-white lg:w-72 text-sm"
+            className="h-9 rounded-none border-[#444] text-white lg:w-72 text-sm"
           />
           <div className="flex gap-2 items-center">
-            <div className="flex p-0.5 rounded border border-[#444]">
+            <div className="flex p-0.5 rounded-none border border-[#444]">
               {['All', '6T', '12T'].map((f) => (
                 <button
                   key={f}
                   onClick={() => onSystemFilterChange(f)}
-                  className={`px-3 py-1 rounded text-xs font-black transition-all cursor-pointer ${
-                    systemFilter === f ? 'bg-[#FFC000] text-black shadow' : 'text-gray-400'
+                  className={`px-3 py-1 rounded-none text-xs font-black transition-all cursor-pointer ${
+                    systemFilter === f ? 'bg-[#FFC000] text-black shadow-none' : 'text-gray-400'
                   }`}
                 >
                   {f}

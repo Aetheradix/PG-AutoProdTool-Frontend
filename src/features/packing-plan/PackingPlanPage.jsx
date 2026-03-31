@@ -93,9 +93,9 @@ export default function PackingPlanPage() {
       ),
       children: (
         <div className="flex flex-col gap-6">
-          <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+          <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 bg-white p-4 rounded-none border border-slate-100 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="bg-blue-50 p-2 rounded-lg text-blue-600">
+              <div className="bg-blue-50 p-2 rounded-none text-blue-600">
                 <FiBarChart size={20} />
               </div>
               <div>
@@ -104,14 +104,14 @@ export default function PackingPlanPage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 bg-slate-50 p-2 rounded-lg shadow-inner border border-slate-100">
+            <div className="flex flex-wrap items-center gap-2 bg-slate-50 p-2 rounded-none shadow-inner border border-slate-100">
               <span className="text-[10px] font-black text-slate-400 px-2 uppercase tracking-widest hidden sm:inline">
                 Time Filter
               </span>
               <Button
                 size="middle"
                 type={!activeFilter ? 'primary' : 'text'}
-                className="text-xs rounded-md h-9 px-4 font-bold"
+                className="text-xs rounded-none h-9 px-4 font-bold"
                 onClick={() => setActiveFilter(null)}
               >
                 Full
@@ -121,7 +121,7 @@ export default function PackingPlanPage() {
                   key={interval}
                   size="middle"
                   type={activeFilter === interval ? 'primary' : 'text'}
-                  className="text-xs rounded-md h-9 px-4 font-bold"
+                  className="text-xs rounded-none h-9 px-4 font-bold"
                   onClick={() => setActiveFilter(interval)}
                 >
                   {interval}
@@ -136,12 +136,12 @@ export default function PackingPlanPage() {
   ];
 
   return (
-    <div className="p-4 bg-slate-50/30 min-h-screen">
+    <div className="p-4 lg:p-8 bg-slate-50/30 min-h-screen">
       <Tabs 
         activeKey={activeTab} 
         onChange={(key) => dispatch(setActiveTab({ view: 'packingPlan', tab: key }))} 
         items={tabItems} 
-        className="premium-tabs" 
+        className="premium-tabs rounded-none" 
       />
     </div>
   );

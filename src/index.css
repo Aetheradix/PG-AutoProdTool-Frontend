@@ -458,6 +458,15 @@ textarea {
 
 .excel-packing-table .ant-table-thead > tr > th {
   @apply !bg-[#EDEDED] !text-black !font-black !text-xs !uppercase !tracking-widest !py-3 !border-r !border-b !border-[#000]/10;
+  border-radius: 0 !important;
+}
+
+/* Remove rounded corners Ant Design applies to first/last header cells */
+.ant-table-thead > tr > th:first-child,
+.ant-table-thead > tr > th:last-child,
+.ant-table-thead > tr > td:first-child,
+.ant-table-thead > tr > td:last-child {
+  border-radius: 0 !important;
 }
 
 .excel-packing-table .ant-table-tbody > tr > td {
