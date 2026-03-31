@@ -447,3 +447,39 @@ textarea {
 .ant-card.rounded-3xl {
   @apply rounded-3xl;
 }
+
+/* ==========================================================================
+   Excel-like Packing Plan Table Theme
+   ========================================================================== */
+
+.excel-packing-table {
+  @apply border-2 border-[#000] rounded-none shadow-none;
+}
+
+.excel-packing-table .ant-table-thead > tr > th {
+  @apply !bg-[#EDEDED] !text-black !font-black !text-xs !uppercase !tracking-widest !py-3 !border-r !border-b !border-[#000]/10;
+}
+
+.excel-packing-table .ant-table-tbody > tr > td {
+  @apply !bg-[#FFF2CC] !text-black !font-bold !py-2 !border-r !border-b !border-[#000]/10 !text-xs;
+}
+
+.excel-packing-table .ant-table-tbody > tr:hover > td {
+  @apply !bg-[#ffeba2]; /* UI hover yellow */
+  color: black !important;
+}
+
+.excel-packing-table .ant-table-cell-fix-left,
+.excel-packing-table .ant-table-cell-fix-right {
+  @apply !bg-[#FFF2CC];
+}
+
+.excel-packing-table .ant-table-tbody > tr:hover > .ant-table-cell-fix-left,
+.excel-packing-table .ant-table-tbody > tr:hover > .ant-table-cell-fix-right {
+  @apply !bg-[#ffeba2];
+}
+
+/* Customizing the action buttons inside excel table */
+.excel-packing-table .ant-btn-link {
+  @apply !text-blue-600 hover:!text-blue-800;
+}

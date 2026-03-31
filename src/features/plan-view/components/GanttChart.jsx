@@ -10,7 +10,7 @@ const statusColors = {
   running: 'bg-gradient-to-r from-emerald-500 to-emerald-600',
   conflict: 'bg-gradient-to-r from-rose-500 to-rose-600',
   warning: 'bg-gradient-to-r from-amber-500 to-amber-600',
-  downtime: 'bg-gradient-to-r from-red-600 to-rose-700',
+  downtime: 'bg-gradient-to-r from-yellow-500 to-yellow-600',
 };
 
 const GanttChart = ({ tasks = [], filterRange = null }) => {

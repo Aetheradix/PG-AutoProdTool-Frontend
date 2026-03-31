@@ -21,12 +21,13 @@ const mapScheduleToGanttFormat = (flatData) => {
   const grouped = {
     '6T': {},
     '12T': {},
-    'DOWNTIME': []
   };
+
+  const downtimes = [];
 
   flatData.forEach(b => {
     if (b.description && b.description.startsWith('DOWNTIME')) {
-      grouped['DOWNTIME'].push(b);
+      downtimes.push(b);
     } else {
       const sys = b.system || 'Unknown';
       const tc = b.tank_config || 'Unknown';
@@ -37,23 +38,6 @@ const mapScheduleToGanttFormat = (flatData) => {
   });
 
   const rows = [];
-  
-  // Downtime row
-  if (grouped['DOWNTIME'].length > 0) {
-     rows.push({
-       resource: 'DOWNTIME',
-       items: grouped['DOWNTIME'].map(b => ({
-          id: b.batch_id,
-          title: b.description,
-          batch: b.batch_id || '',
-          start_time: b.mkg_start_time,
-          end_time: b.mkg_end_time,
-          tech_type: 'Single',
-          system: 'ALL',
-          status: 'downtime'
-       }))
-     });
-  }
 
   ['6T', '12T'].forEach(system => {
     const configs = grouped[system] || {};
@@ -74,12 +58,22 @@ const mapScheduleToGanttFormat = (flatData) => {
         }
     }
 
+    // Prepare downtimes applicable to this system
+    const systemDowntimes = downtimes.filter(dt => 
+        dt.system === system || dt.system === 'ALL_SYSTEMS' || dt.system?.toUpperCase() === 'ALL'
+    ).map(b => ({
+        id: b.batch_id + '-' + system, 
+        title: b.description,
+        batch: b.batch_id || '',
+        start_time: b.mkg_start_time,
+        end_time: b.mkg_end_time,
+        tech_type: 'Single',
+        system: b.system,
+        status: 'downtime'
+    }));
+
     Object.entries(processedConfigs).forEach(([tankConfig, batches]) => {
-      rows.push({
-        resource: `${system} / ${tankConfig}`,
-        system,
-        tankConfig,
-        items: batches.map(b => ({
+      const items = batches.map(b => ({
           id: b.batch_id,
           title: b.description,
           batch: b.batch_id,
@@ -88,7 +82,16 @@ const mapScheduleToGanttFormat = (flatData) => {
           tech_type: b.tech_type,
           system: b.system,
           status: b.tech_type === 'Dual' ? 'warning' : 'ready'
-        }))
+      }));
+      
+      // Inject downtimes into this lane
+      items.push(...systemDowntimes.map(dt => ({ ...dt, id: dt.id + '-' + tankConfig })));
+
+      rows.push({
+        resource: `${system} / ${tankConfig}`,
+        system,
+        tankConfig,
+        items
       });
     });
   });
@@ -203,17 +206,23 @@ const PlanView = () => {
     
     const rows = [];
     ['6T', '12T'].forEach(system => {
-        const sysBatches = flatData.filter(b => b.system === system && (!b.description || !b.description.startsWith('DOWNTIME')));
+        const sysBatches = flatData.filter(b => {
+             if (b.description && b.description.startsWith('DOWNTIME')) {
+                 return b.system === system || b.system === 'ALL_SYSTEMS' || b.system?.toUpperCase() === 'ALL';
+             }
+             return b.system === system;
+        });
+
         if (sysBatches.length > 0) {
             rows.push({
                 resource: system,
                 items: sysBatches.map(b => ({
-                   id: b.batch_id,
+                   id: b.batch_id + (b.description?.startsWith('DOWNTIME') ? '-' + system : ''),
                    title: b.description,
                    batch: b.batch_id,
                    start_time: b.mkg_start_time,
                    end_time: b.mkg_end_time,
-                   status: b.tech_type === 'Dual' ? 'warning' : 'ready',
+                   status: b.description && b.description.startsWith('DOWNTIME') ? 'downtime' : (b.tech_type === 'Dual' ? 'warning' : 'ready'),
                 }))
             });
         }

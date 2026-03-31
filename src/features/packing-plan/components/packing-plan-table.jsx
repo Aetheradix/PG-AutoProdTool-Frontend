@@ -44,6 +44,7 @@ const PackingPlanTable = ({
             title="Packing Plan"
             searchPlaceholder="Search PO number, SKU, description..."
             excludeFields={['id', 'created_at', 'updated_at']}
+            className="excel-packing-table"
           />
         </Card>
       </div>
