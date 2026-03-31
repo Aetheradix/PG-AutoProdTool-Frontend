@@ -15,24 +15,62 @@ import TankTimeline from './components/TankTimeline';
 import { useScheduleTable } from './hooks/useScheduleTable';
 
 
-const mapScheduleToGanttFormat = (ganttData) => {
-  if (!ganttData) return [];
-  const rows = [];
+const mapScheduleToGanttFormat = (flatData) => {
+  if (!Array.isArray(flatData)) return [];
+  
+  const grouped = {
+    '6T': {},
+    '12T': {},
+    'DOWNTIME': []
+  };
 
- 
-  ['6T', '12T'].forEach((system) => {
-    const configs = ganttData[system] || {};
+  flatData.forEach(b => {
+    if (b.description && b.description.startsWith('DOWNTIME')) {
+      grouped['DOWNTIME'].push(b);
+    } else {
+      const sys = b.system || 'Unknown';
+      const tc = b.tank_config || 'Unknown';
+      if (!grouped[sys]) grouped[sys] = {};
+      if (!grouped[sys][tc]) grouped[sys][tc] = [];
+      grouped[sys][tc].push(b);
+    }
+  });
+
+  const rows = [];
+  
+  // Downtime row
+  if (grouped['DOWNTIME'].length > 0) {
+     rows.push({
+       resource: 'DOWNTIME',
+       items: grouped['DOWNTIME'].map(b => ({
+          id: b.batch_id,
+          title: b.description,
+          batch: b.batch_id || '',
+          start_time: b.mkg_start_time,
+          end_time: b.mkg_end_time,
+          tech_type: 'Single',
+          system: 'ALL',
+          status: 'downtime'
+       }))
+     });
+  }
+
+  ['6T', '12T'].forEach(system => {
+    const configs = grouped[system] || {};
     
-    // Create a modified configs object that duplicates Dual batches from FMT+MMT into FMT
+    // Duplicate Dual batches from FMT+MMT into FMT
     const processedConfigs = { ...configs };
     if (processedConfigs['FMT+MMT'] && processedConfigs['FMT']) {
-        // Find dual batches in FMT+MMT
+      const dualBatches = processedConfigs['FMT+MMT'].filter(b => b.tech_type === 'Dual');
+      if (dualBatches.length > 0) {
+        const existingFmtIds = new Set(processedConfigs['FMT'].map(b => b.batch_id));
+        const uniqueDuals = dualBatches.filter(b => !existingFmtIds.has(b.batch_id));
+        processedConfigs['FMT'] = [...processedConfigs['FMT'], ...uniqueDuals];
+      }
+    } else if (processedConfigs['FMT+MMT'] && !processedConfigs['FMT']) {
         const dualBatches = processedConfigs['FMT+MMT'].filter(b => b.tech_type === 'Dual');
         if (dualBatches.length > 0) {
-            // Append them to FMT (checking for duplicates just in case)
-            const existingFmtIds = new Set(processedConfigs['FMT'].map(b => b.batch_id));
-            const uniqueDuals = dualBatches.filter(b => !existingFmtIds.has(b.batch_id));
-            processedConfigs['FMT'] = [...processedConfigs['FMT'], ...uniqueDuals];
+           processedConfigs['FMT'] = [...dualBatches];
         }
     }
 
@@ -41,48 +79,83 @@ const mapScheduleToGanttFormat = (ganttData) => {
         resource: `${system} / ${tankConfig}`,
         system,
         tankConfig,
-        items: (batches || []).map((b) => ({
+        items: batches.map(b => ({
           id: b.batch_id,
           title: b.description,
           batch: b.batch_id,
           start_time: b.mkg_start_time,
           end_time: b.mkg_end_time,
-          tech_type: b.tech_type, // 'Single' or 'Dual'
+          tech_type: b.tech_type,
           system: b.system,
-          status: b.tech_type === 'Dual' ? 'warning' : 'ready',
-        })),
+          status: b.tech_type === 'Dual' ? 'warning' : 'ready'
+        }))
       });
     });
   });
-
+  
   return rows;
 };
 
-const mapScheduleToTankFormat = (tanksData) => {
-  if (!tanksData || !Array.isArray(tanksData)) return [];
+const mapScheduleToTankFormat = (flatData) => {
+  if (!Array.isArray(flatData)) return [];
   
-  // Group the flat list by resource_name (tank id)
-  const grouped = tanksData.reduce((acc, b) => {
-    const res = b.resource_name || 'Unknown';
-    if (!acc[res]) acc[res] = [];
-    acc[res].push({
-      id: b.id,
-      title: b.description,
-      batch: b.description, // For tooltip/display
-      start_time: b.start_time,
-      end_time: b.end_time,
-      type: b.description.toLowerCase().includes('wash')
-        ? 'washout'
-        : b.description.toLowerCase().includes('cond')
-          ? 'conditioner'
-          : b.description.toLowerCase().includes('shm') || b.description.toLowerCase().includes('h&s')
-            ? 'shampoo'
-            : b.description.toLowerCase().includes('base')
-              ? 'premix'
-              : 'shampoo',
+  const grouped = {};
+  
+  flatData.forEach(b => {
+    // Ignore down/maintenance tasks for tank timeline
+    if (b.description && b.description.startsWith('DOWNTIME')) return;
+
+    if (!b.storage_tank || b.storage_tank === 'N/A') return;
+    
+    // Split combined tanks if exist
+    const tanksArr = b.storage_tank.split('+').map(s => s.trim());
+    
+    tanksArr.forEach(tankRaw => {
+        if (!tankRaw) return;
+        
+        let tankName = tankRaw;
+        let hasWash = false;
+        let washMatch = tankRaw.match(/\[Wash (\d+)m\]/i);
+        let washDuration = 0;
+        
+        if (washMatch) {
+            hasWash = true;
+            washDuration = parseInt(washMatch[1], 10);
+            tankName = tankName.replace(/\[Wash \d+m\]/i, '').trim();
+        }
+        
+        if (!grouped[tankName]) grouped[tankName] = [];
+        
+        const washStart = b.pkg_end_time ? new Date(b.pkg_end_time) : null;
+        const washEnd = washStart ? new Date(washStart.getTime() + washDuration * 60000) : null;
+
+        grouped[tankName].push({
+           id: `${b.batch_id}-${tankName}`,
+           title: b.description,
+           batch: b.batch_id,
+           start_time: b.mkg_end_time || b.mkg_start_time,
+           end_time: b.pkg_end_time || b.mkg_end_time,
+           type: b.description.toLowerCase().includes('cond')
+               ? 'conditioner'
+               : b.description.toLowerCase().includes('shm') || b.description.toLowerCase().includes('h&s')
+                 ? 'shampoo'
+                 : b.description.toLowerCase().includes('base')
+                   ? 'premix'
+                   : 'shampoo'
+        });
+        
+        if (hasWash && b.pkg_end_time) {
+            grouped[tankName].push({
+                id: `${b.batch_id}-${tankName}-wash`,
+                title: 'Washout',
+                batch: 'WASH',
+                start_time: washStart.toISOString(),
+                end_time: washEnd.toISOString(),
+                type: 'washout'
+            });
+        }
     });
-    return acc;
-  }, {});
+  });
 
   return Object.entries(grouped).map(([resource, items]) => ({
     resource,
@@ -119,32 +192,34 @@ const PlanView = () => {
  
   // Tank tasks — NOW from new API (flat list grouped on fly)
   const tankTasks = useMemo(() => {
-    if (!scheduleGanttResponse?.data?.Tanks) return [];
-    return mapScheduleToTankFormat(scheduleGanttResponse.data.Tanks);
+    if (!scheduleGanttResponse?.data) return [];
+    return mapScheduleToTankFormat(scheduleGanttResponse.data);
   }, [scheduleGanttResponse]);
 
   // Draggable Gantt — derive from new API by flattening the 6T/12T config groups
   const draggableTasks = useMemo(() => {
     if (!scheduleGanttResponse?.data) return [];
-    const data = scheduleGanttResponse.data;
+    const flatData = scheduleGanttResponse.data;
     
-    return ['6T', '12T'].map(system => {
-      const configs = data[system] || {};
-      // Flatten all batches from different tank_configs into one array for this system
-      const allBatches = Object.values(configs).flat();
-      
-      return {
-        resource: system,
-        items: allBatches.map(b => ({
-          id: b.batch_id,
-          title: b.description,
-          batch: b.batch_id,
-          start_time: b.mkg_start_time,
-          end_time: b.mkg_end_time,
-          status: b.tech_type === 'Dual' ? 'warning' : 'ready',
-        }))
-      };
+    const rows = [];
+    ['6T', '12T'].forEach(system => {
+        const sysBatches = flatData.filter(b => b.system === system && (!b.description || !b.description.startsWith('DOWNTIME')));
+        if (sysBatches.length > 0) {
+            rows.push({
+                resource: system,
+                items: sysBatches.map(b => ({
+                   id: b.batch_id,
+                   title: b.description,
+                   batch: b.batch_id,
+                   start_time: b.mkg_start_time,
+                   end_time: b.mkg_end_time,
+                   status: b.tech_type === 'Dual' ? 'warning' : 'ready',
+                }))
+            });
+        }
     });
+
+    return rows;
   }, [scheduleGanttResponse]);
 
   const filterRange = useMemo(() => {
