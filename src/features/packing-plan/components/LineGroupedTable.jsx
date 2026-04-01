@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
-import { Table, Typography, ConfigProvider, Button, Space, Popconfirm, Form, Input } from 'antd';
-import { FiEdit2, FiTrash2, FiPlus, FiPackage, FiSearch } from 'react-icons/fi';
-import EditableCell from '../../excel-upload/components/EditableCell';
 import { useAuth } from '@/context/AuthContext';
 import { useEditableTable } from '@/hooks/useEditableTable';
+import { Button, ConfigProvider, DatePicker, Form, Input, Modal, Popconfirm, Space, Table, Typography } from 'antd';
+import dayjs from 'dayjs';
+import { useMemo } from 'react';
+import { FiEdit2, FiPackage, FiPlus, FiSearch, FiTrash2 } from 'react-icons/fi';
 import { buildDynamicColumns } from '../../../utils/tableUtils';
+import EditableCell from '../../excel-upload/components/EditableCell';
 
 const { Title, Text } = Typography;
 
@@ -27,13 +28,14 @@ const LineGroupedTable = (props) => {
 
     // Build dynamic columns and filter out 'line' and other excluded fields
     const dynamicCols = buildDynamicColumns(table.dataSource, table.rowKey)
-      .filter(col => col.dataIndex !== 'line' && !excludeFields.includes(col.dataIndex));
+      .filter(col => col.dataIndex !== 'line' && !excludeFields.includes(col.dataIndex))
+      .map(col => ({ ...col, sorter: false })); // Remove sorting to disable hover/tooltips
 
     const finalCols = [
       { 
-        title: 'S.NO', 
-        dataIndex: 'sn', 
-        width: 60, 
+        title: 'LINE', 
+        dataIndex: 'line', 
+        width: 80, 
         align: 'center',
         fixed: 'left',
         render: (text) => <span className="font-bold text-slate-500">{text}</span>
@@ -116,8 +118,8 @@ const LineGroupedTable = (props) => {
     table.filteredData.forEach((item) => {
       const lineId = item.line || 'Unknown';
       const lineName = LINE_NAMES[lineId] || lineId;
-      if (!groups[lineName]) groups[lineName] = [];
-      groups[lineName].push({ ...item, sn: groups[lineName].length + 1 });
+      if (!groups[lineName]) groups[lineName] = { rows: [], lineId: lineId };
+      groups[lineName].rows.push({ ...item, sn: groups[lineName].rows.length + 1 });
     });
     
     const sortedOrder = ['Sachet Line 1', 'Sachet Line 2', 'Sachet Line 4', 'Ronchi', 'Tube Line 1'];
@@ -137,13 +139,15 @@ const LineGroupedTable = (props) => {
       theme={{
         components: {
           Table: {
-            headerBg: '#002060', // Dark Blue from Excel headers
-            headerColor: '#ffffff',
+            headerBg: '#e2e8f0', // Light Gray (Slate 200)
+            headerColor: '#0f172a', // Dark Slate 900
+            headerSortHoverBg: '#e2e8f0', // Disable hover effect by keeping same bg
+            headerSortActiveBg: '#e2e8f0',
             borderRadius: 0,
             fontSize: 12,
             cellPaddingBlock: 8,
             cellPaddingInline: 12,
-            borderColor: '#666', // Added darker border for Excel look
+            borderColor: '#94a3b8', // Slightly lighter border
           },
         },
       }}
@@ -172,12 +176,23 @@ const LineGroupedTable = (props) => {
         </div>
 
         <Form form={table.form} component={false}>
-          {Object.entries(groupedData).map(([lineName, dataSource]) => (
+          {Object.entries(groupedData).map(([lineName, { rows: dataSource, lineId }]) => (
             <div key={lineName} className="mb-6 animate-fade-in group">
               <div className="bg-[#002060] text-white py-2.5 px-5 rounded-none font-bold uppercase tracking-wider text-xs flex items-center justify-between border-b border-blue-900/50">
                 <div className="flex items-center gap-2.5">
                   <FiPackage className="text-blue-200" size={16} />
                   <span>{lineName} - PACKING PLAN</span>
+                  {isAdmin && (
+                    <Button 
+                      size="small" 
+                      type="primary" 
+                      icon={<FiPlus />} 
+                      onClick={() => table.handleAdd({ line: lineId })}
+                      className="ml-4 h-6 text-[10px] rounded-none bg-blue-500 hover:bg-blue-400 border-none shadow-sm flex items-center gap-1 font-black"
+                    >
+                      ADD TO {lineId}
+                    </Button>
+                  )}
                 </div>
                 <div className="text-[10px] opacity-70 font-medium">
                   {dataSource.length} BATCHES
@@ -191,6 +206,7 @@ const LineGroupedTable = (props) => {
                 bordered
                 rowKey={table.rowKey}
                 scroll={{ x: 'max-content' }}
+                showSorterTooltip={false}
                 className="excel-style-table border-x border-b border-slate-400"
                 rowClassName={() => 'bg-[#FFF2CC] hover:bg-[#FFF2CC]! font-medium !rounded-none'}
               />
@@ -198,6 +214,72 @@ const LineGroupedTable = (props) => {
           ))}
         </Form>
       </div>
+
+      <Modal
+        title={
+          <div className="flex items-center gap-2 text-[#002060] border-b border-slate-100 pb-3 mb-0">
+            <FiPackage size={20} />
+            <span className="font-black uppercase tracking-tight text-lg">Add New {title}</span>
+          </div>
+        }
+        open={table.isAddModalOpen}
+        onOk={table.handleAddOk}
+        onCancel={() => table.setIsAddModalOpen(false)}
+        okText="CREATE PLAN"
+        cancelText="CANCEL"
+        confirmLoading={table.isCreating}
+        width={1100}
+        centered
+        className="premium-modal"
+        styles={{
+          body: { padding: '24px 32px' },
+          mask: { backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0, 32, 96, 0.15)' }
+        }}
+        okButtonProps={{ className: 'bg-[#002060] hover:bg-[#003080] rounded-none h-10 px-8 font-black tracking-widest' }}
+        cancelButtonProps={{ className: 'rounded-none h-10 px-8 font-bold' }}
+      >
+        <Form
+          form={table.addForm}
+          layout="vertical"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4"
+        >
+          {table.addModalFields.map((key) => {
+            const isDatetime = key.toLowerCase().includes('datetime') || key.toLowerCase().endsWith('_date');
+            const isQty = key.toLowerCase().includes('qty') || key.toLowerCase().includes('quantity');
+            
+            return (
+              <Form.Item
+                key={key}
+                name={key}
+                label={
+                  <span className="font-bold text-slate-600 uppercase text-[10px] tracking-widest">
+                    {key.replace(/_/g, ' ')}
+                  </span>
+                }
+                rules={[{ required: true, message: `${key.replace(/_/g, ' ')} required` }]}
+              >
+                {isDatetime ? (
+                  <DatePicker
+                    showTime
+                    format="YYYY-MM-DD HH:mm:ss"
+                    className="w-full rounded-none border-slate-300 h-10 font-medium"
+                    placeholder={`Select ${key.replace(/_/g, ' ')}`}
+                    needConfirm={false}
+                    getValueProps={(value) => ({ value: value ? dayjs(value) : null })}
+                    onChange={(val) => table.addForm.setFieldValue(key, val ? val.format('YYYY-MM-DD HH:mm:ss') : null)}
+                  />
+                ) : (
+                  <Input
+                    type={isQty ? 'number' : 'text'}
+                    placeholder={`Enter ${key.replace(/_/g, ' ')}`}
+                    className="rounded-none border-slate-300 h-10 font-bold bg-slate-50 focus:bg-white transition-all shadow-inner"
+                  />
+                )}
+              </Form.Item>
+            );
+          })}
+        </Form>
+      </Modal>
     </ConfigProvider>
   );
 };

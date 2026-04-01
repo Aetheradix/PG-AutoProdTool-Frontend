@@ -92,9 +92,12 @@ export function useEditableTable({
         }
     }
 
-    function handleAdd() {
+    function handleAdd(initialValues = {}) {
         setIsAddModalOpen(true);
         addForm.resetFields();
+        if (initialValues) {
+            addForm.setFieldsValue(initialValues);
+        }
     }
 
     async function handleAddOk() {
