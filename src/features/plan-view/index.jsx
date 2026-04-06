@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   useGetProductionScheduleGanttQuery,
+  useGetGanttEditQuery,
 } from '../../store/api/statusApi';
 import { setActiveTab } from '../../store/slices/uiSlice';
 import { exportTableToExcel } from '../../utils/exportUtils';
@@ -174,6 +175,8 @@ const PlanView = () => {
   // New API for GanttChart, TankTimeline, and DraggableGanttChart
   const { data: scheduleGanttResponse, isLoading: isScheduleLoading, error: scheduleError } =
     useGetProductionScheduleGanttQuery();
+    
+  const { data: ganttEditResponse } = useGetGanttEditQuery();
 
   // Added for Excel Export and Table View consistency
   const {
@@ -192,6 +195,7 @@ const PlanView = () => {
     return mapScheduleToGanttFormat(scheduleGanttResponse.data);
   }, [scheduleGanttResponse]);
 
+  // console.log('Mapped Gantt tasks:', tasks);    
 
   // Tank tasks — NOW from new API (flat list grouped on fly)
   const tankTasks = useMemo(() => {
@@ -199,39 +203,21 @@ const PlanView = () => {
     return mapScheduleToTankFormat(scheduleGanttResponse.data);
   }, [scheduleGanttResponse]);
 
-  // Draggable Gantt — derive from new API by flattening the 6T/12T config groups
+  // Draggable Gantt — derive from new API (Gantt-Edit) with fallback to live data if empty
   const draggableTasks = useMemo(() => {
-    if (!scheduleGanttResponse?.data) return [];
-    const flatData = scheduleGanttResponse.data;
-    console.log('Flat schedule data for Draggable Gantt:', flatData);
+    const editData = ganttEditResponse?.data || [];
+    const liveData = scheduleGanttResponse?.data || [];
+    
+    // Fallback to live data if edit data is empty (only for UI grouping check)
+    const dataToMap = editData.length > 0 ? editData : liveData;
+    
+    console.log('Using data for Draggable Gantt mapping:', editData.length > 0 ? 'EDITABLE' : 'LIVE FALLBACK');
+    console.log('Raw Gantt-Edit Response:', ganttEditResponse);
+    
+    return mapScheduleToGanttFormat(dataToMap);
+  }, [ganttEditResponse, scheduleGanttResponse]);
 
-    const rows = [];
-    ['6T', '12T'].forEach(system => {
-      const sysBatches = flatData.filter(b => {
-        if (b.description && b.description.startsWith('DOWNTIME')) {
-          return b.system === system || b.system === 'ALL_SYSTEMS' || b.system?.toUpperCase() === 'ALL';
-        }
-        return b.system === system;
-      });
-
-      if (sysBatches.length > 0) {
-        rows.push({
-          resource: system,
-          items: sysBatches.map(b => ({
-            id: b.batch_id + (b.description?.startsWith('DOWNTIME') ? '-' + system : ''),
-            title: b.description,
-            batch: b.batch_id,
-            start_time: b.mkg_start_time,
-            end_time: b.mkg_end_time,
-            status: b.description && b.description.startsWith('DOWNTIME') ? 'downtime' : (b.tech_type === 'Dual' ? 'warning' : 'ready'),
-          }))
-        });
-      }
-    });
-
-    return rows;
-  }, [scheduleGanttResponse]);
-
+  console.log('Mapped Draggable Gantt tasks:', draggableTasks);
   const filterRange = useMemo(() => {
     if (!activeFilter || !scheduleGanttResponse?.data) return null;
 
