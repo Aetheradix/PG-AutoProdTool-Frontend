@@ -7,6 +7,7 @@ import RMStatusDeadStock from './components/RMStatusDeadStock';
 import { SKUMasterTable } from './components/SKUMasterTable';
 import { UploadActionButtons } from './components/UploadActionButtons';
 import { UploadDataTable } from './components/UploadDataTable';
+import { TankManagement } from './components/TankManagement';
 import { getUploadColumns } from './utils/uploadColumns';
 import { useSelector, useDispatch } from 'react-redux';
 import { setActiveTab } from '../../store/slices/uiSlice';
@@ -114,6 +115,22 @@ export function MasterDataPage() {
             <h3 className="text-lg font-semibold text-slate-700">Manage Dead Stock</h3>
           </div>
           <RMStatusDeadStock />
+        </div>
+      )
+    },
+    {
+      key: 'tanks',
+      label: (
+        <span className="flex items-center gap-2 px-1">
+          <FiDatabase /> Tanks
+        </span>
+      ),
+      children: (
+        <div className="flex flex-col gap-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-slate-700">Manage Tank Assets</h3>
+          </div>
+          <TankManagement />
         </div>
       )
     },

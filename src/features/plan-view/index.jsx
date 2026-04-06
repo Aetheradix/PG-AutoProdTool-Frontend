@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   useGetProductionScheduleGanttQuery,
+  useGetGanttEditQuery,
 } from '../../store/api/statusApi';
 import { setActiveTab } from '../../store/slices/uiSlice';
 import { exportTableToExcel } from '../../utils/exportUtils';
@@ -17,7 +18,7 @@ import { useScheduleTable } from './hooks/useScheduleTable';
 
 const mapScheduleToGanttFormat = (flatData) => {
   if (!Array.isArray(flatData)) return [];
-  
+
   const grouped = {
     '6T': {},
     '12T': {},
@@ -41,7 +42,7 @@ const mapScheduleToGanttFormat = (flatData) => {
 
   ['6T', '12T'].forEach(system => {
     const configs = grouped[system] || {};
-    
+
     // Duplicate Dual batches from FMT+MMT into FMT
     const processedConfigs = { ...configs };
     if (processedConfigs['FMT+MMT'] && processedConfigs['FMT']) {
@@ -52,38 +53,38 @@ const mapScheduleToGanttFormat = (flatData) => {
         processedConfigs['FMT'] = [...processedConfigs['FMT'], ...uniqueDuals];
       }
     } else if (processedConfigs['FMT+MMT'] && !processedConfigs['FMT']) {
-        const dualBatches = processedConfigs['FMT+MMT'].filter(b => b.tech_type === 'Dual');
-        if (dualBatches.length > 0) {
-           processedConfigs['FMT'] = [...dualBatches];
-        }
+      const dualBatches = processedConfigs['FMT+MMT'].filter(b => b.tech_type === 'Dual');
+      if (dualBatches.length > 0) {
+        processedConfigs['FMT'] = [...dualBatches];
+      }
     }
 
     // Prepare downtimes applicable to this system
-    const systemDowntimes = downtimes.filter(dt => 
-        dt.system === system || dt.system === 'ALL_SYSTEMS' || dt.system?.toUpperCase() === 'ALL'
+    const systemDowntimes = downtimes.filter(dt =>
+      dt.system === system || dt.system === 'ALL_SYSTEMS' || dt.system?.toUpperCase() === 'ALL'
     ).map(b => ({
-        id: b.batch_id + '-' + system, 
-        title: b.description,
-        batch: b.batch_id || '',
-        start_time: b.mkg_start_time,
-        end_time: b.mkg_end_time,
-        tech_type: 'Single',
-        system: b.system,
-        status: 'downtime'
+      id: b.batch_id + '-' + system,
+      title: b.description,
+      batch: b.batch_id || '',
+      start_time: b.mkg_start_time,
+      end_time: b.mkg_end_time,
+      tech_type: 'Single',
+      system: b.system,
+      status: 'downtime'
     }));
 
     Object.entries(processedConfigs).forEach(([tankConfig, batches]) => {
       const items = batches.map(b => ({
-          id: b.batch_id,
-          title: b.description,
-          batch: b.batch_id,
-          start_time: b.mkg_start_time,
-          end_time: b.mkg_end_time,
-          tech_type: b.tech_type,
-          system: b.system,
-          status: b.tech_type === 'Dual' ? 'warning' : 'ready'
+        id: b.batch_id,
+        title: b.description,
+        batch: b.batch_id,
+        start_time: b.mkg_start_time,
+        end_time: b.mkg_end_time,
+        tech_type: b.tech_type,
+        system: b.system,
+        status: b.tech_type === 'Dual' ? 'warning' : 'ready'
       }));
-      
+
       // Inject downtimes into this lane
       items.push(...systemDowntimes.map(dt => ({ ...dt, id: dt.id + '-' + tankConfig })));
 
@@ -95,68 +96,68 @@ const mapScheduleToGanttFormat = (flatData) => {
       });
     });
   });
-  
+
   return rows;
 };
 
 const mapScheduleToTankFormat = (flatData) => {
   if (!Array.isArray(flatData)) return [];
-  
+
   const grouped = {};
-  
+
   flatData.forEach(b => {
     // Ignore down/maintenance tasks for tank timeline
     if (b.description && b.description.startsWith('DOWNTIME')) return;
 
     if (!b.storage_tank || b.storage_tank === 'N/A') return;
-    
+
     // Split combined tanks if exist
     const tanksArr = b.storage_tank.split('+').map(s => s.trim());
-    
-    tanksArr.forEach(tankRaw => {
-        if (!tankRaw) return;
-        
-        let tankName = tankRaw;
-        let hasWash = false;
-        let washMatch = tankRaw.match(/\[Wash (\d+)m\]/i);
-        let washDuration = 0;
-        
-        if (washMatch) {
-            hasWash = true;
-            washDuration = parseInt(washMatch[1], 10);
-            tankName = tankName.replace(/\[Wash \d+m\]/i, '').trim();
-        }
-        
-        if (!grouped[tankName]) grouped[tankName] = [];
-        
-        const washStart = b.pkg_end_time ? new Date(b.pkg_end_time) : null;
-        const washEnd = washStart ? new Date(washStart.getTime() + washDuration * 60000) : null;
 
+    tanksArr.forEach(tankRaw => {
+      if (!tankRaw) return;
+
+      let tankName = tankRaw;
+      let hasWash = false;
+      let washMatch = tankRaw.match(/\[Wash (\d+)m\]/i);
+      let washDuration = 0;
+
+      if (washMatch) {
+        hasWash = true;
+        washDuration = parseInt(washMatch[1], 10);
+        tankName = tankName.replace(/\[Wash \d+m\]/i, '').trim();
+      }
+
+      if (!grouped[tankName]) grouped[tankName] = [];
+
+      const washStart = b.pkg_end_time ? new Date(b.pkg_end_time) : null;
+      const washEnd = washStart ? new Date(washStart.getTime() + washDuration * 60000) : null;
+
+      grouped[tankName].push({
+        id: `${b.batch_id}-${tankName}`,
+        title: b.description,
+        batch: b.batch_id,
+        start_time: b.mkg_end_time || b.mkg_start_time,
+        end_time: b.pkg_end_time || b.mkg_end_time,
+        type: b.description.toLowerCase().includes('cond')
+          ? 'conditioner'
+          : b.description.toLowerCase().includes('shm') || b.description.toLowerCase().includes('h&s')
+            ? 'shampoo'
+            : b.description.toLowerCase().includes('base')
+              ? 'premix'
+              : 'shampoo'
+      });
+
+      if (hasWash && b.pkg_end_time) {
         grouped[tankName].push({
-           id: `${b.batch_id}-${tankName}`,
-           title: b.description,
-           batch: b.batch_id,
-           start_time: b.mkg_end_time || b.mkg_start_time,
-           end_time: b.pkg_end_time || b.mkg_end_time,
-           type: b.description.toLowerCase().includes('cond')
-               ? 'conditioner'
-               : b.description.toLowerCase().includes('shm') || b.description.toLowerCase().includes('h&s')
-                 ? 'shampoo'
-                 : b.description.toLowerCase().includes('base')
-                   ? 'premix'
-                   : 'shampoo'
+          id: `${b.batch_id}-${tankName}-wash`,
+          title: 'Washout',
+          batch: 'WASH',
+          start_time: washStart.toISOString(),
+          end_time: washEnd.toISOString(),
+          type: 'washout'
         });
-        
-        if (hasWash && b.pkg_end_time) {
-            grouped[tankName].push({
-                id: `${b.batch_id}-${tankName}-wash`,
-                title: 'Washout',
-                batch: 'WASH',
-                start_time: washStart.toISOString(),
-                end_time: washEnd.toISOString(),
-                type: 'washout'
-            });
-        }
+      }
     });
   });
 
@@ -175,9 +176,11 @@ const PlanView = () => {
   const { data: scheduleGanttResponse, isLoading: isScheduleLoading, error: scheduleError } =
     useGetProductionScheduleGanttQuery();
     
+  const { data: ganttEditResponse } = useGetGanttEditQuery();
+
   // Added for Excel Export and Table View consistency
-  const { 
-    groupedData, 
+  const {
+    groupedData,
     sortedDates,
     isLoading: isTableLoading,
     searchText,
@@ -192,44 +195,27 @@ const PlanView = () => {
     return mapScheduleToGanttFormat(scheduleGanttResponse.data);
   }, [scheduleGanttResponse]);
 
- 
+  // console.log('Mapped Gantt tasks:', tasks);    
+
   // Tank tasks — NOW from new API (flat list grouped on fly)
   const tankTasks = useMemo(() => {
     if (!scheduleGanttResponse?.data) return [];
     return mapScheduleToTankFormat(scheduleGanttResponse.data);
   }, [scheduleGanttResponse]);
 
-  // Draggable Gantt — derive from new API by flattening the 6T/12T config groups
+  // Draggable Gantt — derive from new API (Gantt-Edit) with fallback to live data if empty
   const draggableTasks = useMemo(() => {
-    if (!scheduleGanttResponse?.data) return [];
-    const flatData = scheduleGanttResponse.data;
+    const editData = ganttEditResponse?.data || [];
+    const liveData = scheduleGanttResponse?.data || [];
     
-    const rows = [];
-    ['6T', '12T'].forEach(system => {
-        const sysBatches = flatData.filter(b => {
-             if (b.description && b.description.startsWith('DOWNTIME')) {
-                 return b.system === system || b.system === 'ALL_SYSTEMS' || b.system?.toUpperCase() === 'ALL';
-             }
-             return b.system === system;
-        });
+    // Fallback to live data if edit data is empty (only for UI grouping check)
+    const dataToMap = editData.length > 0 ? editData : liveData;
+    
+   
+    
+    return mapScheduleToGanttFormat(dataToMap);
+  }, [ganttEditResponse, scheduleGanttResponse]);
 
-        if (sysBatches.length > 0) {
-            rows.push({
-                resource: system,
-                items: sysBatches.map(b => ({
-                   id: b.batch_id + (b.description?.startsWith('DOWNTIME') ? '-' + system : ''),
-                   title: b.description,
-                   batch: b.batch_id,
-                   start_time: b.mkg_start_time,
-                   end_time: b.mkg_end_time,
-                   status: b.description && b.description.startsWith('DOWNTIME') ? 'downtime' : (b.tech_type === 'Dual' ? 'warning' : 'ready'),
-                }))
-            });
-        }
-    });
-
-    return rows;
-  }, [scheduleGanttResponse]);
 
   const filterRange = useMemo(() => {
     if (!activeFilter || !scheduleGanttResponse?.data) return null;
@@ -243,20 +229,20 @@ const PlanView = () => {
     });
 
     if (!minDate) return null;
-    
+
     if (activeFilter === '24h') {
-        const start = minDate.startOf('day');
-        return { start: start.toDate(), end: start.add(24, 'hour').toDate() };
+      const start = minDate.startOf('day');
+      return { start: start.toDate(), end: start.add(24, 'hour').toDate() };
     }
 
     const parts = activeFilter.split('-');
     if (parts.length === 2) {
       const [startH, startM] = parts[0].split(':').map(Number);
       const [endH, endM] = parts[1].split(':').map(Number);
-      
+
       let start = minDate.hour(startH).minute(startM).second(0).millisecond(0);
       let end = minDate.hour(endH).minute(endM).second(0).millisecond(0);
-      
+
       if (end.isBefore(start) || end.isSame(start)) {
         end = end.add(1, 'day');
       }
@@ -288,8 +274,8 @@ const PlanView = () => {
     switch (activeTab) {
       case 'table':
         return (
-          <ScheduleTable 
-            groupedData={groupedData} 
+          <ScheduleTable
+            groupedData={groupedData}
             sortedDates={sortedDates}
             isLoading={isTableLoading}
             searchText={searchText}

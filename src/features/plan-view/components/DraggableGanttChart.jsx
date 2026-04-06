@@ -11,6 +11,7 @@ const statusColors = {
   running: 'bg-gradient-to-r from-emerald-500 to-emerald-600',
   conflict: 'bg-gradient-to-r from-rose-500 to-rose-600',
   warning: 'bg-gradient-to-r from-amber-500 to-amber-600',
+  downtime: 'bg-gradient-to-r from-yellow-500 to-yellow-600',
 };
 
 const DraggableGanttChart = ({ tasks = [], filterRange = null }) => {
@@ -90,7 +91,7 @@ const DraggableGanttChart = ({ tasks = [], filterRange = null }) => {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-fade-in mb-10">
       <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-        <Text className="font-bold text-slate-700">Draggable Timeline (timeline_data)</Text>
+        <Text className="font-bold text-slate-700">Draggable Timeline (Gantt-Edit)</Text>
         <Text type="secondary" className="text-xs">
           Drag bars to adjust schedule
         </Text>
@@ -100,12 +101,12 @@ const DraggableGanttChart = ({ tasks = [], filterRange = null }) => {
         ref={chartRef}
       >
         <div
-          style={{ minWidth: `${Math.max(totalDurationHrs * 120, 1200)}px` }}
+          style={{ minWidth: `${Math.max(totalDurationHrs * 200, 1200)}px` }}
           className="relative"
         >
           {/* Time Header */}
           <div className="flex border-b border-slate-100 bg-slate-50/80 backdrop-blur-sm sticky top-0 z-20">
-            <div className="w-24 shrink-0 border-r border-slate-200 bg-slate-200 flex items-center justify-center font-bold text-slate-500 text-xs tracking-wider sticky left-0 z-30">
+            <div className="w-40 shrink-0 border-r border-slate-200 bg-slate-200 flex items-center justify-center font-bold text-slate-500 text-xs tracking-wider sticky left-0 z-30">
               RESOURCE
             </div>
             {timeLabels.slice(0, -1).map((time, i) => (
@@ -136,8 +137,8 @@ const DraggableGanttChart = ({ tasks = [], filterRange = null }) => {
                 style={{ height: `${Math.max(resourceRow.totalLanes * 80 + 40, 140)}px` }}
               >
                 {/* Resource Label */}
-                <div className="w-24 shrink-0 flex items-center justify-center font-black text-slate-600 border-r border-slate-200 bg-slate-100 group-hover:bg-blue-50 transition-colors duration-300 sticky left-0 z-20">
-                  <div className="bg-white shadow-sm border border-slate-200 rounded-lg px-3 py-2 text-sm">
+                <div className="w-40 shrink-0 flex items-center justify-center font-black text-slate-600 border-r border-slate-200 bg-slate-100 group-hover:bg-blue-50 transition-colors duration-300 sticky left-0 z-20">
+                  <div className="bg-white shadow-sm border border-slate-200 rounded-lg px-3 py-2 text-sm w-[90%] text-center truncate">
                     {resourceRow.resource}
                   </div>
                 </div>

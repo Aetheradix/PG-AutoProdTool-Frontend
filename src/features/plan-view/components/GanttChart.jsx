@@ -14,7 +14,7 @@ const statusColors = {
 };
 
 const GanttChart = ({ tasks = [], filterRange = null }) => {
-  console.log('GanttChart received tasks:', tasks); // Debug log to check incoming tasks
+ 
   const {
     tasksWithLanes,
     timeLabels,
@@ -27,7 +27,7 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-fade-in mb-10 w-full">
       <div className="overflow-auto custom-scrollbar max-h-[calc(100vh-350px)] sm:max-h-[60vh] lg:max-h-[70vh]">
-        <div style={{ minWidth: `${Math.max(totalDurationHrs * 120, 1200)}px` }}>
+        <div style={{ minWidth: `${Math.max(totalDurationHrs * 200, 1200)}px` }}>
           {/* Time Header */}
           <div className="flex border-b border-slate-100 bg-slate-50/80 backdrop-blur-sm sticky top-0 z-20">
             <div className="w-40 shrink-0 border-r border-slate-200 bg-slate-200 flex items-center justify-center font-bold text-slate-500 text-xs tracking-wider sticky left-0 z-30">

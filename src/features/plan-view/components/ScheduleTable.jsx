@@ -68,7 +68,7 @@ const ScheduleTable = ({
   onSearchChange,
   onSystemFilterChange
 }) => {
-  console.log('ScheduleTable Rendered with groupedData:', groupedData);
+ 
 
   // Dynamically build columns based on config
   const columns = useMemo(() => {
