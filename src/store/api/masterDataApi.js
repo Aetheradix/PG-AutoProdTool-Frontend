@@ -152,6 +152,40 @@ export const masterDataApi = apiSlice.injectEndpoints({
             }),
             invalidatesTags: ['MasterData'],
         }),
+        // ─── Tanks ────────────────────────────────────────────────────────────────
+        getTanks: builder.query({
+            query: (params = { page: 1, limit: 1000 }) => ({
+                url: '/v1/tanks',
+                params: {
+                    page: params.page,
+                    limit: params.limit,
+                },
+            }),
+            providesTags: ['Tanks'],
+        }),
+        createTank: builder.mutation({
+            query: (data) => ({
+                url: '/v1/tanks',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: ['Tanks'],
+        }),
+        updateTank: builder.mutation({
+            query: (data) => ({
+                url: `/v1/tanks/${encodeURIComponent(data.id)}`,
+                method: 'PUT',
+                body: data,
+            }),
+            invalidatesTags: ['Tanks'],
+        }),
+        deleteTank: builder.mutation({
+            query: (id) => ({
+                url: `/v1/tanks/${encodeURIComponent(id)}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['Tanks'],
+        }),
     }),
 });
 
@@ -173,5 +207,9 @@ export const {
     useGetEaBnaaQuery,
     useUpdateEaBnaaMutation,
     useCreateEaBnaaMutation,
-    useDeleteEaBnaaMutation
+    useDeleteEaBnaaMutation,
+    useGetTanksQuery,
+    useCreateTankMutation,
+    useUpdateTankMutation,
+    useDeleteTankMutation,
 } = masterDataApi;
