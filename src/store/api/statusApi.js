@@ -46,6 +46,16 @@ export const statusApi = apiSlice.injectEndpoints({
             }),
             invalidatesTags: ['Status'],
         }),
+        updateGanttEdit: builder.mutation({
+            query: ({ id, start_time, end_time }) => ({
+                url: `/v1/production-schedule/gantt-edit/${encodeURIComponent(id)}`,
+                method: 'PUT',
+                body: {
+                    start_time,
+                    end_time,
+                },
+            }),
+        }),
     }),
 });
 
@@ -59,5 +69,6 @@ export const {
     useGetProductionScheduleGanttQuery,
     useGetGanttEditQuery,
     useGetTimelineDataQuery,
-    useUpdateTimelineDataMutation
+    useUpdateTimelineDataMutation,
+    useUpdateGanttEditMutation
 } = statusApi;

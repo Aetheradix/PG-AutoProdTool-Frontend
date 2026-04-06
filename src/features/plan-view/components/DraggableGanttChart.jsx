@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Typography, Tooltip, message } from 'antd';
 
-import { useUpdateTimelineDataMutation } from '@/store/api/statusApi';
+import { useUpdateGanttEditMutation } from '@/store/api/statusApi';
 import { useTimeline } from '../hooks/useTimeline';
 
 const { Text } = Typography;
@@ -18,7 +18,7 @@ const DraggableGanttChart = ({ tasks = [], filterRange = null }) => {
   const { tasksWithLanes, timeLabels, timelineStart, timelineEnd, totalDurationHrs, getPosition } =
     useTimeline(tasks, filterRange);
 
-  const [updateTimelineData] = useUpdateTimelineDataMutation();
+  const [updateGanttEdit] = useUpdateGanttEditMutation();
   const [draggingItem, setDraggingItem] = useState(null);
   const chartRef = useRef(null);
 
@@ -63,11 +63,11 @@ const DraggableGanttChart = ({ tasks = [], filterRange = null }) => {
       );
 
       try {
-        await updateTimelineData({
+        await updateGanttEdit({
           id: draggingItem.id,
-          start_time: newStartTime.toISOString().slice(0, 19).replace('T', ' '),
-          end_time: newEndTime.toISOString().slice(0, 19).replace('T', ' '),
-        }).unwrap();
+          start_time: newStartTime.toISOString().slice(0, 19),
+          end_time: newEndTime.toISOString().slice(0, 19),
+        });
         message.success('Time updated successfully');
       } catch (err) {
         message.error('Failed to update time');
@@ -86,7 +86,7 @@ const DraggableGanttChart = ({ tasks = [], filterRange = null }) => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [draggingItem, timelineStart, timelineEnd, updateTimelineData]);
+  }, [draggingItem, timelineStart, timelineEnd, updateGanttEdit]);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-fade-in mb-10">
