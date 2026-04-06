@@ -211,13 +211,12 @@ const PlanView = () => {
     // Fallback to live data if edit data is empty (only for UI grouping check)
     const dataToMap = editData.length > 0 ? editData : liveData;
     
-    console.log('Using data for Draggable Gantt mapping:', editData.length > 0 ? 'EDITABLE' : 'LIVE FALLBACK');
-    console.log('Raw Gantt-Edit Response:', ganttEditResponse);
+   
     
     return mapScheduleToGanttFormat(dataToMap);
   }, [ganttEditResponse, scheduleGanttResponse]);
 
-  console.log('Mapped Draggable Gantt tasks:', draggableTasks);
+
   const filterRange = useMemo(() => {
     if (!activeFilter || !scheduleGanttResponse?.data) return null;
 

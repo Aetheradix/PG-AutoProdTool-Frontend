@@ -14,7 +14,7 @@ const statusColors = {
 };
 
 const GanttChart = ({ tasks = [], filterRange = null }) => {
-  console.log('GanttChart received tasks:', tasks); // Debug log to check incoming tasks
+ 
   const {
     tasksWithLanes,
     timeLabels,
