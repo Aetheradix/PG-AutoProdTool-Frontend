@@ -15,22 +15,49 @@ const statusColors = {
 };
 
 const DraggableGanttChart = ({ tasks = [], filterRange = null }) => {
+  const [localOverrides, setLocalOverrides] = useState({});
+
+  useEffect(() => {
+    setLocalOverrides({});
+  }, [tasks]);
+
+  const displayTasks = React.useMemo(() => tasks.map(resourceRow => {
+    if (!resourceRow.items) return resourceRow;
+    return {
+      ...resourceRow,
+      items: resourceRow.items.map(item => {
+        const override = localOverrides[`${resourceRow.resource}_${item.id}`];
+        if (override) {
+          return { ...item, start: override.start, end: override.end };
+        }
+        return item;
+      })
+    };
+  }), [tasks, localOverrides]);
+
   const { tasksWithLanes, timeLabels, timelineStart, timelineEnd, totalDurationHrs, getPosition } =
-    useTimeline(tasks, filterRange);
+    useTimeline(displayTasks, filterRange);
 
   const [updateGanttEdit] = useUpdateGanttEditMutation();
   const [draggingItem, setDraggingItem] = useState(null);
+  const [dragOffset, setDragOffset] = useState(0);
   const chartRef = useRef(null);
 
-  const handleMouseDown = (e, item) => {
-    const rect = chartRef.current.getBoundingClientRect();
+  const handleMouseDown = (e, item, resourceName) => {
+    const timelineContainer = e.currentTarget.closest('.flex-1');
+    const containerWidth = timelineContainer 
+      ? timelineContainer.getBoundingClientRect().width 
+      : chartRef.current.getBoundingClientRect().width;
+      
     setDraggingItem({
       ...item,
+      resourceName,
       startX: e.clientX,
       originalStart: item.start,
       originalEnd: item.end,
-      containerWidth: rect.width,
+      containerWidth,
     });
+    setDragOffset(0);
     e.preventDefault();
   };
 
@@ -39,11 +66,7 @@ const DraggableGanttChart = ({ tasks = [], filterRange = null }) => {
       if (!draggingItem) return;
 
       const deltaX = e.clientX - draggingItem.startX;
-      const percentDelta = (deltaX / draggingItem.containerWidth) * 100;
-      const timeDelta = (percentDelta / 100) * (timelineEnd - timelineStart);
-
-      // In a real implementation with internal state, we'd update the item's position here for smooth drag
-      // For now, let's keep it simple and update on mouse up, or we can use a local state for the item
+      setDragOffset(deltaX);
     };
 
     const handleMouseUp = async (e) => {
@@ -62,19 +85,31 @@ const DraggableGanttChart = ({ tasks = [], filterRange = null }) => {
         Math.round((draggingItem.originalEnd + timeDelta) / MS_PER_5_MIN) * MS_PER_5_MIN
       );
 
+      setLocalOverrides(prev => ({
+        ...prev,
+        [draggingItem.id]: { start: newStartTime.getTime(), end: newEndTime.getTime() }
+      }));
+
+      const itemId = draggingItem.id;
+      setDraggingItem(null);
+      setDragOffset(0);
+
       try {
         await updateGanttEdit({
-          id: draggingItem.id,
+          id: itemId,
           start_time: newStartTime.toISOString().slice(0, 19),
           end_time: newEndTime.toISOString().slice(0, 19),
         });
         message.success('Time updated successfully');
       } catch (err) {
         message.error('Failed to update time');
+        setLocalOverrides(prev => {
+          const next = { ...prev };
+          delete next[itemId];
+          return next;
+        });
         console.error(err);
       }
-
-      setDraggingItem(null);
     };
 
     if (draggingItem) {
@@ -178,13 +213,14 @@ const DraggableGanttChart = ({ tasks = [], filterRange = null }) => {
                         color="#1e293b"
                       >
                         <div
-                          onMouseDown={(e) => handleMouseDown(e, item)}
-                          className={`absolute rounded-xl p-3 text-white shadow-lg flex flex-col justify-center transition-all duration-150 hover:scale-[1.01] hover:shadow-2xl cursor-move z-10 border border-white/20 ${statusColors[item.status] || statusColors.ready} ${draggingItem?.id === item.id ? 'opacity-50 scale-105 z-50 ring-2 ring-white shadow-2xl' : ''}`}
+                          onMouseDown={(e) => handleMouseDown(e, item, resourceRow.resource)}
+                          className={`absolute rounded-xl p-3 text-white shadow-lg flex flex-col justify-center transition-all duration-150 hover:scale-[1.01] hover:shadow-2xl cursor-move z-10 border border-white/20 ${statusColors[item.status] || statusColors.ready} ${draggingItem?.id === item.id && draggingItem?.resourceName === resourceRow.resource ? 'opacity-50 scale-105 z-50 ring-2 ring-white shadow-2xl' : ''}`}
                           style={{
                             left: `${getPosition(item.start)}%`,
                             width: `${getPosition(item.end) - getPosition(item.start)}%`,
                             top: `${item.laneIndex * 80}px`,
                             height: '70px',
+                            transform: draggingItem?.id === item.id && draggingItem?.resourceName === resourceRow.resource ? `translateX(${dragOffset}px)` : 'none'
                           }}
                         >
                           <div className="flex items-center justify-between gap-2 overflow-hidden">
