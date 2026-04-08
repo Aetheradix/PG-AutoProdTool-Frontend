@@ -55,6 +55,7 @@ export const statusApi = apiSlice.injectEndpoints({
                     end_time,
                 },
             }),
+            invalidatesTags: ['ProductionSchedule'],
         }),
     }),
 });
