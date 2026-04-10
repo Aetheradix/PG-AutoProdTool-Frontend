@@ -14,7 +14,7 @@ import {
   Badge,
   Space,
 } from 'antd';
-import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiDroplet, FiX, FiCheck } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiDroplet, FiActivity, FiX, FiCheck } from 'react-icons/fi';
 import {
   useGetEquipmentsMasterQuery,
   useCreateEquipmentMasterMutation,
@@ -22,23 +22,14 @@ import {
   useDeleteEquipmentMasterMutation,
 } from '../../../store/api/masterDataApi';
 import { useAuth } from '@/context/AuthContext';
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const DESIGNATION_OPTIONS = [
-  { value: 'storage', label: 'Storage' },
-  { value: 'portable_tank', label: 'Portable Tank' },
-];
-
-function designationLabel(val) {
-  return DESIGNATION_OPTIONS.find((o) => o.value === val)?.label ?? val ?? '—';
-}
+import { getDesignationOptions, designationLabel } from './equipmentConstants';
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function TankManagement() {
+export function EquipmentManagement({ type = 'Tank' }) {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const isTank = type === 'Tank';
 
   // ── API hooks ──────────────────────────────────────────────────────────────
   const { data: apiData, isLoading } = useGetEquipmentsMasterQuery({ page: 1, limit: 1000 });
@@ -46,7 +37,10 @@ export function TankManagement() {
   const [updateEquipment, { isLoading: isUpdating }] = useUpdateEquipmentMasterMutation();
   const [deleteEquipment] = useDeleteEquipmentMasterMutation();
 
-  const tanks = Array.isArray(apiData?.data) ? apiData.data : Array.isArray(apiData) ? apiData : [];
+  const allEquipments = Array.isArray(apiData?.data) ? apiData.data : Array.isArray(apiData) ? apiData : [];
+  
+  // Filter by equipment type
+  const equipments = allEquipments.filter(e => e.equip_type === type);
 
   // ── UI state ───────────────────────────────────────────────────────────────
   const [addForm] = Form.useForm();
@@ -56,8 +50,12 @@ export function TankManagement() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
 
+  // ── Constants ──────────────────────────────────────────────────────────────
+  const DESIGNATION_OPTIONS = getDesignationOptions(type);
+  const Icon = isTank ? FiDroplet : FiActivity;
+
   // ── Filtered data ──────────────────────────────────────────────────────────
-  const filteredTanks = tanks.filter((t) => {
+  const filteredEquipments = equipments.filter((t) => {
     if (!searchText) return true;
     const s = searchText.toLowerCase();
     return (
@@ -78,18 +76,18 @@ export function TankManagement() {
         equipment_name: values.name,
         resource_group: values.designation,
         status: values.is_active ? 'Active' : 'Inactive',
-        equip_type: 'Tank',
+        equip_type: type,
         description: '',
       };
       await createEquipment(payload).unwrap();
-      message.success('Tank added successfully!');
+      message.success(`${type} added successfully!`);
       setIsAddModalOpen(false);
       addForm.resetFields();
     } catch (err) {
       if (err?.data?.detail) {
         message.error(err.data.detail);
       } else if (!err?.errorFields) {
-        message.error('Failed to add tank. Please try again.');
+        message.error(`Failed to add ${type.toLowerCase()}. Please try again.`);
       }
     }
   }
@@ -112,17 +110,17 @@ export function TankManagement() {
         equipment_name: values.name,
         resource_group: values.designation,
         status: values.is_active ? 'Active' : 'Inactive',
-        equip_type: 'Tank',
+        equip_type: type,
       };
       await updateEquipment(payload).unwrap();
-      message.success('Tank updated successfully!');
+      message.success(`${type} updated successfully!`);
       setIsEditModalOpen(false);
       setEditingRecord(null);
     } catch (err) {
       if (err?.data?.detail) {
         message.error(err.data.detail);
       } else if (!err?.errorFields) {
-        message.error('Failed to update tank. Please try again.');
+        message.error(`Failed to update ${type.toLowerCase()}. Please try again.`);
       }
     }
   }
@@ -130,9 +128,9 @@ export function TankManagement() {
   async function handleDelete(record) {
     try {
       await deleteEquipment(record.equipment_id).unwrap();
-      message.success('Tank deleted successfully!');
+      message.success(`${type} deleted successfully!`);
     } catch (err) {
-      message.error(err?.data?.detail || 'Failed to delete tank.');
+      message.error(err?.data?.detail || `Failed to delete ${type.toLowerCase()}.`);
     }
   }
 
@@ -146,14 +144,14 @@ export function TankManagement() {
       render: (_, __, idx) => <span className="text-slate-400 font-mono text-xs">{idx + 1}</span>,
     },
     {
-      title: 'TANK NAME',
+      title: `${type.toUpperCase()} NAME`,
       dataIndex: 'equipment_name',
       key: 'equipment_name',
       sorter: (a, b) => (a.equipment_name ?? '').localeCompare(b.equipment_name ?? ''),
       render: (name) => (
         <div className="flex items-center gap-2">
           <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 text-blue-500">
-            <FiDroplet size={14} />
+            <Icon size={14} />
           </span>
           <span className="font-semibold text-slate-800">{name}</span>
         </div>
@@ -166,8 +164,11 @@ export function TankManagement() {
       sorter: (a, b) => (a.resource_group ?? '').localeCompare(b.resource_group ?? ''),
       render: (val) => {
         const colorMap = {
-          storage: { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' },
-          portable_tank: { bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe' },
+          Portable: { bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe' },
+          Ronchi: { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' },
+          Unused: { bg: '#fef2f2', color: '#dc2626', border: '#fecaca' },
+          Sachet: { bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe' },
+          Tube: { bg: '#fff7ed', color: '#ea580c', border: '#ffedd5' },
         };
         const style = colorMap[val] || { bg: '#f8fafc', color: '#64748b', border: '#e2e8f0' };
         return (
@@ -183,7 +184,7 @@ export function TankManagement() {
               letterSpacing: '0.02em',
             }}
           >
-            {designationLabel(val)}
+            {designationLabel(val, type)}
           </span>
         );
       },
@@ -247,7 +248,7 @@ export function TankManagement() {
                   </Button>
                 </Tooltip>
                 <Popconfirm
-                  title="Delete this tank?"
+                  title={`Delete this ${type.toLowerCase()}?`}
                   description="This action cannot be undone."
                   onConfirm={() => handleDelete(record)}
                   okText="Yes"
@@ -289,11 +290,11 @@ export function TankManagement() {
               boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
             }}
           >
-            Add Tank
+            Add {type}
           </Button>
         )}
         <Input
-          placeholder="Search by name or designation..."
+          placeholder={`Search by ${type.toLowerCase()} name or designation...`}
           prefix={<FiSearch className="text-slate-400" />}
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
@@ -310,16 +311,16 @@ export function TankManagement() {
 
       {/* ── Summary badges ───────────────────────────────────────────────── */}
       <div className="flex gap-3 flex-wrap">
-        <SummaryBadge label="Total Tanks" value={tanks.length} color="#2563eb" bg="#eff6ff" />
+        <SummaryBadge label={`Total ${type}s`} value={equipments.length} color="#2563eb" bg="#eff6ff" />
         <SummaryBadge
           label="Active"
-          value={tanks.filter((t) => t.status === 'Active').length}
+          value={equipments.filter((t) => t.status === 'Active').length}
           color="#16a34a"
           bg="#f0fdf4"
         />
         <SummaryBadge
           label="Inactive"
-          value={tanks.filter((t) => t.status !== 'Active').length}
+          value={equipments.filter((t) => t.status !== 'Active').length}
           color="#dc2626"
           bg="#fef2f2"
         />
@@ -327,7 +328,7 @@ export function TankManagement() {
 
       {/* ── Table ───────────────────────────────────────────────────────── */}
       <Table
-        dataSource={filteredTanks}
+        dataSource={filteredEquipments}
         columns={columns}
         rowKey="equipment_id"
         loading={isLoading}
@@ -338,8 +339,9 @@ export function TankManagement() {
       />
 
       {/* ── Add Modal ───────────────────────────────────────────────────── */}
-      <TankFormModal
-        title="Add New Tank"
+      <EquipmentFormModal
+        type={type}
+        title={`Add New ${type}`}
         open={isAddModalOpen}
         form={addForm}
         onOk={handleAddOk}
@@ -349,8 +351,9 @@ export function TankManagement() {
       />
 
       {/* ── Edit Modal ──────────────────────────────────────────────────── */}
-      <TankFormModal
-        title={`Edit Tank — ${editingRecord?.equipment_name ?? ''}`}
+      <EquipmentFormModal
+        type={type}
+        title={`Edit ${type} — ${editingRecord?.equipment_name ?? ''}`}
         open={isEditModalOpen}
         form={editForm}
         onOk={handleEditOk}
@@ -387,13 +390,17 @@ function SummaryBadge({ label, value, color, bg }) {
   );
 }
 
-function TankFormModal({ title, open, form, onOk, onCancel, okText, confirmLoading }) {
+function EquipmentFormModal({ type, title, open, form, onOk, onCancel, okText, confirmLoading }) {
+  const isTank = type === 'Tank';
+  const Icon = isTank ? FiDroplet : FiActivity;
+  const DESIGNATION_OPTIONS = getDesignationOptions(type);
+
   return (
     <Modal
       title={
         <div className="flex items-center gap-2 py-1">
           <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 text-blue-500">
-            <FiDroplet size={16} />
+            <Icon size={16} />
           </span>
           <span className="font-bold text-slate-800 text-base">{title}</span>
         </div>
@@ -417,20 +424,20 @@ function TankFormModal({ title, open, form, onOk, onCancel, okText, confirmLoadi
       destroyOnClose
     >
       <Form form={form} layout="vertical" className="py-3" initialValues={{ is_active: true }}>
-        {/* Tank Name */}
+        {/* Name */}
         <Form.Item
           name="name"
           label={
             <span className="font-semibold text-slate-700 text-xs uppercase tracking-wider">
-              Tank Name
+              {type} Name
             </span>
           }
-          rules={[{ required: true, message: 'Please enter tank name' }]}
+          rules={[{ required: true, message: `Please enter ${type.toLowerCase()} name` }]}
         >
           <Input
-            placeholder="e.g. Tank A1, Mixer 3"
+            placeholder={`e.g. ${isTank ? 'Tank A1' : 'Line 1'}`}
             style={{ borderRadius: 8, height: 40 }}
-            prefix={<FiDroplet className="text-slate-300" />}
+            prefix={<Icon className="text-slate-300" />}
           />
         </Form.Item>
 
@@ -475,7 +482,7 @@ function TankFormModal({ title, open, form, onOk, onCancel, okText, confirmLoadi
               />
             </Form.Item>
             <span className="text-xs text-slate-500">
-              Toggle to set whether this tank is currently in operation
+              Toggle to set whether this {type.toLowerCase()} is currently in operation
             </span>
           </div>
         </Form.Item>
