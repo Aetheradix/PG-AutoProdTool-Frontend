@@ -7,10 +7,11 @@ import RMStatusDeadStock from './components/RMStatusDeadStock';
 import { SKUMasterTable } from './components/SKUMasterTable';
 import { UploadActionButtons } from './components/UploadActionButtons';
 import { UploadDataTable } from './components/UploadDataTable';
-import { EquipmentManagement } from './components/EquipmentManagement';
+
 import { getUploadColumns } from './utils/uploadColumns';
 import { useSelector, useDispatch } from 'react-redux';
 import { setActiveTab } from '../../store/slices/uiSlice';
+import { EquipmentManagement } from '../equipments-management/EquipmentManagement';
 
 export function MasterDataPage() {
   const dispatch = useDispatch();
