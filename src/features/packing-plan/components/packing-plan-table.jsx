@@ -12,6 +12,9 @@ const PackingPlanTable = ({
 }) => {
   return (
     <div className="flex flex-col gap-6">
+      <div className="pb-12">
+        <ExcelUpload />
+      </div>
       <div className="flex-1 w-full">
         <Card
           title={
@@ -46,10 +49,6 @@ const PackingPlanTable = ({
             excludeFields={['id', 'created_at', 'updated_at']}
           />
         </Card>
-      </div>
-
-      <div className="mt-12">
-        <ExcelUpload />
       </div>
     </div>
   );
