@@ -1,16 +1,17 @@
 import { Card, Tabs } from 'antd';
 import { AiOutlineStock } from "react-icons/ai";
-import { FiDatabase, FiPackage, FiUpload } from 'react-icons/fi';
+import { FiDatabase, FiPackage, FiUpload, FiActivity, FiCpu } from 'react-icons/fi';
 import { useExcelUpload } from '../excel-upload/hooks/useExcelUpload';
 import { BulkDetailTable } from './components/BulkDetailTable';
 import RMStatusDeadStock from './components/RMStatusDeadStock';
 import { SKUMasterTable } from './components/SKUMasterTable';
 import { UploadActionButtons } from './components/UploadActionButtons';
 import { UploadDataTable } from './components/UploadDataTable';
-import { TankManagement } from './components/TankManagement';
+
 import { getUploadColumns } from './utils/uploadColumns';
 import { useSelector, useDispatch } from 'react-redux';
 import { setActiveTab } from '../../store/slices/uiSlice';
+import { EquipmentManagement } from '../equipments-management/EquipmentManagement';
 
 export function MasterDataPage() {
   const dispatch = useDispatch();
@@ -130,7 +131,39 @@ export function MasterDataPage() {
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold text-slate-700">Manage Tank Assets</h3>
           </div>
-          <TankManagement />
+          <EquipmentManagement type="Tank" />
+        </div>
+      )
+    },
+    {
+      key: 'lines',
+      label: (
+        <span className="flex items-center gap-2 px-1">
+          <FiActivity /> Lines
+        </span>
+      ),
+      children: (
+        <div className="flex flex-col gap-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-slate-700">Manage Production Lines</h3>
+          </div>
+          <EquipmentManagement type="Line" />
+        </div>
+      )
+    },
+    {
+      key: 'systems',
+      label: (
+        <span className="flex items-center gap-2 px-1">
+          <FiCpu /> Systems
+        </span>
+      ),
+      children: (
+        <div className="flex flex-col gap-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-slate-700">Manage Systems</h3>
+          </div>
+          <EquipmentManagement type="Mix" />
         </div>
       )
     },

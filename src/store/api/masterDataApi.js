@@ -186,6 +186,40 @@ export const masterDataApi = apiSlice.injectEndpoints({
             }),
             invalidatesTags: ['Tanks'],
         }),
+        // ─── Equipment Master ─────────────────────────────────────────────────────
+        getEquipmentsMaster: builder.query({
+            query: (params = { page: 1, limit: 1000 }) => ({
+                url: '/v1/equipments-master',
+                params: {
+                    page: params.page,
+                    limit: params.limit,
+                },
+            }),
+            providesTags: ['EquipmentsMaster'],
+        }),
+        createEquipmentMaster: builder.mutation({
+            query: (data) => ({
+                url: '/v1/equipments-master',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: ['EquipmentsMaster'],
+        }),
+        updateEquipmentMaster: builder.mutation({
+            query: ({ originalName, ...data }) => ({
+                url: `/v1/equipments-master/${encodeURIComponent(originalName)}`,
+                method: 'PUT',
+                body: data,
+            }),
+            invalidatesTags: ['EquipmentsMaster'],
+        }),
+        deleteEquipmentMaster: builder.mutation({
+            query: (name) => ({
+                url: `/v1/equipments-master/${encodeURIComponent(name)}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['EquipmentsMaster'],
+        }),
     }),
 });
 
@@ -212,4 +246,8 @@ export const {
     useCreateTankMutation,
     useUpdateTankMutation,
     useDeleteTankMutation,
+    useGetEquipmentsMasterQuery,
+    useCreateEquipmentMasterMutation,
+    useUpdateEquipmentMasterMutation,
+    useDeleteEquipmentMasterMutation,
 } = masterDataApi;

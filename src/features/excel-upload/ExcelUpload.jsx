@@ -110,7 +110,7 @@ export const ExcelUpload = () => {
           dataSource={data}
           columns={data.length > 0 ? finalColumns : []}
           rowClassName="editable-row"
-          pagination={{ pageSize: 10, showSizeChanger: true }}
+          pagination={{ defaultPageSize: 10, showSizeChanger: true }}
           scroll={{ x: 'max-content', y: 600 }}
         />
       </Form>
