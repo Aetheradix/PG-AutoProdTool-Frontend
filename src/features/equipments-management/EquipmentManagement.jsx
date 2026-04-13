@@ -125,7 +125,7 @@ export function EquipmentManagement({ type = 'Tank' }) {
       <Table
         dataSource={filteredEquipments}
         columns={columns}
-        rowKey="equipment_id"
+        rowKey={(record) => `${record.equipment_name}-${record.resource_group}-${record.equip_type}`}
         loading={isLoading}
         pagination={{ defaultPageSize: 10, showSizeChanger: true }}
         scroll={{ x: 'max-content' }}

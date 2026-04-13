@@ -4,7 +4,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import AppFeature from "./features";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/shared/ProtectedRoute";
-import { ConfigProvider, Spin } from 'antd';
+import { ConfigProvider, Spin, App as AntApp } from 'antd';
 
 const Login = lazy(() => import("./features/auth/login/LoginPage"));
 const Signup = lazy(() => import("./features/auth/signup/SignupPage"));
@@ -65,28 +65,30 @@ const App = () => {
       }}
     >
       <AuthProvider>
-        <BrowserRouter>
-          <Suspense
-            fallback={
-              <div className="min-h-screen flex items-center justify-center">
-                <Spin size="large" tip="Loading..." />
-              </div>
-            }
-          >
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route
-                path="/*"
-                element={
-                  <ProtectedRoute>
-                    <ProtectedApp />
-                  </ProtectedRoute>
-                }
-              />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
+        <AntApp>
+          <BrowserRouter>
+            <Suspense
+              fallback={
+                <div className="min-h-screen flex items-center justify-center">
+                  <Spin size="large" tip="Loading..." />
+                </div>
+              }
+            >
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route
+                  path="/*"
+                  element={
+                    <ProtectedRoute>
+                      <ProtectedApp />
+                    </ProtectedRoute>
+                  }
+                />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </AntApp>
       </AuthProvider>
     </ConfigProvider>
   );

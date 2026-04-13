@@ -206,16 +206,16 @@ export const masterDataApi = apiSlice.injectEndpoints({
             invalidatesTags: ['EquipmentsMaster'],
         }),
         updateEquipmentMaster: builder.mutation({
-            query: (data) => ({
-                url: `/v1/equipments-master/${encodeURIComponent(data.equipment_id)}`,
+            query: ({ originalName, ...data }) => ({
+                url: `/v1/equipments-master/${encodeURIComponent(originalName)}`,
                 method: 'PUT',
                 body: data,
             }),
             invalidatesTags: ['EquipmentsMaster'],
         }),
         deleteEquipmentMaster: builder.mutation({
-            query: (id) => ({
-                url: `/v1/equipments-master/${encodeURIComponent(id)}`,
+            query: (name) => ({
+                url: `/v1/equipments-master/${encodeURIComponent(name)}`,
                 method: 'DELETE',
             }),
             invalidatesTags: ['EquipmentsMaster'],

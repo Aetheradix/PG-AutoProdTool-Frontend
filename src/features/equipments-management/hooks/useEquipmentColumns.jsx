@@ -1,11 +1,11 @@
 import React from 'react';
 import { Button, Popconfirm, Space, Tag, Tooltip } from 'antd';
-import { FiEdit2, FiTrash2, FiDroplet, FiActivity } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiDroplet, FiActivity, FiCpu } from 'react-icons/fi';
 import { getDesignationStyle } from '../equipmentConstants';
 
 
 export default function useEquipmentColumns({ type, isAdmin, onEdit, onDelete }) {
-  const Icon = type === 'Tank' ? FiDroplet : FiActivity;
+  const Icon = type === 'Tank' ? FiDroplet : type === 'Line' ? FiActivity : FiCpu;
 
   return [
     {

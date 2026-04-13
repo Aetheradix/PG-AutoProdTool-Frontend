@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Form, message } from 'antd';
 import {
   useGetEquipmentsMasterQuery,
@@ -23,11 +23,19 @@ export default function useEquipmentManagement(type) {
   const { options: designationOptions, isLoading: isOptionsLoading } = useResourceGroupOptions(type);
 
   // ── Data ─────────────────────────────────────────────────────────────────
-  const allEquipments = Array.isArray(apiData?.data)
-    ? apiData.data
-    : Array.isArray(apiData)
-    ? apiData
-    : [];
+  const allEquipments = useMemo(() => {
+    const raw = Array.isArray(apiData?.data) ? apiData.data : Array.isArray(apiData) ? apiData : [];
+    return raw.map(item => {
+      const cleaned = {};
+      Object.keys(item).forEach(key => {
+        const val = item[key];
+        // Clean both key and value (if string)
+        cleaned[key.trim()] = typeof val === 'string' ? val.trim() : val;
+      });
+      return cleaned;
+    });
+  }, [apiData]);
+
   const equipments = allEquipments.filter((e) => e.equip_type === type);
 
   // ── UI state ─────────────────────────────────────────────────────────────
@@ -50,12 +58,17 @@ export default function useEquipmentManagement(type) {
 
   // ── Modal handlers ────────────────────────────────────────────────────────
   function openAddModal() {
-    addForm.resetFields();
     setIsAddModalOpen(true);
+    // Defer reset to ensure form is connected
+    setTimeout(() => {
+      addForm.resetFields();
+    }, 0);
   }
 
   function openEditModal(record) {
+    console.log('Opening Edit Modal with cleaned record:', record);
     setEditingRecord(record);
+
     editForm.setFieldsValue({
       name:        record.equipment_name,
       designation: record.resource_group,
@@ -92,13 +105,25 @@ export default function useEquipmentManagement(type) {
   async function handleEdit() {
     try {
       const values = await editForm.validateFields();
-      await updateEquipment({
-        equipment_id:   editingRecord.equipment_id,
+      console.log('Proceeding with handleEdit. editingRecord:', editingRecord);
+      const originalName = editingRecord.equipment_name || editingRecord['equipment_name '];
+
+      if (!originalName) {
+        console.error('Cannot find equipment name in:', editingRecord);
+        message.error('Selection error: Original name not found.');
+        return;
+      }
+
+      const payload = {
+        originalName:   originalName,
         equipment_name: values.name,
         resource_group: values.designation,
         status:         values.is_active ? 'Active' : 'Inactive',
         equip_type:     type,
-      }).unwrap();
+      };
+
+      console.log('Sending Update Payload:', payload);
+      await updateEquipment(payload).unwrap();
       message.success(`${type} updated successfully!`);
       closeEditModal();
     } catch (err) {
@@ -109,7 +134,12 @@ export default function useEquipmentManagement(type) {
 
   async function handleDelete(record) {
     try {
-      await deleteEquipment(record.equipment_id).unwrap();
+      console.log('Deleting equipment:', record);
+      if (!record?.equipment_name) {
+        throw new Error('Equipment name is missing.');
+      }
+      await deleteEquipment(record.equipment_name).unwrap();
+      console.log('Delete successful:', record.equipment_name);
       message.success(`${type} deleted successfully!`);
     } catch (err) {
       message.error(err?.data?.detail || `Failed to delete ${type.toLowerCase()}.`);

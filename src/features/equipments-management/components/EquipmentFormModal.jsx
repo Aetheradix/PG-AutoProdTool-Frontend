@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Form, Input, Select, Switch } from 'antd';
-import { FiDroplet, FiActivity } from 'react-icons/fi';
+import { FiDroplet, FiActivity, FiCpu } from 'react-icons/fi';
 
 export default function EquipmentFormModal({
   type,
@@ -14,7 +14,7 @@ export default function EquipmentFormModal({
   designationOptions = [],
   isOptionsLoading = false,
 }) {
-  const Icon = type === 'Tank' ? FiDroplet : FiActivity;
+  const Icon = type === 'Tank' ? FiDroplet : type === 'Line' ? FiActivity : FiCpu;
 
   return (
     <Modal
