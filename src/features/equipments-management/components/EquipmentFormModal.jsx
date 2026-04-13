@@ -42,7 +42,7 @@ export default function EquipmentFormModal({
       cancelButtonProps={{ style: { borderRadius: 8 } }}
       width={500}
       className="premium-modal"
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" className="py-3" initialValues={{ is_active: true }}>
 
