@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Typography, Tooltip } from 'antd';
 import { useTimeline } from '../hooks/useTimeline';
-
 
 const { Text } = Typography;
 
@@ -10,171 +9,133 @@ const statusColors = {
   running: 'bg-gradient-to-r from-emerald-500 to-emerald-600',
   conflict: 'bg-gradient-to-r from-rose-500 to-rose-600',
   warning: 'bg-gradient-to-r from-amber-500 to-amber-600',
-  downtime: 'bg-gradient-to-r from-yellow-500 to-yellow-600',
+  downtime: 'bg-gradient-to-r from-slate-500 to-slate-600',
 };
 
+const fmtTime = (ms) => new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+
 const GanttChart = ({ tasks = [], filterRange = null }) => {
- 
-  const {
-    tasksWithLanes,
-    timeLabels,
-    timelineStart,
-    timelineEnd,
-    totalDurationHrs,
-    getPosition,
-  } = useTimeline(tasks, filterRange);
+  const { tasksWithLanes, timeLabels, timelineStart, timelineEnd, totalDurationHrs, getPosition } =
+    useTimeline(tasks, filterRange);
+
+  // --- API DATA GROUPING LOGIC ---
+  const groupedData = useMemo(() => {
+    const systems = {};
+    const order = { '12T': 0, '6T': 1, '1.25T': 2 };
+
+    tasksWithLanes.forEach((row) => {
+      // API se aane wale resource name ko split karein (e.g., "12T / FMT")
+      const [sys, tank] = row.resource.split('/').map(s => s.trim());
+      
+      if (!systems[sys]) {
+        systems[sys] = { name: sys, rows: [] };
+      }
+      systems[sys].rows.push({
+        tankName: tank || 'N/A',
+        items: row.items,
+        totalLanes: row.totalLanes
+      });
+    });
+
+    return Object.values(systems).sort((a, b) => (order[a.name] ?? 99) - (order[b.name] ?? 99));
+  }, [tasksWithLanes]);
+
+  console.log('Grouped Data:', groupedData);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-fade-in mb-10 w-full">
-      <div className="overflow-auto custom-scrollbar max-h-[calc(100vh-350px)] sm:max-h-[60vh] lg:max-h-[70vh]">
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-2xl overflow-hidden w-full font-sans">
+      <div className="overflow-auto custom-scrollbar max-h-[75vh]">
         <div style={{ minWidth: `${Math.max(totalDurationHrs * 200, 1200)}px` }}>
-          {/* Time Header */}
-          <div className="flex border-b border-slate-100 bg-slate-50/80 backdrop-blur-sm sticky top-0 z-20">
-            <div className="w-40 shrink-0 border-r border-slate-200 bg-slate-200 flex items-center justify-center font-bold text-slate-500 text-xs tracking-wider sticky left-0 z-30">
-              RESOURCE
-            </div>
+          
+          {/* Timeline Header */}
+          <div className="flex border-b border-slate-100 bg-slate-50/50 sticky top-0 z-50 backdrop-blur-md">
+            <div className="w-24 shrink-0 border-r border-slate-200 flex items-center justify-center font-bold text-[10px] text-slate-400 sticky left-0 z-50 bg-slate-50 uppercase tracking-widest">System</div>
+            <div className="w-24 shrink-0 border-r border-slate-200 flex items-center justify-center font-bold text-[10px] text-slate-400 sticky left-[96px] z-50 bg-slate-50 uppercase tracking-widest">Tanks</div>
             {timeLabels.slice(0, -1).map((time, i) => (
-              <div
-                key={i}
-                className={`flex-1 py-4 text-center text-[11px] font-bold text-slate-500 border-r border-slate-200/50 last:border-r-0 ${time.isNewDay ? 'bg-blue-50/50' : ''}`}
-                title={time.fullDate}
-              >
+              <div key={i} className="flex-1 py-4 text-center text-[11px] font-black text-slate-500 border-r border-slate-100">
                 {time.label}
-                {time.isNewDay && (
-                  <div className="text-[9px] text-blue-400 opacity-70">
-                    {new Date(time.timestamp).toLocaleDateString(undefined, {
-                      day: 'numeric',
-                      month: 'short',
-                    })}
-                  </div>
-                )}
               </div>
             ))}
           </div>
 
-          {/* Grid Area */}
-          <div className="relative bg-white">
-            {tasksWithLanes.map((resourceRow, rowIndex) => (
-              <div
-                key={rowIndex}
-                className="flex border-b border-slate-100 last:border-b-0 min-h-35 group"
-                style={{ height: `${Math.max(resourceRow.totalLanes * 80 + 40, 140)}px` }}
-              >
-                {/* Resource Label */}
-                <div className="w-40 shrink-0 flex items-center justify-center font-black text-slate-600 border-r border-slate-200 bg-slate-100 group-hover:bg-blue-50 transition-colors duration-300 sticky left-0 z-20">
-                  <div className="bg-white shadow-sm border border-slate-200 rounded-lg px-3 py-2 text-sm w-[90%] text-center truncate">
-                    {resourceRow.resource}
-                  </div>
-                </div>
+          {/* Grouped Rows */}
+          {groupedData.map((system,id) => (
+            <div key={id} className="flex border-b border-slate-100 last:border-b-0">
+              
+              {/* System Column (Merged Look) */}
+              <div className="w-24 shrink-0 flex items-center justify-center font-black text-slate-700 bg-white border-r border-slate-100 sticky left-0 z-30 text-sm">
+                {system.name}
+              </div>
 
-                {/* Timeline Row */}
-                <div className="flex-1 relative p-4">
-                  {/* Grid Lines */}
-                  <div className="absolute inset-0 flex pointer-events-none">
-                    {timeLabels.slice(0, -1).map((time, i) => (
-                      <div
-                        key={i}
-                        className={`flex-1 border-r border-slate-100/80 last:border-r-0 ${time.isNewDay ? 'border-l-2 border-l-blue-100' : ''}`}
-                      ></div>
-                    ))}
-                  </div>
-
-                  {/* Sub-row Labels/Zones for Dual Rows */}
-                  {resourceRow.isDualRow && (
-                    <div className="absolute inset-0 pointer-events-none flex flex-col z-0 opacity-40">
-                      <div className="flex-1 border-b border-dashed border-slate-200 flex items-center pl-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] italic">
-                        FMT Zone (Mixing)
-                      </div>
-                      <div className="flex-1 flex items-center pl-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] italic">
-                        MMT Zone (Main)
-                      </div>
+              {/* Sub-rows for Tanks */}
+              <div className="flex-1">
+                {system.rows.map((row, idx) => (
+                  <div key={idx} className="flex border-b border-slate-50 last:border-b-0 group min-h-[110px]">
+                    
+                    {/* Tank Label */}
+                    <div className="w-24 shrink-0 flex items-center justify-center border-r border-slate-100 bg-white sticky left-[96px] z-20">
+                      <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded border border-slate-100 uppercase">
+                        {row.tankName}
+                      </span>
                     </div>
-                  )}
 
-                  {/* Task Items */}
-                  <div className="relative h-full">
-                    {resourceRow.items.map((item) => {
-                      const isDual = item.isDualBlock;
-                      // Calculate vertical positioning
-                      // If it's a Dual Row, we split the height
-                      // Dual blocks span 100%, Single blocks span the top 45%
-                      const height = resourceRow.isDualRow 
-                        ? (isDual ? 'calc(100% - 8px)' : '42%') 
-                        : '70px';
-                      const top = resourceRow.isDualRow
-                        ? (isDual ? '4px' : `${item.laneIndex * 50 + 4}px`) // Basic lane index for single baches
-                        : `${item.laneIndex * 80}px`;
+                    {/* Timeline Grid */}
+                    <div className="flex-1 relative p-3">
+                      {/* Grid Vertical Lines */}
+                      <div className="absolute inset-0 flex pointer-events-none opacity-5">
+                        {timeLabels.map((_, i) => <div key={i} className="flex-1 border-r border-black"></div>)}
+                      </div>
 
-                      return (
-                        <Tooltip
-                          key={`${item.id}-${item.isDualBlock ? 'dual' : 'single'}`}
-                          title={
-                            <div className="p-1">
-                              <div className="font-bold border-b border-white/20 mb-1">
-                                {item.title} {isDual ? '(Dual Stage)' : '(Single Stage)'}
-                              </div>
-                              <div className="text-[10px] opacity-90">
-                                {new Date(item.start).toLocaleTimeString()} -{' '}
-                                {new Date(item.end).toLocaleTimeString()}
-                              </div>
-                              <div className="text-[10px] opacity-90">
-                                {new Date(item.start).toDateString()}
-                              </div>
-                              <div className="mt-2 text-[9px] font-bold text-blue-200">
-                                {isDual ? 'Occupies FMT + MMT' : 'Occupies FMT Only'}
-                              </div>
-                            </div>
-                          }
-                          placement="top"
-                          color="#1e293b"
-                        >
+                      {/* Task Bars */}
+                      {row.items.map((item) => (
+                        <Tooltip key={item.id} title={`${item.title} | Batch: ${item.batch} | ${fmtTime(item.start)} – ${fmtTime(item.end)} | Status: ${item.status}`} color="#000">
                           <div
-                            className={`absolute rounded-xl p-3 text-white shadow-lg flex flex-col justify-center transition-all duration-300 hover:scale-[1.01] hover:shadow-2xl cursor-pointer z-10 border border-white/20 ${statusColors[item.status] || statusColors.ready} ${isDual ? 'ring-2 ring-white/30 ring-offset-2 ring-offset-blue-500/20' : ''}`}
+                            className={`absolute rounded-xl px-3 py-1.5 text-white shadow-lg flex flex-col justify-between transition-all hover:scale-[1.02] cursor-pointer border border-white/20 ${statusColors[item.status] || statusColors.ready}`}
                             style={{
                               left: `${getPosition(item.start)}%`,
                               width: `${getPosition(item.end) - getPosition(item.start)}%`,
-                              top: top,
-                              height: height,
-                              minHeight: isDual ? '120px' : '60px'
+                              top: `${item.laneIndex * 100 + 10}px`,
+                              height: '90px',
+                              minWidth: '60px',
                             }}
                           >
-                            <div className="flex items-center justify-between gap-2 overflow-hidden">
-                              <Text className={`text-white font-extrabold leading-tight truncate shadow-sm ${isDual ? 'text-[15px]' : 'text-[13px]'}`}>
-                                {item.title}
-                              </Text>
-                              {isDual && (
-                                <span className="bg-white/30 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest animate-pulse border border-white/20">
-                                  FMT+MMT
-                                </span>
-                              )}
+                            {/* Title */}
+                            <span className="font-bold truncate text-[11px] leading-tight">{item.title}</span>
+
+                            {/* Batch ID */}
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className="bg-black/25 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider truncate">{item.batch}</span>
                             </div>
-                            <div className="flex items-center gap-2 mt-1 opacity-90">
-                              <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter">
-                                {item.batch}
-                              </span>
-                              <Text className="text-white/80 text-[11px] font-medium truncate">
-                                {((item.end - item.start) / 3600000).toFixed(1)}h
-                              </Text>
+
+                            {/* Start & End Time */}
+                            <div className="flex items-center gap-1 text-[9px] opacity-90 mt-0.5">
+                              <span className="bg-white/15 px-1 py-0.5 rounded font-semibold">{fmtTime(item.start)}</span>
+                              <span className="opacity-70">→</span>
+                              <span className="bg-white/15 px-1 py-0.5 rounded font-semibold">{fmtTime(item.end)}</span>
                             </div>
-                            {isDual && (
-                              <div className="mt-auto pt-2 border-t border-white/10 flex justify-between items-end">
-                                <span className="text-[8px] font-black opacity-60 uppercase tracking-tighter">Process Continuity</span>
-                                <div className="flex gap-1">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-white opacity-40"></div>
-                                  <div className="w-1.5 h-1.5 rounded-full bg-white animate-bounce"></div>
-                                  <div className="w-1.5 h-1.5 rounded-full bg-white opacity-40"></div>
-                                </div>
-                              </div>
-                            )}
+
+                            {/* Status */}
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className="text-[8px] uppercase bg-black/20 px-1.5 py-0.5 rounded-full font-bold tracking-widest">{item.status}</span>
+                            </div>
                           </div>
                         </Tooltip>
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+
+          {/* 1.25T Empty Placeholder */}
+          {!groupedData.find(s => s.name === '1.25T') && (
+            <div className="flex border-b border-slate-100 h-[110px]">
+              <div className="w-24 shrink-0 border-r border-slate-100 flex items-center justify-center font-bold text-slate-300 sticky left-0 bg-white">1.25T</div>
+              <div className="w-24 shrink-0 border-r border-slate-100 flex items-center justify-center text-[10px] italic text-slate-200 sticky left-[96px] bg-white">No Config</div>
+              <div className="flex-1 bg-slate-50/30"></div>
+            </div>
+          )}
         </div>
       </div>
     </div>
