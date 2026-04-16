@@ -67,8 +67,9 @@ export const useCreatePlanForm = () => {
             const values = await downtimeForm.validateFields();
             const newDowntime = {
                 id: Date.now(),
+                line: values.line || 'All', // Default to All if not provided
                 reason: values.reason,
-                startTime: values.startTime.format('DD/MM/YYYY, hh:mm A'),
+                startTime: values.startTime ? values.startTime.format('DD/MM/YYYY, hh:mm A') : '',
                 duration: values.duration,
             };
 

@@ -57,7 +57,20 @@ export function CreatePlanForm() {
               requiredMark={false}
               component={false}
             >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div>
+                  <FormSelect
+                    name="line"
+                    label="Line / Operation"
+                    placeholder="Select Line"
+                    className=" h-10"
+                    options={[
+                      { value: '6T', label: '6T' },
+                      { value: '12T', label: '12T' },
+                      { value: 'Both', label: 'Both' },
+                    ]}
+                  />
+                </div>
                 <div>
                   <FormDatePicker
                     name="startTime"
@@ -112,7 +125,10 @@ export function CreatePlanForm() {
                     <div className="flex items-center gap-3">
                       <FiClock className="text-slate-400" />
                       <Text className="text-slate-600">
-                        <span className="font-bold">{d.reason}:</span> {d.startTime} ({d.duration} mins)
+                        <span className="font-bold">
+                          [{d.line || 'All'}] {d.reason}:
+                        </span>{' '}
+                        {d.startTime} ({d.duration} mins)
                       </Text>
                     </div>
                     <Button
@@ -133,14 +149,14 @@ export function CreatePlanForm() {
               Cancel
             </Button>
             {/* <Link to="/plan-view"> */}
-              <Button
-                type="primary"
-                htmlType="submit"
-                size="large"
-                className="bg-blue-600 px-8 rounded-lg font-bold border-none"
-              >
-                Generate Plan
-              </Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              size="large"
+              className="bg-blue-600 px-8 rounded-lg font-bold border-none"
+            >
+              Generate Plan
+            </Button>
             {/* </Link> */}
           </div>
         </div>
