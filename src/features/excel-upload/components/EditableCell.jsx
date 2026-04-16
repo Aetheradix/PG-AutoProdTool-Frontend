@@ -1,6 +1,7 @@
-import { Form, Input, DatePicker } from 'antd';
+import { Form, Input, DatePicker, TimePicker } from 'antd';
 import React from 'react';
 import dayjs from 'dayjs';
+import { parseDuration } from '../../../utils/tableUtils';
 
 const EditableCell = ({
   editing,
@@ -26,6 +27,11 @@ const EditableCell = ({
   ) : isDate ? (
     <DatePicker
       format="YYYY-MM-DD"
+      className="w-full"
+    />
+  ) : isTimeType ? (
+    <TimePicker
+      format="HH:mm"
       className="w-full"
     />
   ) : (
@@ -57,6 +63,21 @@ const EditableCell = ({
             }),
             normalize: (value) =>
               value ? value.format('YYYY-MM-DD') : null,
+          })}
+          {...(isTimeType && {
+            getValueProps: (value) => {
+              if (!value) return { value: null };
+              // Handle ISO duration like PT14H46M
+              const { hours, minutes, isParsed } = parseDuration(value);
+              if (isParsed) {
+                return { value: dayjs().hour(hours).minute(minutes).second(0) };
+              }
+              // Normal date or time string fallback
+              const d = dayjs(value, 'HH:mm');
+              return { value: d.isValid() ? d : null };
+            },
+            normalize: (value) =>
+              value ? (dayjs.isDayjs(value) ? value.format('HH:mm') : value) : null,
           })}
         >
           {inputNode}
