@@ -13,6 +13,7 @@ const statusColors = {
 };
 
 const fmtTime = (ms) => new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+const fmtDate = (ms) => new Date(ms).toLocaleDateString([], { day: '2-digit', month: 'short' });
 
 const GanttChart = ({ tasks = [], filterRange = null }) => {
   const { tasksWithLanes, timeLabels, timelineStart, timelineEnd, totalDurationHrs, getPosition } =
@@ -88,7 +89,7 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
 
                       {/* Task Bars */}
                       {row.items.map((item) => (
-                        <Tooltip key={item.id} title={`${item.title} | Batch: ${item.batch} | ${fmtTime(item.start)} – ${fmtTime(item.end)} | Status: ${item.status}`} color="#000">
+                        <Tooltip key={item.id} title={`${item.title} | Batch: ${item.batch} | ${fmtDate(item.start)} ${fmtTime(item.start)} – ${fmtDate(item.end)} ${fmtTime(item.end)} | Status: ${item.status}`} color="#000">
                           <div
                             className={`absolute rounded-xl px-3 py-1.5 text-white shadow-lg flex flex-col justify-between transition-all hover:scale-[1.02] cursor-pointer border border-white/20 ${statusColors[item.status] || statusColors.ready}`}
                             style={{

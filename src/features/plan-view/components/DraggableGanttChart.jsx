@@ -37,6 +37,8 @@ const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
 
   const fmtTime = (ms) =>
     new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  const fmtDate = (ms) =>
+    new Date(ms).toLocaleDateString([], { day: '2-digit', month: 'short' });
 
   const style = {
     position: 'absolute',
@@ -69,9 +71,9 @@ const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
 
       {/* Start & End Time */}
       <div className="flex items-center gap-1 text-[9px] opacity-90 mt-0.5">
-        <span className="bg-white/15 px-1 py-0.5 rounded font-semibold">{fmtTime(item.start)}</span>
+        <span className="bg-white/15 px-1 py-0.5 rounded font-semibold whitespace-nowrap">{fmtDate(item.start)} {fmtTime(item.start)}</span>
         <span className="opacity-70">→</span>
-        <span className="bg-white/15 px-1 py-0.5 rounded font-semibold">{fmtTime(item.end)}</span>
+        <span className="bg-white/15 px-1 py-0.5 rounded font-semibold whitespace-nowrap">{fmtDate(item.end)} {fmtTime(item.end)}</span>
       </div>
 
       {/* Status */}
@@ -87,7 +89,7 @@ const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
     content
   ) : (
     <Tooltip
-      title={`${item.title} | Batch: ${item.batch} | ${fmtTime(item.start)} – ${fmtTime(item.end)} | Status: ${item.status}`}
+      title={`${item.title} | Batch: ${item.batch} | ${fmtDate(item.start)} ${fmtTime(item.start)} – ${fmtDate(item.end)} ${fmtTime(item.end)} | Status: ${item.status}`}
       placement="top"
       color="#1e293b"
     >
