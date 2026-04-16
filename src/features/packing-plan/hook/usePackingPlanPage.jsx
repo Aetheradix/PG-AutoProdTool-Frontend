@@ -12,7 +12,7 @@ import {
 // import { extractApiData } from '../../utils/tableUtils';
 import { setActiveTab } from '@/store/slices/uiSlice';
 import { exportDataTableToExcel } from '@/utils/exportUtils';
-import { extractApiData } from '@/utils/tableUtils';
+import { extractApiData, combineDateAndDuration } from '@/utils/tableUtils';
 
 export default function usePackingPlanPage() {
   const dispatch = useDispatch();
@@ -25,8 +25,11 @@ export default function usePackingPlanPage() {
 
     let minDate = null;
     apiData.data.forEach((item) => {
-      const d = new Date(item.start_datetime);
-      if (!minDate || d < minDate) minDate = d;
+      const combined = combineDateAndDuration(item.start_date, item.start_time);
+      if (combined) {
+        const d = new Date(combined);
+        if (!minDate || d < minDate) minDate = d;
+      }
     });
 
     if (!minDate) return null;

@@ -100,9 +100,9 @@ export function useEditableTable({
         }
     }
 
-    async function handleAddOk() {
+    async function handleAddOk(values) {
         try {
-            const row = await addForm.validateFields();
+            const row = values || await addForm.validateFields();
             await createItem(row).unwrap();
             message.success(`${title} created successfully`);
             setIsAddModalOpen(false);

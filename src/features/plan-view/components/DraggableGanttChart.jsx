@@ -1,212 +1,315 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Typography, Tooltip, message } from 'antd';
-
+import { DndContext, PointerSensor, useSensor, useSensors, DragOverlay } from '@dnd-kit/core';
+import { useDraggable } from '@dnd-kit/core';
+import { restrictToParentElement } from '@dnd-kit/modifiers';
 import { useUpdateGanttEditMutation } from '@/store/api/statusApi';
 import { useTimeline } from '../hooks/useTimeline';
+import { ClockCircleOutlined, ControlOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
 const statusColors = {
-  ready: 'bg-gradient-to-r from-blue-500 to-blue-600',
-  running: 'bg-gradient-to-r from-emerald-500 to-emerald-600',
-  conflict: 'bg-gradient-to-r from-rose-500 to-rose-600',
-  warning: 'bg-gradient-to-r from-amber-500 to-amber-600',
-  downtime: 'bg-gradient-to-r from-yellow-500 to-yellow-600',
+  ready: 'bg-gradient-to-br from-blue-500 to-blue-600',
+  running: 'bg-gradient-to-br from-emerald-500 to-teal-600',
+  conflict: 'bg-gradient-to-br from-rose-500 to-red-600',
+  warning: 'bg-gradient-to-br from-amber-500 to-orange-500',
+  downtime: 'bg-gradient-to-br from-yellow-400 to-yellow-600',
 };
 
-const DraggableGanttChart = ({ tasks = [], filterRange = null }) => {
-  const { tasksWithLanes, timeLabels, timelineStart, timelineEnd, totalDurationHrs, getPosition } =
-    useTimeline(tasks, filterRange);
+const MS_PER_5_MIN = 5 * 60 * 1000;
+const snapTo5Min = (ms) => Math.round(ms / MS_PER_5_MIN) * MS_PER_5_MIN;
+const formatLocalISO = (date) => {
+  const tzOffset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - tzOffset).toISOString().slice(0, 19);
+};
 
-  const [updateGanttEdit] = useUpdateGanttEditMutation();
-  const [draggingItem, setDraggingItem] = useState(null);
-  const chartRef = useRef(null);
+// ─────────────────────────────────────────────
+// TaskBar: Draggable Item
+// ─────────────────────────────────────────────
+const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
+  const isDowntime = item.status === 'downtime';
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: item.id,
+    data: item,
+    disabled: isDowntime,
+  });
 
-  const handleMouseDown = (e, item) => {
-    const rect = chartRef.current.getBoundingClientRect();
-    setDraggingItem({
-      ...item,
-      startX: e.clientX,
-      originalStart: item.start,
-      originalEnd: item.end,
-      containerWidth: rect.width,
-    });
-    e.preventDefault();
+  const fmtTime = (ms) =>
+    new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+
+  const style = {
+    position: 'absolute',
+    left: `${leftPct}%`,
+    width: `${widthPct}%`,
+    top: '8px',
+    height: '90px',
+    transform: transform ? `translateX(${transform.x}px)` : undefined,
+    opacity: isDragging && !isDragOverlay ? 0.45 : 1,
+    minWidth: 60,
   };
 
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (!draggingItem) return;
+  const content = (
+    <div
+      ref={isDragOverlay ? undefined : setNodeRef}
+      {...(isDragOverlay ? {} : listeners)}
+      {...(isDragOverlay ? {} : attributes)}
+      style={style}
+      className={`rounded-xl px-3 py-1.5 text-white shadow-lg flex flex-col justify-between z-10 border border-white/20 select-none ${statusColors[item.status] || statusColors.ready} transition-all duration-200 ${isDowntime ? 'cursor-default' : 'cursor-grab'} ${isDragOverlay ? 'cursor-grabbing ring-4 ring-white/30 scale-[1.05]' : ''}`}
+    >
+      {/* Title */}
+      <span className="font-bold truncate text-[11px] leading-tight">{item.title}</span>
 
-      const deltaX = e.clientX - draggingItem.startX;
-      const percentDelta = (deltaX / draggingItem.containerWidth) * 100;
-      const timeDelta = (percentDelta / 100) * (timelineEnd - timelineStart);
+      {/* Batch ID */}
+      <div className="flex items-center gap-1 mt-0.5">
+        <span className="bg-black/25 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider truncate">
+          {item.batch}
+        </span>
+      </div>
 
-      // In a real implementation with internal state, we'd update the item's position here for smooth drag
-      // For now, let's keep it simple and update on mouse up, or we can use a local state for the item
-    };
+      {/* Start & End Time */}
+      <div className="flex items-center gap-1 text-[9px] opacity-90 mt-0.5">
+        <span className="bg-white/15 px-1 py-0.5 rounded font-semibold">{fmtTime(item.start)}</span>
+        <span className="opacity-70">→</span>
+        <span className="bg-white/15 px-1 py-0.5 rounded font-semibold">{fmtTime(item.end)}</span>
+      </div>
 
-    const handleMouseUp = async (e) => {
-      if (!draggingItem) return;
+      {/* Status */}
+      <div className="flex items-center gap-1 mt-0.5">
+        <span className="text-[8px] uppercase bg-black/20 px-1.5 py-0.5 rounded-full font-bold tracking-widest">
+          {item.status}
+        </span>
+      </div>
+    </div>
+  );
 
-      const deltaX = e.clientX - draggingItem.startX;
-      const percentDelta = (deltaX / draggingItem.containerWidth) * 100;
-      const timeDelta = (percentDelta / 100) * (timelineEnd - timelineStart);
+  return isDragOverlay ? (
+    content
+  ) : (
+    <Tooltip
+      title={`${item.title} | Batch: ${item.batch} | ${fmtTime(item.start)} – ${fmtTime(item.end)} | Status: ${item.status}`}
+      placement="top"
+      color="#1e293b"
+    >
+      {content}
+    </Tooltip>
+  );
+};
 
-      // nearest 5 minutes for usability
-      const MS_PER_5_MIN = 5 * 60 * 1000;
-      const newStartTime = new Date(
-        Math.round((draggingItem.originalStart + timeDelta) / MS_PER_5_MIN) * MS_PER_5_MIN
-      );
-      const newEndTime = new Date(
-        Math.round((draggingItem.originalEnd + timeDelta) / MS_PER_5_MIN) * MS_PER_5_MIN
-      );
+// ─────────────────────────────────────────────
+// TankRow: Sub-row for MMT, FMT, etc.
+// ─────────────────────────────────────────────
+const TankRow = ({
+  tankData,
+  system,
+  timelineStart,
+  timelineEnd,
+  getPosition,
+  onTaskUpdate,
+  isFirst,
+}) => {
+  const rowRef = useRef(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
-      try {
-        await updateGanttEdit({
-          id: draggingItem.id,
-          start_time: newStartTime.toISOString().slice(0, 19),
-          end_time: newEndTime.toISOString().slice(0, 19),
-        });
-        message.success('Time updated successfully');
-      } catch (err) {
-        message.error('Failed to update time');
-        console.error(err);
-      }
-
-      setDraggingItem(null);
-    };
-
-    if (draggingItem) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [draggingItem, timelineStart, timelineEnd, updateGanttEdit]);
+    const handleDragEnd = useCallback(
+      ({ active, delta }) => {
+        if (!delta.x || !rowRef.current) return;
+        const totalW = rowRef.current.getBoundingClientRect().width;
+        const totalMs = timelineEnd - timelineStart;
+        const deltaMs = (delta.x / totalW) * totalMs;
+        const item = active.data.current;
+        let newStart = snapTo5Min(item.start + deltaMs);
+        let newEnd = newStart + (item.end - item.start);
+        if (newStart < timelineStart) newStart = timelineStart;
+        if (newEnd > timelineEnd) newEnd = timelineEnd;
+        onTaskUpdate({ id: item.id, batch_id: item.batch, start: newStart, end: newEnd });
+      },
+      [timelineStart, timelineEnd, onTaskUpdate]
+    );
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-fade-in mb-10">
-      <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-        <Text className="font-bold text-slate-700">Draggable Timeline (Gantt-Edit)</Text>
-        <Text type="secondary" className="text-xs">
-          Drag bars to adjust schedule
-        </Text>
-      </div>
+    <div className="flex border-b border-slate-100 last:border-b-0 min-h-[110px] bg-white hover:bg-slate-50/50 transition-colors">
+      {/* System Label Column (Merged visual) */}
       <div
-        className="overflow-auto custom-scrollbar max-h-[calc(100vh-350px)] sm:max-h-[60vh] lg:max-h-[70vh]"
-        ref={chartRef}
+        className={`w-28 shrink-0 flex items-center justify-center border-r border-slate-200 font-black text-slate-700 sticky left-0 z-30 bg-slate-50 ${!isFirst ? 'text-transparent border-t-0' : 'bg-blue-50/30'}`}
+      >
+        {system}
+      </div>
+
+      {/* Tank Label Column */}
+      <div className="w-32 shrink-0 flex items-center justify-center border-r border-slate-200 font-bold text-[11px] text-slate-500 sticky left-[112px] z-20 bg-white">
+        <span className="bg-slate-100 px-2 py-1 rounded-md border border-slate-200 uppercase tracking-wider">
+          {tankData.tankType}
+        </span>
+      </div>
+
+      {/* Gantt Timeline Area */}
+      <div className="flex-1 relative" ref={rowRef}>
+        <DndContext
+          sensors={sensors}
+          modifiers={[restrictToParentElement]}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="relative h-full w-full">
+            {tankData.items.map((item) => (
+              <TaskBar
+                key={item.id}
+                item={item}
+                leftPct={getPosition(item.start)}
+                widthPct={getPosition(item.end) - getPosition(item.start)}
+              />
+            ))}
+          </div>
+        </DndContext>
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────
+// Main Chart Component
+// ─────────────────────────────────────────────
+const DraggableGanttChart = ({
+  tasks = [],
+  filterRange = null,
+  synchronizedScroll = null,
+  onScrollChange,
+}) => {
+  const { tasksWithLanes, timeLabels, timelineStart, timelineEnd, totalDurationHrs, getPosition } =
+    useTimeline(tasks, filterRange);
+  const [updateGanttEdit] = useUpdateGanttEditMutation();
+  const scrollRef = useRef(null);
+  const isSyncingRef = useRef(false);
+
+  // --- NESTED GROUPING LOGIC ---
+  const groupedData = useMemo(() => {
+    const groups = {};
+    const priority = { '12T': 0, '6T': 1, '1.25T': 2 };
+
+    tasksWithLanes.forEach((row) => {
+      // Expecting resource format: "12T / MMT" or "12T / FMT"
+      const parts = row.resource.split('/');
+      const system = parts[0]?.trim() || 'Unknown';
+      const tank = parts[1]?.trim() || 'General';
+
+      if (!groups[system]) groups[system] = [];
+      groups[system].push({ tankType: tank, items: row.items });
+    });
+
+    return Object.keys(groups)
+      .sort((a, b) => (priority[a] ?? 999) - (priority[b] ?? 999))
+      .map((sys) => ({
+        system: sys,
+        tanks: groups[sys].sort((a, b) => a.tankType.localeCompare(b.tankType)),
+      }));
+  }, [tasksWithLanes]);
+
+  const handleTaskUpdate = useCallback(
+    async (updateData) => {
+      try {
+        await updateGanttEdit({
+          id: updateData.batch_id || updateData.id,
+          start_time: formatLocalISO(new Date(updateData.start)),
+          end_time: formatLocalISO(new Date(updateData.end)),
+        }).unwrap();
+        message.success('Update Success');
+      } catch (err) {
+        message.error('Update Failed');
+      }
+    },
+    [updateGanttEdit]
+  );
+
+  useEffect(() => {
+    if (!scrollRef.current || !synchronizedScroll) return;
+
+    const { left = 0, top = 0 } = synchronizedScroll;
+    const leftDiff = Math.abs(scrollRef.current.scrollLeft - left);
+    const topDiff = Math.abs(scrollRef.current.scrollTop - top);
+
+    if (leftDiff < 1 && topDiff < 1) return;
+
+    isSyncingRef.current = true;
+    scrollRef.current.scrollTo({ left, top });
+
+    requestAnimationFrame(() => {
+      isSyncingRef.current = false;
+    });
+  }, [synchronizedScroll]);
+
+  const handleScroll = useCallback(
+    (event) => {
+      if (isSyncingRef.current) return;
+      onScrollChange?.({
+        left: event.currentTarget.scrollLeft,
+        top: event.currentTarget.scrollTop,
+      });
+    },
+    [onScrollChange]
+  );
+
+  return (
+    <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl overflow-hidden w-full">
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="overflow-auto custom-scrollbar max-h-[80vh]"
       >
         <div
           style={{ minWidth: `${Math.max(totalDurationHrs * 200, 1200)}px` }}
           className="relative"
         >
-          {/* Time Header */}
-          <div className="flex border-b border-slate-100 bg-slate-50/80 backdrop-blur-sm sticky top-0 z-20">
-            <div className="w-40 shrink-0 border-r border-slate-200 bg-slate-200 flex items-center justify-center font-bold text-slate-500 text-xs tracking-wider sticky left-0 z-30">
-              RESOURCE
+          {/* Header Row */}
+          <div className="flex border-b border-slate-200 bg-slate-200/80 backdrop-blur sticky top-0 z-50">
+            <div className="w-28 shrink-0 border-r border-slate-300 flex items-center justify-center font-black text-[10px] text-slate-500 sticky left-0 z-[60] bg-slate-200">
+              SYSTEM
+            </div>
+            <div className="w-32 shrink-0 border-r border-slate-300 flex items-center justify-center font-black text-[10px] text-slate-500 sticky left-[112px] z-[60] bg-slate-200">
+              TANKS
             </div>
             {timeLabels.slice(0, -1).map((time, i) => (
               <div
                 key={i}
-                className={`flex-1 py-4 text-center text-[11px] font-bold text-slate-500 border-r border-slate-200/50 last:border-r-0 ${time.isNewDay ? 'bg-blue-50/50' : ''}`}
-                title={time.fullDate}
+                className={`flex-1 py-3 text-center text-[11px] font-black text-slate-600 border-r border-slate-200/50 ${time.isNewDay ? 'bg-indigo-100/30' : ''}`}
               >
                 {time.label}
-                {time.isNewDay && (
-                  <div className="text-[9px] text-blue-400 opacity-70">
-                    {new Date(time.timestamp).toLocaleDateString(undefined, {
-                      day: 'numeric',
-                      month: 'short',
-                    })}
-                  </div>
-                )}
               </div>
             ))}
           </div>
 
-          {/* Grid Area */}
-          <div className="relative bg-white">
-            {tasksWithLanes.map((resourceRow, rowIndex) => (
-              <div
-                key={rowIndex}
-                className="flex border-b border-slate-100 last:border-b-0 min-h-35 group"
-                style={{ height: `${Math.max(resourceRow.totalLanes * 80 + 40, 140)}px` }}
-              >
-                {/* Resource Label */}
-                <div className="w-40 shrink-0 flex items-center justify-center font-black text-slate-600 border-r border-slate-200 bg-slate-100 group-hover:bg-blue-50 transition-colors duration-300 sticky left-0 z-20">
-                  <div className="bg-white shadow-sm border border-slate-200 rounded-lg px-3 py-2 text-sm w-[90%] text-center truncate">
-                    {resourceRow.resource}
-                  </div>
-                </div>
-
-                {/* Timeline Row */}
-                <div className="flex-1 relative p-4">
-                  {/* Grid Lines */}
-                  <div className="absolute inset-0 flex pointer-events-none">
-                    {timeLabels.slice(0, -1).map((time, i) => (
-                      <div
-                        key={i}
-                        className={`flex-1 border-r border-slate-100/80 last:border-r-0 ${time.isNewDay ? 'border-l-2 border-l-blue-100' : ''}`}
-                      ></div>
-                    ))}
-                  </div>
-
-                  {/* Task Items */}
-                  <div className="relative h-full">
-                    {resourceRow.items.map((item) => (
-                      <Tooltip
-                        key={item.id}
-                        title={
-                          <div className="p-1">
-                            <div className="font-bold border-b border-white/20 mb-1">
-                              {item.title}
-                            </div>
-                            <div className="text-[10px] opacity-90">
-                              {new Date(item.start).toLocaleTimeString()} -{' '}
-                              {new Date(item.end).toLocaleTimeString()}
-                            </div>
-                            <div className="text-[10px] opacity-90">
-                              {new Date(item.start).toDateString()}
-                            </div>
-                          </div>
-                        }
-                        placement="top"
-                        color="#1e293b"
-                      >
-                        <div
-                          onMouseDown={(e) => handleMouseDown(e, item)}
-                          className={`absolute rounded-xl p-3 text-white shadow-lg flex flex-col justify-center transition-all duration-150 hover:scale-[1.01] hover:shadow-2xl cursor-move z-10 border border-white/20 ${statusColors[item.status] || statusColors.ready} ${draggingItem?.id === item.id ? 'opacity-50 scale-105 z-50 ring-2 ring-white shadow-2xl' : ''}`}
-                          style={{
-                            left: `${getPosition(item.start)}%`,
-                            width: `${getPosition(item.end) - getPosition(item.start)}%`,
-                            top: `${item.laneIndex * 80}px`,
-                            height: '70px',
-                          }}
-                        >
-                          <div className="flex items-center justify-between gap-2 overflow-hidden">
-                            <Text className="text-white font-extrabold leading-tight truncate text-[13px] shrink shadow-sm">
-                              {item.title}
-                            </Text>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1 opacity-90">
-                            <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter">
-                              {item.batch}
-                            </span>
-                            <Text className="text-white/80 text-[11px] font-medium truncate">
-                              {((item.end - item.start) / 3600000).toFixed(1)}h
-                            </Text>
-                          </div>
-                        </div>
-                      </Tooltip>
-                    ))}
-                  </div>
-                </div>
-              </div>
+          {/* Grouped Rows */}
+          <div className="bg-white">
+            {groupedData.map((group) => (
+              <React.Fragment key={group.system}>
+                {group.tanks.map((tankData, idx) => (
+                  <TankRow
+                    key={`${group.system}-${tankData.tankType}`}
+                    system={group.system}
+                    tankData={tankData}
+                    isFirst={idx === 0}
+                    timelineStart={timelineStart}
+                    timelineEnd={timelineEnd}
+                    getPosition={getPosition}
+                    onTaskUpdate={handleTaskUpdate}
+                  />
+                ))}
+                {/* System Divider */}
+                <div className="h-1 bg-slate-200"></div>
+              </React.Fragment>
             ))}
+
+            {/* Auto-Placeholder for missing 1.25T */}
+            {!groupedData.find((g) => g.system === '1.25T') && (
+              <div className="flex border-b border-slate-200 min-h-[110px] bg-slate-50/40">
+                <div className="w-28 shrink-0 border-r border-slate-200 flex items-center justify-center font-black text-slate-400 bg-slate-100 sticky left-0 z-30">
+                  1.25T
+                </div>
+                <div className="w-32 shrink-0 border-r border-slate-200 flex items-center justify-center text-[10px] italic text-slate-300 sticky left-[112px] z-20 bg-white">
+                  No Config
+                </div>
+                <div className="flex-1 bg-stripes-slate opacity-20"></div>
+              </div>
+            )}
           </div>
         </div>
       </div>

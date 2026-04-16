@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Typography, Tooltip, Empty, Spin } from 'antd';
 import { useTimeline } from '../../plan-view/hooks/useTimeline';
 import { useGetPackingPlanQuery } from '../../../store/api/packingPlanApi';
+import { combineDateAndDuration } from '@/utils/tableUtils';
 
 const { Text } = Typography;
 
@@ -28,8 +29,8 @@ const PackingPlanGantt = ({ filterRange = null }) => {
         title: item.p_code || item.description || 'No Title',
         description: item.description,
         batch: item.batch_no || item.order_no,
-        start_time: item.start_datetime,
-        end_time: item.end_datetime,
+        start_time: combineDateAndDuration(item.start_date, item.start_time),
+        end_time: combineDateAndDuration(item.end_date, item.end_time),
         status: 'ready', 
         qty: item.planned_qty,
         uom: item.base_uom
@@ -178,7 +179,7 @@ const PackingPlanGantt = ({ filterRange = null }) => {
                                 {item.batch}
                               </span>
                               <Text className="text-white/90 text-[11px] font-bold truncate">
-                                {((item.end - item.start) / 3600000).toFixed(1)}h
+                                {isNaN(item.end - item.start) ? '0.0' : ((item.end - item.start) / 3600000).toFixed(1)}h
                               </Text>
                             </div>
                             

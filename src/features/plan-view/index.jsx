@@ -7,7 +7,7 @@ import {
   useGetGanttEditQuery,
 } from '../../store/api/statusApi';
 import { setActiveTab } from '../../store/slices/uiSlice';
-import { exportTableToExcel } from '../../utils/exportUtils';
+import { exportTableToExcel, exportDataTableToExcel } from '../../utils/exportUtils';
 import DraggableGanttChart from './components/DraggableGanttChart';
 import GanttChart from './components/GanttChart';
 import PlanHeader from './components/PlanHeader';
@@ -75,6 +75,7 @@ const mapScheduleToGanttFormat = (flatData) => {
 
     Object.entries(processedConfigs).forEach(([tankConfig, batches]) => {
       const items = batches.map(b => ({
+        ...b,
         id: b.batch_id,
         title: b.description,
         batch: b.batch_id,
@@ -306,9 +307,72 @@ const PlanView = () => {
       />
       {renderContent()}
 
-      {/* Draggable Gantt Chart Section — still uses old timeline API */}
+      {/* Draggable Gantt Chart Section */}
       {activeTab === 'gantt' && (
         <div className="mt-12">
+          <div className="flex justify-between items-center mb-4 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+            <div>
+              <h3 className="m-0 text-lg font-bold text-[#002060]">Interactive Plan</h3>
+              <p className="m-0 text-xs text-slate-500">Drag items to adjust start and end times.</p>
+            </div>
+            <button 
+                className="bg-emerald-600 hover:bg-emerald-700 text-white border-none font-bold shadow-md rounded-lg px-4 py-2 flex items-center gap-2 cursor-pointer transition-colors"
+                onClick={() => {
+                  const flatItemsMap = new Map();
+                  draggableTasks.forEach(row => {
+                    row.items.forEach(item => {
+                       if (!flatItemsMap.has(item.batch)) {
+                         flatItemsMap.set(item.batch, { ...item });
+                       }
+                    });
+                  });
+
+                  const allBatches = Array.from(flatItemsMap.values());
+                  const grouped = {};
+                  const allDates = new Set();
+
+                  allBatches.forEach(b => {
+                    if (b.status === 'downtime') return; // Skip downtime in schedule table
+                    
+                    const system = b.system || 'Unknown';
+                    const shift = b.shift || 'Unknown';
+                    const startTime = dayjs(b.start_time);
+                    const dk = startTime.format('YYYY-MM-DD');
+                    const label = startTime.format('DD MMMM YYYY');
+                    
+                    allDates.add(dk);
+
+                    if (!grouped[system]) grouped[system] = {};
+                    if (!grouped[system][shift]) grouped[system][shift] = {};
+                    if (!grouped[system][shift][dk]) {
+                      grouped[system][shift][dk] = { label, batches: [] };
+                    }
+
+                    grouped[system][shift][dk].batches.push({
+                      ...b,
+                      startTime: startTime.format('HH:mm'),
+                      endTime: dayjs(b.end_time).format('HH:mm'),
+                    });
+                  });
+
+                  const sorted = {};
+                  ['12T', '6T'].forEach(sys => {
+                    if (grouped[sys]) {
+                      const sortedShifts = {};
+                      ['A', 'B', 'C'].forEach(s => {
+                        if (grouped[sys][s]) sortedShifts[s] = grouped[sys][s];
+                      });
+                      sorted[sys] = sortedShifts;
+                    }
+                  });
+
+                  const sortedDates = Array.from(allDates).sort();
+                  exportTableToExcel(sorted, sortedDates, 'Updated_Production_Schedule.xlsx');
+                }}
+            >
+              Export Updated Plan
+            </button>
+          </div>
           <DraggableGanttChart tasks={draggableTasks} filterRange={filterRange} />
         </div>
       )}

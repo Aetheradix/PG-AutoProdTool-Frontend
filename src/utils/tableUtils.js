@@ -33,12 +33,83 @@ export function detectRowKey(data) {
  * @param {string} rowKey  - The primary key field name (pinned left)
  * @returns {Array} column definitions (without the Actions column)
  */
-/**
- * Checks whether a column key represents a datetime field.
- */
 function isDatetimeField(key) {
     const lower = key.toLowerCase();
     return lower.includes('datetime') || lower.endsWith('_date');
+}
+
+function isDateOnlyField(key) {
+    const lower = key.toLowerCase();
+    return lower.endsWith('_date') && !lower.includes('datetime');
+}
+
+function isTimeField(key) {
+    const lower = key.toLowerCase();
+    return lower.endsWith('_time');
+}
+
+/**
+ * Parses a duration-like string (e.g., PT15H43M or 15:43:00) into {hours, minutes}.
+ */
+export function parseDuration(val) {
+    let hours = 0;
+    let minutes = 0;
+    let isParsed = false;
+
+    if (typeof val !== 'string') return { hours, minutes, isParsed };
+
+    // Handle PT ISO Duration (e.g., PT15H43M)
+    if (val.startsWith('PT')) {
+        let timeStr = val.substring(2);
+        if (timeStr.includes('H')) {
+            const p = timeStr.split('H');
+            hours = parseInt(p[0] || '0', 10);
+            timeStr = p[1];
+        }
+        if (timeStr.includes('M')) {
+            const p = timeStr.split('M');
+            hours = hours; // stay same
+            minutes = parseInt(p[0] || '0', 10);
+        }
+        isParsed = true;
+    }
+    // Handle standard 24-hour format (e.g., 15:43 or 15:43:00)
+    else if (val.includes(':')) {
+        const parts = val.split(':');
+        hours = parseInt(parts[0], 10);
+        minutes = parseInt(parts[1], 10);
+        if (!isNaN(hours) && !isNaN(minutes)) {
+            isParsed = true;
+        }
+    }
+
+    return { hours, minutes, isParsed };
+}
+
+/**
+ * Combines a date string (YYYY-MM-DD or absolute) with a duration-like time string.
+ * Returns an ISO datetime string for the start of that time on that date.
+ */
+export function combineDateAndDuration(dateStr, timeStr) {
+    if (!dateStr) return null;
+    
+    // Create base date (ensure it handles various input formats)
+    const baseDate = dayjs(dateStr);
+    if (!baseDate.isValid()) return null;
+
+    if (!timeStr) return baseDate.toISOString();
+
+    const { hours, minutes, isParsed } = parseDuration(timeStr);
+    
+    if (isParsed) {
+        return baseDate.startOf('day').hour(hours).minute(minutes).second(0).toISOString();
+    }
+
+    // Fallback: If it's already a valid date-time string, return as is
+    const fallback = dayjs(timeStr);
+    if (fallback.isValid()) return fallback.toISOString();
+
+    return baseDate.toISOString();
 }
 
 export function buildDynamicColumns(data, rowKey) {
@@ -46,21 +117,23 @@ export function buildDynamicColumns(data, rowKey) {
 
     return Object.keys(data[0]).map((key) => {
         const isDatetime = isDatetimeField(key);
+        const isDateOnly = isDateOnlyField(key);
+        const isTime = isTimeField(key);
 
         return {
             title: key.toUpperCase().replace(/_/g, ' '),
             dataIndex: key,
             key,
             editable: true,
-            inputType: isDatetime ? 'datetime' : 'text',
+            inputType: isDatetime ? (isDateOnly ? 'date' : 'datetime') : isTime ? 'time' : 'text',
             width:
-                key === 'id' || key === 'bulk_id'
-                    ? 100
+                key === 'id' || key === 'bulk_id' || key === 'line'
+                    ? 80
                     : key === 'description' || key === 'name'
-                        ? 300
-                        : isDatetime
-                            ? 200
-                            : 200,
+                        ? 250
+                        : isDatetime || isTime
+                            ? 120
+                            : 130,
             ellipsis: true,
             fixed: key === rowKey ? 'left' : undefined,
             sorter: (a, b) => {
@@ -70,7 +143,31 @@ export function buildDynamicColumns(data, rowKey) {
                 return String(valA).localeCompare(String(valB));
             },
             ...(isDatetime && {
-                render: (val) => (val ? dayjs(val).format('YYYY-MM-DD HH:mm:ss') : '—'),
+                render: (val) => {
+                    if (!val) return '—';
+                    if (isDateOnly) {
+                        return dayjs(val).format('YYYY-MM-DD');
+                    }
+                    return dayjs(val).format('YYYY-MM-DD HH:mm:ss');
+                },
+            }),
+            ...(isTime && {
+                render: (val) => {
+                    if (!val) return '—';
+                    
+                    const { hours, minutes, isParsed } = parseDuration(val);
+
+                    if (isParsed) {
+                        // Format to 12-hour AM/PM format genericly
+                        const ampm = hours >= 12 ? 'PM' : 'AM';
+                        const formattedHours = hours % 12 || 12; // Convert 0 (midnight) or 12 (noon) to 12
+                        const paddedHours = String(formattedHours).padStart(2, '0');
+                        const paddedMinutes = String(minutes).padStart(2, '0');
+                        return `${paddedHours}:${paddedMinutes} ${ampm}`;
+                    }
+
+                    return val;
+                },
             }),
         };
     });

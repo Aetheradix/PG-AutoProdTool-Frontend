@@ -1,6 +1,6 @@
 import { useAuth } from '@/context/AuthContext';
 import { useEditableTable } from '@/hooks/useEditableTable';
-import { Button, ConfigProvider, DatePicker, Form, Input, Modal, Popconfirm, Space, Table, Typography } from 'antd';
+import { Button, ConfigProvider, DatePicker, Form, Input, Modal, Popconfirm, Space, Table, TimePicker, Typography } from 'antd';
 import dayjs from 'dayjs';
 import { useMemo } from 'react';
 import { FiEdit2, FiPackage, FiPlus, FiSearch, FiTrash2 } from 'react-icons/fi';
@@ -32,10 +32,10 @@ const LineGroupedTable = (props) => {
       .map(col => ({ ...col, sorter: false })); // Remove sorting to disable hover/tooltips
 
     const finalCols = [
-      { 
-        title: 'LINE', 
-        dataIndex: 'line', 
-        width: 80, 
+      {
+        title: 'LINE',
+        dataIndex: 'line',
+        width: 80,
         align: 'center',
         fixed: 'left',
         render: (text) => <span className="font-bold text-slate-500">{text}</span>
@@ -61,7 +61,7 @@ const LineGroupedTable = (props) => {
         render: (_, record) => {
           const editable = table.isEditing(record);
           const isPlaceholder = record.isPlaceholder;
-          
+
           if (isPlaceholder) return null;
 
           return editable ? (
@@ -121,14 +121,14 @@ const LineGroupedTable = (props) => {
       if (!groups[lineName]) groups[lineName] = { rows: [], lineId: lineId };
       groups[lineName].rows.push({ ...item, sn: groups[lineName].rows.length + 1 });
     });
-    
+
     const sortedOrder = ['Sachet Line 1', 'Sachet Line 2', 'Sachet Line 4', 'Ronchi', 'Tube Line 1'];
     const sortedGroups = {};
     sortedOrder.forEach(name => {
-        if (groups[name]) sortedGroups[name] = groups[name];
+      if (groups[name]) sortedGroups[name] = groups[name];
     });
     Object.keys(groups).forEach(name => {
-        if (!sortedGroups[name]) sortedGroups[name] = groups[name];
+      if (!sortedGroups[name]) sortedGroups[name] = groups[name];
     });
 
     return sortedGroups;
@@ -154,7 +154,7 @@ const LineGroupedTable = (props) => {
     >
       <div className={`flex flex-col gap-6 ${className || ''}`}>
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-1">
-          {isAdmin && (
+          {/* {isAdmin && (
             <Button
               type="primary"
               onClick={table.handleAdd}
@@ -164,7 +164,7 @@ const LineGroupedTable = (props) => {
             >
               Add {title}
             </Button>
-          )}
+          )} */}
           <Input
             placeholder={searchPlaceholder}
             prefix={<FiSearch className="text-slate-400" />}
@@ -183,10 +183,10 @@ const LineGroupedTable = (props) => {
                   <FiPackage className="text-blue-200" size={16} />
                   <span>{lineName} - PACKING PLAN</span>
                   {isAdmin && (
-                    <Button 
-                      size="small" 
-                      type="primary" 
-                      icon={<FiPlus />} 
+                    <Button
+                      size="small"
+                      type="primary"
+                      icon={<FiPlus />}
                       onClick={() => table.handleAdd({ line: lineId })}
                       className="ml-4 h-6 text-[10px] rounded-none bg-blue-500 hover:bg-blue-400 border-none shadow-sm flex items-center gap-1 font-black"
                     >
@@ -244,9 +244,11 @@ const LineGroupedTable = (props) => {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4"
         >
           {table.addModalFields.map((key) => {
-            const isDatetime = key.toLowerCase().includes('datetime') || key.toLowerCase().endsWith('_date');
+            const isDate = key.toLowerCase().endsWith('_date');
+            const isTime = key.toLowerCase().includes('time') && !key.toLowerCase().includes('date');
+            const isDatetime = key.toLowerCase().includes('datetime');
             const isQty = key.toLowerCase().includes('qty') || key.toLowerCase().includes('quantity');
-            
+
             return (
               <Form.Item
                 key={key}
@@ -258,15 +260,24 @@ const LineGroupedTable = (props) => {
                 }
                 rules={[{ required: true, message: `${key.replace(/_/g, ' ')} required` }]}
               >
-                {isDatetime ? (
+                {isDate ? (
                   <DatePicker
-                    showTime
-                    format="YYYY-MM-DD HH:mm:ss"
+                    format="YYYY-MM-DD"
                     className="w-full rounded-none border-slate-300 h-10 font-medium"
                     placeholder={`Select ${key.replace(/_/g, ' ')}`}
-                    needConfirm={false}
-                    getValueProps={(value) => ({ value: value ? dayjs(value) : null })}
-                    onChange={(val) => table.addForm.setFieldValue(key, val ? val.format('YYYY-MM-DD HH:mm:ss') : null)}
+                  />
+                ) : isTime ? (
+                  <TimePicker
+                    format="HH:mm"
+                    className="w-full rounded-none border-slate-300 h-10 font-medium"
+                    placeholder={`Select ${key.replace(/_/g, ' ')}`}
+                  />
+                ) : isDatetime ? (
+                  <DatePicker
+                    showTime
+                    format="YYYY-MM-DD HH:mm"
+                    className="w-full rounded-none border-slate-300 h-10 font-medium"
+                    placeholder={`Select ${key.replace(/_/g, ' ')}`}
                   />
                 ) : (
                   <Input
