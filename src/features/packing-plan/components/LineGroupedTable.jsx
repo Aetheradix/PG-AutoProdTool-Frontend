@@ -259,6 +259,18 @@ const LineGroupedTable = (props) => {
                   </span>
                 }
                 rules={[{ required: true, message: `${key.replace(/_/g, ' ')} required` }]}
+                {...(isDate && {
+                  getValueProps: (value) => ({ value: value ? dayjs(value) : null }),
+                  normalize: (value) => (value ? (dayjs.isDayjs(value) ? value.format('YYYY-MM-DD') : value) : null),
+                })}
+                {...(isTime && {
+                  getValueProps: (value) => ({ value: value ? dayjs(value, 'HH:mm') : null }),
+                  normalize: (value) => (value ? (dayjs.isDayjs(value) ? value.format('HH:mm') : value) : null),
+                })}
+                {...(isDatetime && {
+                  getValueProps: (value) => ({ value: value ? dayjs(value) : null }),
+                  normalize: (value) => (value ? (dayjs.isDayjs(value) ? value.format('YYYY-MM-DD HH:mm:ss') : value) : null),
+                })}
               >
                 {isDate ? (
                   <DatePicker

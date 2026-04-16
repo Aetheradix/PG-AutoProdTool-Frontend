@@ -102,7 +102,11 @@ export function useEditableTable({
 
     async function handleAddOk(values) {
         try {
-            const row = values || await addForm.validateFields();
+            // values might be the MouseEvent from Ant Design Modal onOk.
+            // If it has nativeEvent or is a Proxy/Event, we treat it as null to trigger form validation.
+            const isEvent = values && (values.nativeEvent || values instanceof Event || (values.target && values.stopPropagation));
+            const row = (values && !isEvent) ? values : await addForm.validateFields();
+            
             await createItem(row).unwrap();
             message.success(`${title} created successfully`);
             setIsAddModalOpen(false);

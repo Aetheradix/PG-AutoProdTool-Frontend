@@ -170,7 +170,10 @@ export function StandardDataTable(props) {
           className="grid grid-cols-4 gap-x-6 gap-y-2 py-4"
         >
           {table.addModalFields.map((key) => {
-            const isDatetime = key.toLowerCase().includes('datetime') || key.toLowerCase().endsWith('_date');
+            const isDate = key.toLowerCase().endsWith('_date');
+            const isTime = key.toLowerCase().includes('time') && !key.toLowerCase().includes('date');
+            const isDatetime = key.toLowerCase().includes('datetime');
+
             return (
               <Form.Item
                 key={key}
@@ -181,12 +184,32 @@ export function StandardDataTable(props) {
                   </span>
                 }
                 rules={[{ required: true, message: `Please input ${key.replace(/_/g, ' ')}` }]}
+                {...(isDate && {
+                  getValueProps: (value) => ({ value: value ? dayjs(value) : null }),
+                  normalize: (value) => (value ? (dayjs.isDayjs(value) ? value.format('YYYY-MM-DD') : value) : null),
+                })}
+                {...(isTime && {
+                  getValueProps: (value) => ({ value: value ? dayjs(value, 'HH:mm') : null }),
+                  normalize: (value) => (value ? (dayjs.isDayjs(value) ? value.format('HH:mm') : value) : null),
+                })}
                 {...(isDatetime && {
                   getValueProps: (value) => ({ value: value ? dayjs(value) : null }),
-                  normalize: (value) => (value ? value.format('YYYY-MM-DD HH:mm:ss') : null),
+                  normalize: (value) => (value ? (dayjs.isDayjs(value) ? value.format('YYYY-MM-DD HH:mm:ss') : value) : null),
                 })}
               >
-                {isDatetime ? (
+                {isDate ? (
+                  <DatePicker
+                    format="YYYY-MM-DD"
+                    className="w-full rounded-lg border-slate-200 h-10"
+                    placeholder={`Select ${key.replace(/_/g, ' ')}`}
+                  />
+                ) : isTime ? (
+                  <TimePicker
+                    format="HH:mm"
+                    className="w-full rounded-lg border-slate-200 h-10"
+                    placeholder={`Select ${key.replace(/_/g, ' ')}`}
+                  />
+                ) : isDatetime ? (
                   <DatePicker
                     showTime
                     format="YYYY-MM-DD HH:mm:ss"
