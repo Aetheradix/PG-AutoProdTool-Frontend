@@ -154,7 +154,7 @@ const LineGroupedTable = (props) => {
     >
       <div className={`flex flex-col gap-6 ${className || ''}`}>
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-1">
-          {isAdmin && (
+          {/* {isAdmin && (
             <Button
               type="primary"
               onClick={table.handleAdd}
@@ -164,7 +164,7 @@ const LineGroupedTable = (props) => {
             >
               Add {title}
             </Button>
-          )}
+          )} */}
           <Input
             placeholder={searchPlaceholder}
             prefix={<FiSearch className="text-slate-400" />}

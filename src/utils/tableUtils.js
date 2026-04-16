@@ -48,6 +48,70 @@ function isTimeField(key) {
     return lower.endsWith('_time');
 }
 
+/**
+ * Parses a duration-like string (e.g., PT15H43M or 15:43:00) into {hours, minutes}.
+ */
+export function parseDuration(val) {
+    let hours = 0;
+    let minutes = 0;
+    let isParsed = false;
+
+    if (typeof val !== 'string') return { hours, minutes, isParsed };
+
+    // Handle PT ISO Duration (e.g., PT15H43M)
+    if (val.startsWith('PT')) {
+        let timeStr = val.substring(2);
+        if (timeStr.includes('H')) {
+            const p = timeStr.split('H');
+            hours = parseInt(p[0] || '0', 10);
+            timeStr = p[1];
+        }
+        if (timeStr.includes('M')) {
+            const p = timeStr.split('M');
+            hours = hours; // stay same
+            minutes = parseInt(p[0] || '0', 10);
+        }
+        isParsed = true;
+    }
+    // Handle standard 24-hour format (e.g., 15:43 or 15:43:00)
+    else if (val.includes(':')) {
+        const parts = val.split(':');
+        hours = parseInt(parts[0], 10);
+        minutes = parseInt(parts[1], 10);
+        if (!isNaN(hours) && !isNaN(minutes)) {
+            isParsed = true;
+        }
+    }
+
+    return { hours, minutes, isParsed };
+}
+
+/**
+ * Combines a date string (YYYY-MM-DD or absolute) with a duration-like time string.
+ * Returns an ISO datetime string for the start of that time on that date.
+ */
+export function combineDateAndDuration(dateStr, timeStr) {
+    if (!dateStr) return null;
+    
+    // Create base date (ensure it handles various input formats)
+    const baseDate = dayjs(dateStr);
+    if (!baseDate.isValid()) return null;
+
+    if (!timeStr) return baseDate.toISOString();
+
+    const { hours, minutes, isParsed } = parseDuration(timeStr);
+    
+    if (isParsed) {
+        return baseDate.startOf('day').hour(hours).minute(minutes).second(0).toISOString();
+    }
+
+    // Fallback: If it's already a valid date-time string, return as is
+    const fallback = dayjs(timeStr);
+    if (fallback.isValid()) return fallback.toISOString();
+
+    return baseDate.toISOString();
+}
+
 export function buildDynamicColumns(data, rowKey) {
     if (!data || data.length === 0) return [];
 
@@ -91,33 +155,7 @@ export function buildDynamicColumns(data, rowKey) {
                 render: (val) => {
                     if (!val) return '—';
                     
-                    let hours = 0;
-                    let minutes = 0;
-                    let isParsed = false;
-
-                    // Handle PT ISO Duration (e.g., PT15H43M)
-                    if (typeof val === 'string' && val.startsWith('PT')) {
-                        let timeStr = val.substring(2);
-                        if (timeStr.includes('H')) {
-                            const p = timeStr.split('H');
-                            hours = parseInt(p[0] || '0', 10);
-                            timeStr = p[1];
-                        }
-                        if (timeStr.includes('M')) {
-                            const p = timeStr.split('M');
-                            minutes = parseInt(p[0] || '0', 10);
-                        }
-                        isParsed = true;
-                    } 
-                    // Handle standard 24-hour format from backend (e.g., 15:43 or 15:43:00)
-                    else if (typeof val === 'string' && val.includes(':')) {
-                        const parts = val.split(':');
-                        hours = parseInt(parts[0], 10);
-                        minutes = parseInt(parts[1], 10);
-                        if (!isNaN(hours) && !isNaN(minutes)) {
-                            isParsed = true;
-                        }
-                    }
+                    const { hours, minutes, isParsed } = parseDuration(val);
 
                     if (isParsed) {
                         // Format to 12-hour AM/PM format genericly
@@ -126,9 +164,6 @@ export function buildDynamicColumns(data, rowKey) {
                         const paddedHours = String(formattedHours).padStart(2, '0');
                         const paddedMinutes = String(minutes).padStart(2, '0');
                         return `${paddedHours}:${paddedMinutes} ${ampm}`;
-                        
-                        // IF you ever want to switch back to 24-hour, simply use:
-                        // return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
                     }
 
                     return val;
