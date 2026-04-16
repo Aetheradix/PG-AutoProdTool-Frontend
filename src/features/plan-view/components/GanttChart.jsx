@@ -9,7 +9,7 @@ const statusColors = {
   running: 'bg-gradient-to-r from-emerald-500 to-emerald-600',
   conflict: 'bg-gradient-to-r from-rose-500 to-rose-600',
   warning: 'bg-gradient-to-r from-amber-500 to-amber-600',
-  downtime: 'bg-gradient-to-r from-slate-500 to-slate-600',
+  downtime: 'bg-gradient-to-br from-yellow-400 to-yellow-600',
 };
 
 const fmtTime = (ms) => new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -40,7 +40,7 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
     return Object.values(systems).sort((a, b) => (order[a.name] ?? 99) - (order[b.name] ?? 99));
   }, [tasksWithLanes]);
 
-  console.log('Grouped Data:', groupedData);
+  console.log('Grouped Data for Gantt Chart:', groupedData);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-2xl overflow-hidden w-full font-sans">

@@ -28,9 +28,11 @@ const formatLocalISO = (date) => {
 // TaskBar: Draggable Item
 // ─────────────────────────────────────────────
 const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
+  const isDowntime = item.status === 'downtime';
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: item.id,
     data: item,
+    disabled: isDowntime,
   });
 
   const fmtTime = (ms) =>
@@ -53,7 +55,7 @@ const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
       {...(isDragOverlay ? {} : listeners)}
       {...(isDragOverlay ? {} : attributes)}
       style={style}
-      className={`rounded-xl px-3 py-1.5 text-white shadow-lg flex flex-col justify-between cursor-grab z-10 border border-white/20 select-none ${statusColors[item.status] || statusColors.ready} transition-all duration-200 ${isDragOverlay ? 'cursor-grabbing ring-4 ring-white/30 scale-[1.05]' : ''}`}
+      className={`rounded-xl px-3 py-1.5 text-white shadow-lg flex flex-col justify-between z-10 border border-white/20 select-none ${statusColors[item.status] || statusColors.ready} transition-all duration-200 ${isDowntime ? 'cursor-default' : 'cursor-grab'} ${isDragOverlay ? 'cursor-grabbing ring-4 ring-white/30 scale-[1.05]' : ''}`}
     >
       {/* Title */}
       <span className="font-bold truncate text-[11px] leading-tight">{item.title}</span>
@@ -109,21 +111,21 @@ const TankRow = ({
   const rowRef = useRef(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
-  const handleDragEnd = useCallback(
-    ({ active, delta }) => {
-      if (!delta.x || !rowRef.current) return;
-      const totalW = rowRef.current.getBoundingClientRect().width;
-      const totalMs = timelineEnd - timelineStart;
-      const deltaMs = (delta.x / totalW) * totalMs;
-      const item = active.data.current;
-      let newStart = snapTo5Min(item.start + deltaMs);
-      let newEnd = newStart + (item.end - item.start);
-      if (newStart < timelineStart) newStart = timelineStart;
-      if (newEnd > timelineEnd) newEnd = timelineEnd;
-      onTaskUpdate({ id: item.id, start: newStart, end: newEnd });
-    },
-    [timelineStart, timelineEnd, onTaskUpdate]
-  );
+    const handleDragEnd = useCallback(
+      ({ active, delta }) => {
+        if (!delta.x || !rowRef.current) return;
+        const totalW = rowRef.current.getBoundingClientRect().width;
+        const totalMs = timelineEnd - timelineStart;
+        const deltaMs = (delta.x / totalW) * totalMs;
+        const item = active.data.current;
+        let newStart = snapTo5Min(item.start + deltaMs);
+        let newEnd = newStart + (item.end - item.start);
+        if (newStart < timelineStart) newStart = timelineStart;
+        if (newEnd > timelineEnd) newEnd = timelineEnd;
+        onTaskUpdate({ id: item.id, batch_id: item.batch, start: newStart, end: newEnd });
+      },
+      [timelineStart, timelineEnd, onTaskUpdate]
+    );
 
   return (
     <div className="flex border-b border-slate-100 last:border-b-0 min-h-[110px] bg-white hover:bg-slate-50/50 transition-colors">
@@ -206,7 +208,7 @@ const DraggableGanttChart = ({
     async (updateData) => {
       try {
         await updateGanttEdit({
-          id: updateData.id,
+          id: updateData.batch_id || updateData.id,
           start_time: formatLocalISO(new Date(updateData.start)),
           end_time: formatLocalISO(new Date(updateData.end)),
         }).unwrap();
