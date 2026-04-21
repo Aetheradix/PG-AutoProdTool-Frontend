@@ -11,14 +11,14 @@ export const dashboardCardsData = [
   {
     title: 'Create Production Plan',
     action: 'Start Planning',
-    path: '/create-production-plan',
+    path: '/create-making-plan',
     icon: <FiPlusCircle size={24} />,
     description: 'Generate a new 24-hour shift-wise plan for a selected date.',
   },
   {
     title: 'View Last Plan',
     action: 'Open Plan',
-    path: '/view-last-plan',
+    path: '/plan-view',
     icon: <FiFileText size={24} />,
     description: 'Review and tweak the most recently generated production plan.',
   },
