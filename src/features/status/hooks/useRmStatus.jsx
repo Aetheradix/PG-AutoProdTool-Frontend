@@ -4,7 +4,18 @@ import { useGetRmStatusQuery } from '@/store/api/statusApi';
 export const useRmStatus = () => {
     const { data, isLoading, isError, error } = useGetRmStatusQuery();
 
-    const latestRefreshTime = data?.DateandTime || null;
+    const latestRefreshTime = useMemo(() => {
+        if (data?.DateandTime) return data.DateandTime;
+        if (data?.DateAndTime) return data.DateAndTime;
+        // Fallback: If data is loaded, display localized current time or last updated time
+        if (data && data.success) {
+            return new Date().toLocaleString('en-US', {
+                dateStyle: 'short',
+                timeStyle: 'medium'
+            });
+        }
+        return null;
+    }, [data]);
 
 
     const rmTankData = useMemo(() => {

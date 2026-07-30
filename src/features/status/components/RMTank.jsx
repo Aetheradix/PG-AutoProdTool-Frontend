@@ -1,8 +1,7 @@
 import React from 'react';
-import StatusCard from './StatusCard';
+import RMTankCard from './RMTankCard';
 import { ResourceStatusGrid } from './ResourceStatusGrid';
 import { useRmStatus } from '../hooks/useRmStatus';
-
 
 const RMTank = ({ lastRefreshRM }) => {
   const { rmTankData, latestRefreshTime, isLoading, isError, error } = useRmStatus();
@@ -15,15 +14,9 @@ const RMTank = ({ lastRefreshRM }) => {
       isError={isError}
       error={error}
       data={rmTankData}
+      columns={{ xs: 12, sm: 8, md: 6, lg: 4, xl: 3 }}
       renderItem={(tank) => (
-        <StatusCard
-          title={tank.name}
-          value={tank.value}
-          hexCode={tank.hexCode}
-          status={tank.status}
-          unit={tank.unit}
-          deadStock={tank.dead_stock}
-        />
+        <RMTankCard tank={tank} />
       )}
     />
   );

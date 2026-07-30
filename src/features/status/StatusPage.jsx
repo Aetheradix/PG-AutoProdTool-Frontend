@@ -15,19 +15,28 @@ export function StatusPage() {
     error: rmError,
   } = useGetRmStatusQuery();
 
+  console.log('StatusPage statusData:', statusData);
+  console.log('StatusPage rmData:', rmData);
+
   const rawData = Array.isArray(statusData) ? statusData : statusData?.data || [];
 
   const getLatestDate = (item) => {
-    if (item.latest_dt && item.latest_dt.length > 5) {
-      return new Date(item.latest_dt).getTime();
+    if (item.latest_dt && typeof item.latest_dt === 'string' && item.latest_dt.length > 5) {
+      const parsed = new Date(item.latest_dt.replace(' ', 'T')).getTime();
+      if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+
+    if (item.DateAndTime && typeof item.DateAndTime === 'string' && item.DateAndTime.length > 5) {
+      const parsed = new Date(item.DateAndTime.replace(' ', 'T')).getTime();
+      if (!isNaN(parsed) && parsed > 0) return parsed;
     }
 
     const dateValues = Object.keys(item)
       .filter((key) => key.startsWith('DT#_'))
       .map((key) => item[key])
       .filter((val) => val && typeof val === 'string' && val.length > 5)
-      .map((val) => new Date(val).getTime())
-      .filter((time) => !isNaN(time));
+      .map((val) => new Date(val.replace(' ', 'T')).getTime())
+      .filter((time) => !isNaN(time) && time > 0);
 
     return dateValues.length > 0 ? Math.max(...dateValues) : 0;
   };
@@ -38,31 +47,46 @@ export function StatusPage() {
       51, 52, 53
     ];
 
-    return rawData
-      .filter((item) => {
-        const id = parseInt(item.ID || item.id);
-        return desiredIds.includes(id);
-      })
+    const filtered = rawData.filter((item) => {
+      const id = parseInt(item.ID || item.id);
+      return !isNaN(id) ? desiredIds.includes(id) : true;
+    });
+
+    const listToMap = filtered.length > 0 ? filtered : rawData;
+
+    return listToMap
       .map((item) => ({
         ...item,
-        id: item.ID || item.id || 'N/A',
+        id: item.ID || item.id || item.Tagname || 'N/A',
         batchId: item.BATCH_NO || item.batch_no || 'N/A',
         brand: item.BRAND_NAME || item.brand_name || 'N/A',
         status: item.status || item.STATUS || 'Active',
-        hexCode: item.hex_code || item.HEX_CODE,
-        colorName: item.color_name || item.colour_name || item.COLOR_NAME || item.COLOUR_NAME,
+        hexCode: item.hex_code || item.HEX_CODE || '#3b82f6',
+        colorName: item.color_name || item.colour_name || item.COLOR_NAME || item.COLOUR_NAME || 'Status',
         timestamp: getLatestDate(item),
       }))
-      .sort((a, b) => a.id - b.id);
+      .sort((a, b) => (parseInt(a.id) || 0) - (parseInt(b.id) || 0));
   }, [rawData]);
 
   const lastRefreshTTS = useMemo(() => {
+    if (statusData?.DateAndTime) return statusData.DateAndTime;
+    if (statusData?.DateandTime) return statusData.DateandTime;
     if (productionData.length === 0) return 'N/A';
-    const maxTimestamp = Math.max(...productionData.map(item => item.timestamp));
-    return maxTimestamp > 0 ? new Date(maxTimestamp).toLocaleString() : 'N/A';
-  }, [productionData]);
+    const validTimestamps = productionData.map(item => item.timestamp).filter(t => t > 0);
+    if (validTimestamps.length > 0) {
+      const maxTimestamp = Math.max(...validTimestamps);
+      return new Date(maxTimestamp).toLocaleString('en-US', {
+        dateStyle: 'short',
+        timeStyle: 'medium'
+      });
+    }
+    return new Date().toLocaleString('en-US', {
+      dateStyle: 'short',
+      timeStyle: 'medium'
+    });
+  }, [statusData, productionData]);
 
-  const lastRefreshRM = rmData?.DateandTime || 'N/A';
+  const lastRefreshRM = rmData?.DateandTime || rmData?.DateAndTime || 'N/A';
 
   const mappedRMTankData = React.useMemo(() => {
     return (
