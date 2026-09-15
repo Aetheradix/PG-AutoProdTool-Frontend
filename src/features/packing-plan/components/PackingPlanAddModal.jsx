@@ -45,7 +45,9 @@ const PackingPlanAddModal = ({ open, onCancel, onOk, confirmLoading, initialValu
       p_code: values.p_code,
       description: values.description,
       batch_no: values.batch_no,
-      planned_qty: values.planned_qty ? Number(values.planned_qty) : undefined,
+      planned_qty: values.planned_qty !== undefined && values.planned_qty !== null && values.planned_qty !== ''
+        ? (isNaN(Number(values.planned_qty)) ? String(values.planned_qty) : Number(values.planned_qty))
+        : undefined,
       start_date: values.start_date?.format('YYYY-MM-DD'),
       start_time: values.start_time?.format('HH:mm'),
       end_date: values.end_date?.format('YYYY-MM-DD'),
@@ -99,7 +101,6 @@ const PackingPlanAddModal = ({ open, onCancel, onOk, confirmLoading, initialValu
         <Form.Item
           name="line"
           label={<span className="font-bold text-slate-600 uppercase text-[10px] tracking-widest">Line</span>}
-          rules={[{ required: true, message: 'Line is required' }]}
         >
           <Select 
             placeholder="Select Line" 
@@ -114,7 +115,6 @@ const PackingPlanAddModal = ({ open, onCancel, onOk, confirmLoading, initialValu
         <Form.Item
           name="order_no"
           label={<span className="font-bold text-slate-600 uppercase text-[10px] tracking-widest">Order No</span>}
-          rules={[{ required: true, message: 'Order No is required' }]}
         >
           <Input placeholder="Enter order no" className="h-10 rounded-none font-bold bg-slate-50" />
         </Form.Item>
@@ -122,7 +122,6 @@ const PackingPlanAddModal = ({ open, onCancel, onOk, confirmLoading, initialValu
         <Form.Item
           name="p_code"
           label={<span className="font-bold text-slate-600 uppercase text-[10px] tracking-widest">P Code</span>}
-          rules={[{ required: true, message: 'P Code is required' }]}
         >
           <Input placeholder="Enter p code" className="h-10 rounded-none font-bold bg-slate-50" />
         </Form.Item>
@@ -130,7 +129,6 @@ const PackingPlanAddModal = ({ open, onCancel, onOk, confirmLoading, initialValu
         <Form.Item
           name="description"
           label={<span className="font-bold text-slate-600 uppercase text-[10px] tracking-widest">Description</span>}
-          rules={[{ required: true, message: 'Description is required' }]}
           className="lg:col-span-2"
         >
           <Input placeholder="Enter description" className="h-10 rounded-none font-bold bg-slate-50" />
@@ -139,7 +137,6 @@ const PackingPlanAddModal = ({ open, onCancel, onOk, confirmLoading, initialValu
         <Form.Item
           name="batch_no"
           label={<span className="font-bold text-slate-600 uppercase text-[10px] tracking-widest">Batch No</span>}
-          rules={[{ required: true, message: 'Batch No is required' }]}
         >
           <Input placeholder="Enter batch no" className="h-10 rounded-none font-bold bg-slate-50" />
         </Form.Item>
@@ -147,15 +144,13 @@ const PackingPlanAddModal = ({ open, onCancel, onOk, confirmLoading, initialValu
         <Form.Item
           name="planned_qty"
           label={<span className="font-bold text-slate-600 uppercase text-[10px] tracking-widest">Planned Qty</span>}
-          rules={[{ required: true, message: 'Planned Qty is required' }]}
         >
-          <Input type="number" placeholder="Enter planned qty" className="h-10 rounded-none font-bold bg-slate-50" />
+          <Input type="text" placeholder="Enter planned qty (e.g. 6000 or 6T / 12T)" className="h-10 rounded-none font-bold bg-slate-50" />
         </Form.Item>
 
         <Form.Item
           name="start_date"
           label={<span className="font-bold text-slate-600 uppercase text-[10px] tracking-widest">Start Date</span>}
-          rules={[{ required: true, message: 'Start Date is required' }]}
         >
           <DatePicker format="YYYY-MM-DD" className="w-full h-10 rounded-none" placeholder="Select start date" />
         </Form.Item>
@@ -163,7 +158,6 @@ const PackingPlanAddModal = ({ open, onCancel, onOk, confirmLoading, initialValu
         <Form.Item
           name="start_time"
           label={<span className="font-bold text-slate-600 uppercase text-[10px] tracking-widest">Start Time</span>}
-          rules={[{ required: true, message: 'Start Time is required' }]}
         >
           <TimePicker format="HH:mm" className="w-full h-10 rounded-none" placeholder="Select start time" />
         </Form.Item>
@@ -171,7 +165,6 @@ const PackingPlanAddModal = ({ open, onCancel, onOk, confirmLoading, initialValu
         <Form.Item
           name="end_date"
           label={<span className="font-bold text-slate-600 uppercase text-[10px] tracking-widest">End Date</span>}
-          rules={[{ required: true, message: 'End Date is required' }]}
         >
           <DatePicker format="YYYY-MM-DD" className="w-full h-10 rounded-none" placeholder="Select end date" />
         </Form.Item>
@@ -179,7 +172,6 @@ const PackingPlanAddModal = ({ open, onCancel, onOk, confirmLoading, initialValu
         <Form.Item
           name="end_time"
           label={<span className="font-bold text-slate-600 uppercase text-[10px] tracking-widest">End Time</span>}
-          rules={[{ required: true, message: 'End Time is required' }]}
         >
           <TimePicker format="HH:mm" className="w-full h-10 rounded-none" placeholder="Select end time" />
         </Form.Item>

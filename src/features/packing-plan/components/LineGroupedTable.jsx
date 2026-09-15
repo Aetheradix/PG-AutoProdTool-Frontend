@@ -297,7 +297,6 @@ const LineGroupedTable = (props) => {
             const isDate = key.toLowerCase().endsWith('_date');
             const isTime = key.toLowerCase().includes('time') && !key.toLowerCase().includes('date');
             const isDatetime = key.toLowerCase().includes('datetime');
-            const isQty = key.toLowerCase().includes('qty') || key.toLowerCase().includes('quantity');
 
             return (
               <Form.Item
@@ -308,7 +307,6 @@ const LineGroupedTable = (props) => {
                     {key.replace(/_/g, ' ')}
                   </span>
                 }
-                rules={[{ required: true, message: `${key.replace(/_/g, ' ')} required` }]}
                 {...(isDate && {
                   getValueProps: (value) => ({ value: value ? dayjs(value) : null }),
                   normalize: (value) => (value ? (dayjs.isDayjs(value) ? value.format('YYYY-MM-DD') : value) : null),
@@ -343,7 +341,7 @@ const LineGroupedTable = (props) => {
                   />
                 ) : (
                   <Input
-                    type={isQty ? 'number' : 'text'}
+                    type="text"
                     placeholder={`Enter ${key.replace(/_/g, ' ')}`}
                     className="rounded-none border-slate-300 h-10 font-bold bg-slate-50 focus:bg-white transition-all shadow-inner"
                   />
