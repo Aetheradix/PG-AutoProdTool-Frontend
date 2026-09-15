@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Form, message } from 'antd';
 import {
   useGetUsersQuery,
+  useGetAuditLogsQuery,
   useUpdateUserMutation,
   useDeleteUserMutation,
 } from '@/store/api/userApi';
@@ -9,9 +10,11 @@ import { useSignupMutation } from '@/store/api/authApi';
 
 export const useUserManagement = () => {
   const { data: users, isLoading, isError, refetch } = useGetUsersQuery();
+  const { data: auditLogs, isLoading: isLoadingAudit, refetch: refetchAudit } = useGetAuditLogsQuery();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
   const [signupUser, { isLoading: isCreating }] = useSignupMutation();
+
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -31,15 +34,26 @@ export const useUserManagement = () => {
 
   const handleEditUser = (user) => {
     setEditingUser(user);
-    form.setFieldsValue(user);
+    form.setFieldsValue({
+      username: user.username,
+      full_name: user.full_name,
+      email: user.email,
+      is_admin: user.is_admin,
+      is_active: user.is_active,
+    });
     setIsEditModalOpen(true);
   };
 
   const handleEditSubmit = async () => {
     try {
       const values = await form.validateFields();
-      await updateUser({ userId: editingUser.id, ...values }).unwrap();
-      message.success('User details updated');
+      // Sync role field with is_admin toggle
+      const payload = {
+        ...values,
+        role: values.is_admin ? 'admin' : 'user',
+      };
+      await updateUser({ userId: editingUser.id, ...payload }).unwrap();
+      message.success('User details updated successfully');
       setIsEditModalOpen(false);
       setEditingUser(null);
     } catch (err) {
@@ -105,6 +119,9 @@ export const useUserManagement = () => {
     editingUser,
     form,
     createForm,
+    auditLogs,
+    isLoadingAudit,
+    refetchAudit,
     handleUpdateField,
     handleEditUser,
     handleEditSubmit,
@@ -112,3 +129,4 @@ export const useUserManagement = () => {
     handleCreateSubmit,
   };
 };
+

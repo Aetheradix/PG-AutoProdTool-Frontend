@@ -13,10 +13,41 @@ export const useProvideAuth = () => {
   useEffect(() => {
     const storedUser = sessionStorage.getItem('user');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        const parsed = JSON.parse(storedUser);
+        // Check JWT token expiration
+        if (parsed?.access_token) {
+          const parts = parsed.access_token.split('.');
+          if (parts.length === 3) {
+            const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+            if (payload?.exp && payload.exp * 1000 < Date.now()) {
+              console.warn('Stored session token has expired');
+              sessionStorage.removeItem('user');
+              setUser(null);
+              setLoading(false);
+              return;
+            }
+          }
+        }
+        setUser(parsed);
+      } catch (e) {
+        console.error('Failed to parse user from sessionStorage', e);
+        sessionStorage.removeItem('user');
+      }
     }
     setLoading(false);
   }, []);
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setUser(null);
+      sessionStorage.removeItem('user');
+      dispatch(resetTabs());
+    };
+    window.addEventListener('auth:session-expired', handleSessionExpired);
+    return () => window.removeEventListener('auth:session-expired', handleSessionExpired);
+  }, [dispatch]);
+
 
   const login = async (credentials) => {
     try {
