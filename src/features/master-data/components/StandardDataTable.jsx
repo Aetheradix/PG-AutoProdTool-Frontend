@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Table, Form, Input, Button, Space, Popconfirm, Modal, DatePicker } from 'antd';
+import { Table, Form, Input, Button, Space, Popconfirm, Modal, DatePicker, TimePicker } from 'antd';
 import { FiEdit2, FiSearch, FiPlus, FiTrash2 } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import EditableCell from '../../excel-upload/components/EditableCell';
@@ -19,9 +19,10 @@ import { useEditableTable } from '@/hooks/useEditableTable';
  * @param {string} props.title - Title for the Add Modal
  * @param {string} props.searchPlaceholder - Placeholder for the search input
  * @param {Array} props.excludeFields - Fields to exclude from the Add Modal form
+ * @param {Array} props.excludeColumns - Fields to exclude from the Table columns
  */
 export function StandardDataTable(props) {
-  const { title = 'Item', searchPlaceholder = 'Search...', className } = props;
+  const { title = 'Item', searchPlaceholder = 'Search...', className, excludeColumns = [] } = props;
   const { user } = useAuth();
 
   const isAdmin = user?.role === 'admin';
@@ -31,18 +32,19 @@ export function StandardDataTable(props) {
   const columns = useMemo(() => {
     if (table.dataSource.length === 0) return [];
 
-    const dynamicCols = buildDynamicColumns(table.dataSource, table.rowKey);
+    const dynamicCols = buildDynamicColumns(table.dataSource, table.rowKey, excludeColumns);
 
     isAdmin &&
       dynamicCols.push({
         title: 'ACTIONS',
         dataIndex: 'operation',
         fixed: 'right',
-        width: 150,
+        width: 140,
+        align: 'center',
         render: (_, record) => {
           const editable = table.isEditing(record);
           return editable ? (
-            <Space size="middle">
+            <Space size="middle" className="flex items-center justify-center">
               <Button
                 type="link"
                 onClick={() => table.save(record[table.rowKey])}
@@ -56,7 +58,7 @@ export function StandardDataTable(props) {
               </Button>
             </Space>
           ) : (
-            <Space size="middle">
+            <Space size="middle" className="flex items-center justify-center">
               <Button
                 type="link"
                 disabled={table.editingKey !== ''}
@@ -149,7 +151,7 @@ export function StandardDataTable(props) {
             className: 'px-4',
             onChange: table.onPageChange,
           }}
-          scroll={{ x: 'max-content', y: 600 }}
+          scroll={{ x: 'max-content' }}
           className={`premium-table border-slate-100 shadow-sm rounded-lg overflow-hidden ${className || ''}`}
         />
       </Form>

@@ -380,45 +380,55 @@ textarea {
   @apply rounded-xl overflow-hidden border border-slate-100;
 }
 
-.premium-table .ant-table-thead>tr>th {
-  @apply !bg-slate-50 !text-slate-500 !font-bold !text-xs !uppercase !tracking-wider !py-4;
-  border-bottom: 1px solid #f1f5f9 !important;
+.premium-table .ant-table-thead > tr > th {
+  @apply !bg-slate-50 !text-slate-600 !font-bold !text-xs !uppercase !tracking-wider !py-3.5 !px-4;
+  border-bottom: 1px solid #e2e8f0 !important;
+  vertical-align: middle !important;
 }
 
-.premium-table .ant-table-tbody>tr>td {
-  @apply !py-4 !text-sm !text-slate-600;
+.premium-table .ant-table-tbody > tr > td {
+  @apply !py-3.5 !px-4 !text-sm !text-slate-700;
+  vertical-align: middle !important;
 }
 
-.premium-table .ant-table-tbody>tr.even-row {
-  @apply bg-slate-100/70;
+.premium-table .ant-table-cell {
+  vertical-align: middle !important;
 }
 
-.premium-table .ant-table-tbody>tr:hover>td {
-  background-color: var(--color-primary) !important;
-  color: white !important;
+.premium-table .ant-table-column-sorters {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 6px !important;
 }
 
-.premium-table .ant-table-tbody>tr:hover .ant-btn-link,
-.premium-table .ant-table-tbody>tr:hover .ant-btn-link span,
-.premium-table .ant-table-tbody>tr:hover .ant-btn-link svg {
-  color: white !important;
+.premium-table .ant-table-column-title {
+  flex: none !important;
+}
+
+.premium-table .ant-table-tbody > tr.even-row {
+  @apply bg-slate-50/60;
+}
+
+.premium-table .ant-table-tbody > tr:hover > td {
+  background-color: #f1f5f9 !important;
 }
 
 /* Fix transparency for fixed columns */
 .premium-table .ant-table-cell-fix-left,
 .premium-table .ant-table-cell-fix-right {
-  @apply bg-white;
+  background-color: #ffffff !important;
 }
 
-.premium-table .ant-table-tbody>tr.even-row>.ant-table-cell-fix-left,
-.premium-table .ant-table-tbody>tr.even-row>.ant-table-cell-fix-right {
+.premium-table .ant-table-tbody > tr.even-row > .ant-table-cell-fix-left,
+.premium-table .ant-table-tbody > tr.even-row > .ant-table-cell-fix-right {
+  background-color: #f8fafc !important;
+}
+
+.premium-table .ant-table-tbody > tr:hover > td,
+.premium-table .ant-table-tbody > tr:hover > .ant-table-cell-fix-left,
+.premium-table .ant-table-tbody > tr:hover > .ant-table-cell-fix-right {
   background-color: #f1f5f9 !important;
-  /* Matches slate-100 */
-}
-
-.premium-table .ant-table-tbody>tr:hover>.ant-table-cell-fix-left,
-.premium-table .ant-table-tbody>tr:hover>.ant-table-cell-fix-right {
-  background-color: var(--color-primary) !important;
 }
 
 .premium-table .ant-table-placeholder .ant-empty-normal {

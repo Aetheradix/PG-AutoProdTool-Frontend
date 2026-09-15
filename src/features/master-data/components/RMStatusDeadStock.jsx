@@ -9,7 +9,9 @@ const RMStatusDeadStock = () => {
       useUpdateMutation={useUpdateDeadstockMutation}
       title="Deadstock"
       searchPlaceholder="Search Deadstock..."
-
+      // "current_value" commented out / hidden from table & add modal
+      excludeColumns={['current_value']}
+      excludeFields={['id', 'current_value', 'created_at', 'updated_at']}
     />
   );
 };

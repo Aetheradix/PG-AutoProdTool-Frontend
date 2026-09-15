@@ -112,28 +112,36 @@ export function combineDateAndDuration(dateStr, timeStr) {
     return baseDate.toISOString();
 }
 
-export function buildDynamicColumns(data, rowKey) {
+export function buildDynamicColumns(data, rowKey, excludeFields = []) {
     if (!data || data.length === 0) return [];
 
-    return Object.keys(data[0]).map((key) => {
+    const lowerExclude = (excludeFields || []).map((f) => String(f).toLowerCase());
+
+    return Object.keys(data[0])
+        .filter((key) => !lowerExclude.includes(key.toLowerCase()))
+        .map((key) => {
         const isDatetime = isDatetimeField(key);
         const isDateOnly = isDateOnlyField(key);
         const isTime = isTimeField(key);
+        const lowerKey = key.toLowerCase();
 
         return {
             title: key.toUpperCase().replace(/_/g, ' '),
             dataIndex: key,
             key,
+            align: 'left',
             editable: true,
             inputType: isDatetime ? (isDateOnly ? 'date' : 'datetime') : isTime ? 'time' : 'text',
             width:
-                key === 'id' || key === 'bulk_id' || key === 'line'
-                    ? 80
-                    : key === 'description' || key === 'name'
-                        ? 250
-                        : isDatetime || isTime
-                            ? 120
-                            : 130,
+                lowerKey === 'description' || lowerKey.includes('desc')
+                    ? 240
+                    : lowerKey.includes('name') || lowerKey === 'id' || lowerKey === 'tag_name'
+                        ? 180
+                        : lowerKey === 'line' || lowerKey === 'bulk_id' || lowerKey === 'unit' || lowerKey === 'status'
+                            ? 100
+                            : isDatetime || isTime
+                                ? 140
+                                : 140,
             ellipsis: true,
             fixed: key === rowKey ? 'left' : undefined,
             sorter: (a, b) => {
