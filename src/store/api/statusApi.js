@@ -46,6 +46,10 @@ export const statusApi = apiSlice.injectEndpoints({
             }),
             invalidatesTags: ['Status'],
         }),
+        getWashoutMatrix: builder.query({
+            query: () => '/v1/washout-matrix',
+            providesTags: ['WashoutMatrix'],
+        }),
         updateGanttEdit: builder.mutation({
             query: ({ id, start_time, end_time }) => ({
                 url: `/v1/production-schedule/gantt-edit/${encodeURIComponent(id)}`,
@@ -71,5 +75,6 @@ export const {
     useGetGanttEditQuery,
     useGetTimelineDataQuery,
     useUpdateTimelineDataMutation,
-    useUpdateGanttEditMutation
+    useUpdateGanttEditMutation,
+    useGetWashoutMatrixQuery
 } = statusApi;

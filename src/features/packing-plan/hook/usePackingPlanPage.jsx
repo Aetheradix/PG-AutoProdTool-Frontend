@@ -11,7 +11,7 @@ import {
 // import { exportDataTableToExcel } from '../../utils/exportUtils';
 // import { extractApiData } from '../../utils/tableUtils';
 import { setActiveTab } from '@/store/slices/uiSlice';
-import { exportDataTableToExcel } from '@/utils/exportUtils';
+import { exportLineGroupedPackingPlanToExcel } from '@/utils/exportUtils';
 import { extractApiData, combineDateAndDuration } from '@/utils/tableUtils';
 
 export default function usePackingPlanPage() {
@@ -56,13 +56,8 @@ export default function usePackingPlanPage() {
       return;
     }
     try {
-      await exportDataTableToExcel(dataSource, {
-        fileName: 'Packing_Plan.xlsx',
-        sheetName: 'Packing Plan',
-        title: 'Packing Plan',
-        excludeFields: ['id', 'created_at', 'updated_at'],
-      });
-      message.success('Packing Plan exported successfully!');
+      await exportLineGroupedPackingPlanToExcel(dataSource, 'Packing_Plan_Schedule.xlsx');
+      message.success('Packing Plan exported successfully matching web format!');
     } catch (err) {
       console.error('Export failed:', err);
       message.error('Failed to export Packing Plan');

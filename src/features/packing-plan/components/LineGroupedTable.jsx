@@ -1,11 +1,12 @@
 import { useAuth } from '@/context/AuthContext';
 import { useEditableTable } from '@/hooks/useEditableTable';
-import { Button, ConfigProvider, DatePicker, Form, Input, Modal, Popconfirm, Space, Table, TimePicker, Typography } from 'antd';
+import { Button, ConfigProvider, DatePicker, Form, Input, Modal, Popconfirm, Space, Table, TimePicker, Typography, Tooltip } from 'antd';
 import dayjs from 'dayjs';
-import { useMemo } from 'react';
-import { FiEdit2, FiPackage, FiPlus, FiSearch, FiTrash2 } from 'react-icons/fi';
+import { useMemo, useState } from 'react';
+import { FiEdit2, FiPackage, FiPlus, FiSearch, FiTrash2, FiClock } from 'react-icons/fi';
 import { buildDynamicColumns } from '../../../utils/tableUtils';
 import EditableCell from '../../excel-upload/components/EditableCell';
+import PlanAuditModal from '@/components/common/PlanAuditModal';
 
 const { Title, Text } = Typography;
 
@@ -21,15 +22,51 @@ const LineGroupedTable = (props) => {
   const { title = 'Plan', searchPlaceholder = 'Search...', className, excludeFields = [] } = props;
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
-  const table = useEditableTable(props);
+  const table = useEditableTable({ ...props, planType: 'Packing Plan' });
+
+  const [auditModalOpen, setAuditModalOpen] = useState(false);
+  const [selectedAuditRecord, setSelectedAuditRecord] = useState(null);
+
+  const openAuditHistory = (record) => {
+    setSelectedAuditRecord(record);
+    setAuditModalOpen(true);
+  };
 
   const columns = useMemo(() => {
     if (table.dataSource.length === 0) return [];
 
     // Build dynamic columns and filter out 'line' and other excluded fields
     const dynamicCols = buildDynamicColumns(table.dataSource, table.rowKey)
-      .filter(col => col.dataIndex !== 'line' && !excludeFields.includes(col.dataIndex))
-      .map(col => ({ ...col, sorter: false })); // Remove sorting to disable hover/tooltips
+      .filter(col => col.dataIndex !== 'line' && col.dataIndex !== '_uniqueKey' && !excludeFields.includes(col.dataIndex))
+      .map(col => {
+        const isRemarks = col.dataIndex.toLowerCase().includes('remark');
+        return {
+          ...col,
+          sorter: false,
+          ...(isRemarks && {
+            width: 180,
+            render: (text) => (
+              text ? <span className="text-red-600 font-black text-xs">{text}</span> : <span className="text-slate-400 italic text-xs font-normal">Add remark...</span>
+            ),
+          }),
+        };
+      });
+
+    // Check if remarks column is present; if not, add it dynamically
+    const hasRemarksCol = dynamicCols.some(col => col.dataIndex.toLowerCase().includes('remark'));
+    if (!hasRemarksCol) {
+      dynamicCols.push({
+        title: 'REMARKS',
+        dataIndex: 'remarks',
+        key: 'remarks',
+        width: 180,
+        editable: true,
+        inputType: 'text',
+        render: (text) => (
+          text ? <span className="text-red-600 font-black text-xs">{text}</span> : <span className="text-slate-400 italic text-xs font-normal">Add remark...</span>
+        ),
+      });
+    }
 
     const finalCols = [
       {
@@ -44,7 +81,7 @@ const LineGroupedTable = (props) => {
         ...col,
         onCell: (record) => ({
           record,
-          inputType: col.inputType,
+          inputType: col.inputType || 'text',
           dataIndex: col.dataIndex,
           title: col.title,
           editing: table.isEditing(record),
@@ -52,62 +89,75 @@ const LineGroupedTable = (props) => {
       }))
     ];
 
-    if (isAdmin) {
-      finalCols.push({
-        title: 'ACTIONS',
-        dataIndex: 'operation',
-        fixed: 'right',
-        width: 150,
-        render: (_, record) => {
-          const editable = table.isEditing(record);
-          const isPlaceholder = record.isPlaceholder;
+    finalCols.push({
+      title: 'ACTIONS',
+      dataIndex: 'operation',
+      fixed: 'right',
+      width: 180,
+      align: 'center',
+      render: (_, record) => {
+        const editable = table.isEditing(record);
+        const isPlaceholder = record.isPlaceholder;
 
-          if (isPlaceholder) return null;
+        if (isPlaceholder) return null;
 
-          return editable ? (
-            <Space size="middle">
+        return editable ? (
+          <Space size="middle" className="justify-center">
+            <Button
+              type="link"
+              onClick={() => table.save(record[table.rowKey])}
+              className="text-blue-600 font-bold p-0"
+              loading={table.isUpdating}
+            >
+              Save
+            </Button>
+            <Button type="link" onClick={table.cancel} className="font-bold p-0 text-slate-400">
+              Cancel
+            </Button>
+          </Space>
+        ) : (
+          <Space size="middle" className="justify-center items-center">
+            <Tooltip title="View Edit Audit History">
               <Button
                 type="link"
-                onClick={() => table.save(record[table.rowKey])}
-                className="text-blue-600 font-bold p-0"
-                loading={table.isUpdating}
+                onClick={() => openAuditHistory(record)}
+                className="text-amber-600 font-bold p-0 flex items-center gap-1 text-xs hover:text-amber-700"
               >
-                Save
+                <FiClock size={13} /> History
               </Button>
-              <Button type="link" onClick={table.cancel} className="font-bold p-0 text-slate-400">
-                Cancel
-              </Button>
-            </Space>
-          ) : (
-            <Space size="middle">
-              <Button
-                type="link"
-                disabled={table.editingKey !== ''}
-                onClick={() => table.edit(record)}
-                className="text-blue-600 font-bold p-0 flex items-center gap-1"
-              >
-                <FiEdit2 size={14} /> Edit
-              </Button>
-              <Popconfirm
-                title="Delete this item?"
-                onConfirm={() => table.handleDelete(record)}
-                okText="Yes"
-                cancelText="No"
-              >
+            </Tooltip>
+            {isAdmin && (
+              <>
                 <Button
                   type="link"
-                  danger
                   disabled={table.editingKey !== ''}
-                  className="font-bold p-0 flex items-center gap-1"
+                  onClick={() => table.edit(record)}
+                  className="text-blue-600 font-bold p-0 flex items-center gap-1"
                 >
-                  <FiTrash2 size={14} /> Delete
+                  <FiEdit2 size={13} /> Edit
                 </Button>
-              </Popconfirm>
-            </Space>
-          );
-        },
-      });
-    }
+                <Popconfirm
+                  title="Delete this item?"
+                  onConfirm={() => table.handleDelete(record)}
+                  okText="Yes"
+                  cancelText="No"
+                  disabled={table.editingKey !== ''}
+                >
+                  <Button
+                    type="link"
+                    danger
+                    disabled={table.editingKey !== ''}
+                    className="font-bold p-0 flex items-center gap-1"
+                  >
+                    <FiTrash2 size={13} /> Delete
+                  </Button>
+                </Popconfirm>
+              </>
+            )}
+          </Space>
+        );
+      },
+    });
 
     return finalCols;
   }, [table, isAdmin, excludeFields]);
@@ -303,6 +353,13 @@ const LineGroupedTable = (props) => {
           })}
         </Form>
       </Modal>
+
+      <PlanAuditModal
+        open={auditModalOpen}
+        onClose={() => setAuditModalOpen(false)}
+        record={selectedAuditRecord}
+        title="Packing Plan Batch Audit History"
+      />
     </ConfigProvider>
   );
 };

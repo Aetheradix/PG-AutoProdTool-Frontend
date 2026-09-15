@@ -1,8 +1,9 @@
 import React from 'react';
 import { Button } from 'antd';
-import { FiBarChart, FiPackage } from 'react-icons/fi';
+import { FiBarChart, FiPackage, FiCalendar } from 'react-icons/fi';
 import PackingPlanTable from './packing-plan-table';
 import PackingPlanGantt from './PackingPlanGantt';
+import PackingPlanScheduleView from './PackingPlanScheduleView';
 
 const TIME_INTERVALS = [
   '07:30-11:30',
@@ -28,7 +29,7 @@ export default function getPackingPlanTabItems({
       key: 'packing-plan',
       label: (
         <span className="flex items-center gap-2 px-1">
-          <FiPackage /> Packing Plan
+          <FiPackage /> Packing Plan Management
         </span>
       ),
       children: (
@@ -40,6 +41,15 @@ export default function getPackingPlanTabItems({
           useDeletePackingPlanMutation={useDeletePackingPlanMutation}
         />
       ),
+    },
+    {
+      key: 'packing-plan-view',
+      label: (
+        <span className="flex items-center gap-2 px-1">
+          <FiCalendar /> Packing Plan View
+        </span>
+      ),
+      children: <PackingPlanScheduleView />,
     },
     {
       key: 'dead-stock',

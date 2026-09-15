@@ -13,6 +13,8 @@ import GanttChart from './components/GanttChart';
 import PlanHeader from './components/PlanHeader';
 import ScheduleTable from './components/ScheduleTable';
 import TankTimeline from './components/TankTimeline';
+import PackingPlanScheduleView from '../packing-plan/components/PackingPlanScheduleView';
+import WashoutMatrix from './components/WashoutMatrix';
 import { useScheduleTable } from './hooks/useScheduleTable';
 
 
@@ -253,6 +255,10 @@ const PlanView = () => {
   }, [activeFilter, scheduleGanttResponse, tasks, tankTasks]);
 
   const renderContent = () => {
+    // These tabs don't depend on the Gantt schedule data — render them directly
+    if (activeTab === 'packing-schedule') return <PackingPlanScheduleView />;
+    if (activeTab === 'washout-matrix') return <WashoutMatrix />;
+
     if (isScheduleLoading)
       return (
         <div className="flex justify-center p-20">
