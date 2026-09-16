@@ -63,11 +63,14 @@ export const useTimeline = (tasks = [], filterRange = null, stepMinutes = 60) =>
       const timelineEnd = end.getTime();
 
       const durationMs = timelineEnd - timelineStart;
-      const totalDurationHrs = durationMs / (1000 * 60 * 60);
+      // Cap at 168 hours (1 week) to avoid absurdly wide canvas
+      const totalDurationHrs = Math.min(durationMs / (1000 * 60 * 60), 168);
 
       // Generate labels for each step (default 60 mins)
       const stepMs = stepMinutes * 60 * 1000;
-      const totalSteps = durationMs / stepMs;
+      // Cap at 288 steps max (~6 days at 30min intervals) to prevent DOM explosion
+      const rawSteps = durationMs / stepMs;
+      const totalSteps = Math.min(Math.ceil(rawSteps), 288);
       const labels = [];
       for (let i = 0; i <= totalSteps; i++) {
         const time = new Date(timelineStart + i * stepMs);

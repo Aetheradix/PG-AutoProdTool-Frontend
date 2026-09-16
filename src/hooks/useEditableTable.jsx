@@ -115,11 +115,15 @@ export function useEditableTable({
             await updateItem(payload).unwrap();
 
             // Record audit trail
+            const targetBatch = originalRecord.batch_no || originalRecord.batch_id || originalRecord.order_no || backendId;
+            const currentUserName = user?.name || user?.full_name || 'MR Singh';
+            const currentUserId = user?.id || user?.username || '5';
+
             recordAuditLog({
-                userName: user?.name || user?.username || 'Planner User',
-                userId: user?.id || user?.username || 'user',
-                recordId: backendId,
-                batchId: originalRecord.batch_no || originalRecord.batch_id || originalRecord.order_no || backendId,
+                userName: currentUserName,
+                userId: currentUserId,
+                recordId: targetBatch,
+                batchId: targetBatch,
                 planType: planType || `${title} Management`,
                 oldValues: originalRecord,
                 newValues: row,

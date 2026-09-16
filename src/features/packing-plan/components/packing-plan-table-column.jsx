@@ -1,9 +1,11 @@
-import React from 'react';
-import { Button } from 'antd';
+import React, { Suspense, lazy } from 'react';
+import { Button, Spin } from 'antd';
 import { FiBarChart, FiPackage, FiCalendar } from 'react-icons/fi';
 import PackingPlanTable from './packing-plan-table';
-import PackingPlanGantt from './PackingPlanGantt';
 import PackingPlanScheduleView from './PackingPlanScheduleView';
+
+// Lazy-load the heavy Gantt chart only when the tab is visited
+const PackingPlanGantt = lazy(() => import('./PackingPlanGantt'));
 
 const TIME_INTERVALS = [
   '07:30-11:30',
@@ -100,7 +102,13 @@ export default function getPackingPlanTabItems({
               ))}
             </div>
           </div>
-          <PackingPlanGantt filterRange={filterRange} />
+          <Suspense fallback={
+            <div className="flex justify-center items-center min-h-64">
+              <Spin size="large" tip="Loading Gantt Chart..." />
+            </div>
+          }>
+            <PackingPlanGantt filterRange={filterRange} />
+          </Suspense>
         </div>
       ),
     },

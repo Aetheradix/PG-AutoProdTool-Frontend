@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Modal, Table, Tag, Typography, Empty, Button, Space, Tooltip } from 'antd';
 import { FiClock, FiUser, FiFileText, FiRefreshCw } from 'react-icons/fi';
 import { getAuditLogsForRecord, getAuditLogs } from '../../utils/auditUtils';
+import { useAuth } from '../../context/AuthContext';
 
 const { Text, Title } = Typography;
 
@@ -12,14 +13,20 @@ export default function PlanAuditModal({
   batchId,
   title = 'Batch Audit History',
 }) {
-  const targetId = record?.id || record?.batch_no || record?.batch_id || record?.order_no || batchId;
+  const { user } = useAuth();
+  const currentUserName = user?.name || user?.full_name;
+  console.log(currentUserName, 'currentUserName');
+
+  // Prioritize actual batch identifier over surrogate table row id
+  const targetId =
+    record?.batch_no || record?.batch_id || record?.order_no || record?.id || batchId;
 
   const logs = useMemo(() => {
     if (!targetId) {
       return getAuditLogs();
     }
-    return getAuditLogsForRecord(targetId);
-  }, [open, targetId]);
+    return getAuditLogsForRecord(targetId, record);
+  }, [open, targetId, record]);
 
   const columns = [
     {
@@ -40,11 +47,16 @@ export default function PlanAuditModal({
       dataIndex: 'userName',
       key: 'userName',
       width: 140,
-      render: (text) => (
-        <span className="font-bold text-slate-700 text-xs flex items-center gap-1.5 whitespace-nowrap">
-          <FiUser size={13} className="text-blue-600" /> {text}
-        </span>
-      ),
+      render: (text) => {
+        // Show the stored userName from the log entry; fall back to current user name
+        const resolvedName = text || currentUserName || '—';
+
+        return (
+          <span className="font-bold text-slate-700 text-xs flex items-center gap-1.5 whitespace-nowrap">
+            <FiUser size={13} className="text-blue-600" /> {resolvedName}
+          </span>
+        );
+      },
     },
     {
       title: 'FIELD CHANGED',
@@ -52,7 +64,10 @@ export default function PlanAuditModal({
       key: 'field',
       width: 160,
       render: (text) => (
-        <Tag color="blue" className="font-bold uppercase text-[10px] tracking-wider rounded-none whitespace-nowrap px-2 py-0.5">
+        <Tag
+          color="blue"
+          className="font-bold uppercase text-[10px] tracking-wider rounded-none whitespace-nowrap px-2 py-0.5"
+        >
           {text}
         </Tag>
       ),
@@ -101,7 +116,12 @@ export default function PlanAuditModal({
       open={open}
       onCancel={onClose}
       footer={[
-        <Button key="close" type="primary" onClick={onClose} className="rounded-none bg-[#002060] font-bold px-8 h-9 shadow-sm hover:bg-[#001040]">
+        <Button
+          key="close"
+          type="primary"
+          onClick={onClose}
+          className="rounded-none bg-[#002060] font-bold px-8 h-9 shadow-sm hover:bg-[#001040]"
+        >
           Close
         </Button>,
       ]}
@@ -122,7 +142,8 @@ export default function PlanAuditModal({
             <FiClock size={40} className="text-slate-300 mb-2.5" />
             <Text className="text-slate-600 font-bold text-sm">No edit history recorded yet</Text>
             <Text className="text-slate-400 text-xs mt-1">
-              Changes made to this batch will automatically appear here with user & timestamp details.
+              Changes made to this batch will automatically appear here with user & timestamp
+              details.
             </Text>
           </div>
         ) : (
