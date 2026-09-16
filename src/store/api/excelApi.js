@@ -8,6 +8,7 @@ export const excelApi = apiSlice.injectEndpoints({
                 method: 'POST',
                 body: data,
             }),
+            invalidatesTags: ['PackingPlan', 'Plan', 'ProductionSchedule', 'Timeline', 'Status'],
         }),
     }),
 });

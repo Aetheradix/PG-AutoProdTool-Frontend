@@ -18,6 +18,32 @@ import WashoutMatrix from './components/WashoutMatrix';
 import { useScheduleTable } from './hooks/useScheduleTable';
 
 
+const flattenGanttResponse = (data) => {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.data)) return data.data;
+
+  const flat = [];
+  if (typeof data === 'object') {
+    Object.entries(data).forEach(([key, val]) => {
+      if (key === 'Tanks') return;
+      if (val && typeof val === 'object') {
+        if (Array.isArray(val)) {
+          flat.push(...val);
+        } else {
+          Object.values(val).forEach((batches) => {
+            if (Array.isArray(batches)) {
+              flat.push(...batches);
+            }
+          });
+        }
+      }
+    });
+  }
+
+  return flat;
+};
+
 const mapScheduleToGanttFormat = (flatData) => {
   if (!Array.isArray(flatData)) return [];
 
@@ -42,7 +68,8 @@ const mapScheduleToGanttFormat = (flatData) => {
 
   const rows = [];
 
-  ['6T', '12T'].forEach(system => {
+  const systemsToProcess = Array.from(new Set(['6T', '12T', ...Object.keys(grouped)]));
+  systemsToProcess.forEach(system => {
     const configs = grouped[system] || {};
 
     // Duplicate Dual batches from FMT+MMT into FMT
@@ -195,7 +222,8 @@ const PlanView = () => {
   // Tasks for the normal GanttChart — from new API (hierarchical) Only for GHANTT,not tanks
   const tasks = useMemo(() => {
     if (!scheduleGanttResponse?.data) return [];
-    return mapScheduleToGanttFormat(scheduleGanttResponse.data);
+    const flatData = flattenGanttResponse(scheduleGanttResponse.data);
+    return mapScheduleToGanttFormat(flatData);
   }, [scheduleGanttResponse]);
 
   // console.log('Mapped Gantt tasks:', tasks);    
@@ -203,7 +231,8 @@ const PlanView = () => {
   // Tank tasks — NOW from new API (flat list grouped on fly)
   const tankTasks = useMemo(() => {
     if (!scheduleGanttResponse?.data) return [];
-    return mapScheduleToTankFormat(scheduleGanttResponse.data);
+    const flatData = flattenGanttResponse(scheduleGanttResponse.data);
+    return mapScheduleToTankFormat(flatData);
   }, [scheduleGanttResponse]);
 
   // Draggable Gantt — derive from new API (Gantt-Edit) with fallback to live data if empty
@@ -212,11 +241,10 @@ const PlanView = () => {
     const liveData = scheduleGanttResponse?.data || [];
     
     // Fallback to live data if edit data is empty (only for UI grouping check)
-    const dataToMap = editData.length > 0 ? editData : liveData;
+    const dataToMap = Array.isArray(editData) && editData.length > 0 ? editData : liveData;
+    const flatData = flattenGanttResponse(dataToMap);
     
-   
-    
-    return mapScheduleToGanttFormat(dataToMap);
+    return mapScheduleToGanttFormat(flatData);
   }, [ganttEditResponse, scheduleGanttResponse]);
 
 
@@ -259,25 +287,6 @@ const PlanView = () => {
     if (activeTab === 'packing-schedule') return <PackingPlanScheduleView />;
     if (activeTab === 'washout-matrix') return <WashoutMatrix />;
 
-    if (isScheduleLoading)
-      return (
-        <div className="flex justify-center p-20">
-          <Spin size="large" />
-        </div>
-      );
-    if (scheduleError)
-      return (
-        <div className="p-10">
-          <Empty description="Error loading Gantt chart data" />
-        </div>
-      );
-    if (!tasks.length && !tankTasks.length)
-      return (
-        <div className="p-10">
-          <Empty description="No timeline data found" />
-        </div>
-      );
-
     switch (activeTab) {
       case 'table':
         return (
@@ -292,8 +301,50 @@ const PlanView = () => {
           />
         );
       case 'tank':
+        if (isScheduleLoading) {
+          return (
+            <div className="flex justify-center p-20">
+              <Spin size="large" />
+            </div>
+          );
+        }
+        if (scheduleError) {
+          return (
+            <div className="p-10">
+              <Empty description="Error loading tank timeline data" />
+            </div>
+          );
+        }
+        if (!tankTasks.length) {
+          return (
+            <div className="p-10">
+              <Empty description="No tank timeline data found" />
+            </div>
+          );
+        }
         return <TankTimeline tasks={tankTasks} filterRange={filterRange} />;
       default:
+        if (isScheduleLoading) {
+          return (
+            <div className="flex justify-center p-20">
+              <Spin size="large" />
+            </div>
+          );
+        }
+        if (scheduleError) {
+          return (
+            <div className="p-10">
+              <Empty description="Error loading Gantt chart data" />
+            </div>
+          );
+        }
+        if (!tasks.length) {
+          return (
+            <div className="p-10">
+              <Empty description="No timeline data found" />
+            </div>
+          );
+        }
         return <GanttChart tasks={tasks} filterRange={filterRange} />;
     }
   };

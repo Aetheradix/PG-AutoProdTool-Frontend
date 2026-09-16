@@ -58,18 +58,78 @@ export const useExcelUpload = () => {
             });
 
             if (jsonData.length > 0) {
-                const headers = jsonData[0].filter((h) => h && h.toString().trim() !== '');
-                const rows = jsonData.slice(1).map((row, index) => {
-                    const rowData = { key: index.toString() };
-                    headers.forEach((header, i) => {
-                        rowData[header] = row[i] !== undefined ? row[i] : '';
-                    });
-                    return rowData;
+                // Find the actual header row by scanning for typical table columns (line, order, material, batch, etc.)
+                // or the row with the most non-empty columns in the first 15 rows
+                let headerRowIndex = 0;
+                let maxCols = 0;
+
+                for (let r = 0; r < Math.min(jsonData.length, 15); r++) {
+                    const row = jsonData[r] || [];
+                    const rowLower = row.map((cell) => String(cell || '').trim().toLowerCase());
+                    const hasKeyHeader = rowLower.some((c) =>
+                        c === 'line' || c === 'order' || c === 'order no' || c === 'material' ||
+                        c === 'p-code' || c === 'p_code' || c === 'p code' || c === 'batch' ||
+                        c.includes('production line') || c.includes('planned qty') || c.includes('start date')
+                    );
+                    const nonEmptyCount = row.filter((c) => c !== undefined && c !== null && String(c).trim() !== '').length;
+
+                    if (hasKeyHeader && nonEmptyCount >= 3) {
+                        headerRowIndex = r;
+                        break;
+                    }
+                    if (nonEmptyCount > maxCols) {
+                        maxCols = nonEmptyCount;
+                        headerRowIndex = r;
+                    }
+                }
+
+                const rawHeaders = jsonData[headerRowIndex] || [];
+                const validHeaders = [];
+                const seen = new Set();
+
+                rawHeaders.forEach((h, idx) => {
+                    const name = String(h || '').trim();
+                    if (name) {
+                        // Ensure unique header key
+                        let key = name;
+                        let counter = 1;
+                        while (seen.has(key)) {
+                            key = `${name}_${counter++}`;
+                        }
+                        seen.add(key);
+                        validHeaders.push({ title: name, dataIndex: key, colIdx: idx });
+                    }
                 });
 
-                const dynamicColumns = headers.map((header) => ({
-                    title: header,
-                    dataIndex: header,
+                if (validHeaders.length === 0) {
+                    message.error('Could not find column headers in the uploaded file');
+                    return;
+                }
+
+                const rows = [];
+                let rowCounter = 0;
+
+                for (let r = headerRowIndex + 1; r < jsonData.length; r++) {
+                    const row = jsonData[r] || [];
+                    const rowData = { key: (rowCounter++).toString() };
+                    let hasValue = false;
+
+                    validHeaders.forEach(({ dataIndex, colIdx }) => {
+                        const cellVal = row[colIdx] !== undefined ? String(row[colIdx]).trim() : '';
+                        rowData[dataIndex] = cellVal;
+                        if (cellVal) hasValue = true;
+                    });
+
+                    // Skip completely empty rows or repeated subheaders
+                    const firstVal = String(row[validHeaders[0]?.colIdx] || '').trim().toLowerCase();
+                    if (hasValue && firstVal !== 'line' && firstVal !== 'production line') {
+                        rows.push(rowData);
+                    }
+                }
+
+                const dynamicColumns = validHeaders.map(({ title, dataIndex }) => ({
+                    title,
+                    dataIndex,
                     editable: true,
                     width: 150,
                     ellipsis: true,
@@ -77,7 +137,7 @@ export const useExcelUpload = () => {
 
                 setColumns(dynamicColumns);
                 setData(rows);
-                message.success('File uploaded and parsed successfully');
+                message.success(`File uploaded: parsed ${rows.length} rows across ${dynamicColumns.length} columns`);
             }
         };
         reader.readAsBinaryString(file);

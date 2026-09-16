@@ -2,10 +2,8 @@ import { DeleteOutlined, SaveOutlined, UploadOutlined } from '@ant-design/icons'
 import { Button, Card, Form, Space, Table, Upload } from 'antd';
 import EditableCell from './components/EditableCell';
 import { useExcelUpload } from './hooks/useExcelUpload';
-import { Link, useNavigate } from 'react-router-dom';
 
-export const ExcelUpload = () => {
-  const navigate = useNavigate();
+export const ExcelUpload = ({ onSuccess }) => {
   const {
     data,
     columns,
@@ -20,6 +18,14 @@ export const ExcelUpload = () => {
     handleSubmit,
     clearData,
   } = useExcelUpload();
+
+  const handleUploadSuccess = (res) => {
+    clearData();
+    if (onSuccess && typeof onSuccess === 'function') {
+      onSuccess(res);
+    }
+    // RTK Query PackingPlan tag invalidation auto-refreshes all tables
+  };
 
   const mergedColumns = columns.map((col) => {
     if (!col.editable) {
@@ -80,7 +86,7 @@ export const ExcelUpload = () => {
             <Button
               type="primary"
               icon={<SaveOutlined />}
-              onClick={() => handleSubmit(() => navigate('/plan-view'))}
+              onClick={() => handleSubmit(handleUploadSuccess)}
               loading={isUploading}
               disabled={data.length === 0}
             >
