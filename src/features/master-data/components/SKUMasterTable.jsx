@@ -1,5 +1,6 @@
 import React from 'react';
 import { StandardDataTable } from './StandardDataTable';
+import { SKUMasterAddModal } from './SKUMasterAddModal';
 import {
   useGetSkuMasterQuery,
   useUpdateSkuMasterMutation,
@@ -17,6 +18,7 @@ export function SKUMasterTable() {
       title="SKU Master"
       searchPlaceholder="Search GCAS, Technology or Description..."
       excludeFields={['id', 'created_at', 'updated_at']}
+      renderAddModal={(modalProps) => <SKUMasterAddModal {...modalProps} />}
     />
   );
 }

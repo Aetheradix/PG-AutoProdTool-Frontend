@@ -32,7 +32,7 @@ export function useEditableTable({
     const [addForm] = Form.useForm();
 
     // ─── API hooks ────────────────────────────────────────────────────────────
-    const { data: apiData, isLoading, isError } = useGetQuery({ page: 1, limit: 1000 });
+    const { data: apiData, isLoading, isError, refetch } = useGetQuery({ page: 1, limit: 1000 });
 
     const noop = () => { };
     const [updateItem, { isLoading: isUpdating }] = useUpdateMutation
@@ -192,6 +192,7 @@ export function useEditableTable({
         isError,
         isUpdating,
         isCreating,
+        refetch,
         // data
         dataSource,
         filteredData,

@@ -22,7 +22,14 @@ import { useEditableTable } from '@/hooks/useEditableTable';
  * @param {Array} props.excludeColumns - Fields to exclude from the Table columns
  */
 export function StandardDataTable(props) {
-  const { title = 'Item', searchPlaceholder = 'Search...', className, excludeColumns = [] } = props;
+  const {
+    title = 'Item',
+    searchPlaceholder = 'Search...',
+    className,
+    excludeColumns = [],
+    renderAddModal,
+    requiredFields = [],
+  } = props;
   const { user } = useAuth();
 
   const isAdmin = user?.role === 'admin';
@@ -108,18 +115,27 @@ export function StandardDataTable(props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-between px-1">
-        {isAdmin && (
+      <div className="flex justify-between items-center px-1 flex-wrap gap-3">
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <Button
+              type="primary"
+              onClick={table.handleAdd}
+              disabled={table.editingKey !== ''}
+              icon={<FiPlus />}
+              className="bg-blue-600 hover:bg-blue-700 font-medium"
+            >
+              Add {title}
+            </Button>
+          )}
           <Button
-            type="primary"
-            onClick={table.handleAdd}
-            disabled={table.editingKey !== ''}
-            icon={<FiPlus />}
-            className="bg-blue-600 hover:bg-blue-700 font-medium"
+            onClick={() => table.refetch?.()}
+            loading={table.isLoading}
+            className="font-medium text-slate-600 hover:text-blue-600"
           >
-            Add {title}
+            Refresh Data
           </Button>
-        )}
+        </div>
         <Input
           placeholder={searchPlaceholder}
           prefix={<FiSearch className="text-slate-400" />}
@@ -156,80 +172,95 @@ export function StandardDataTable(props) {
         />
       </Form>
 
-      <Modal
-        title={`Add New ${title}`}
-        open={table.isAddModalOpen}
-        onOk={table.handleAddOk}
-        onCancel={() => table.setIsAddModalOpen(false)}
-        okText="Create"
-        confirmLoading={table.isCreating}
-        width={1200}
-        className="premium-modal"
-      >
-        <Form
-          form={table.addForm}
-          layout="vertical"
-          className="grid grid-cols-4 gap-x-6 gap-y-2 py-4"
+      {renderAddModal ? (
+        renderAddModal({
+          open: table.isAddModalOpen,
+          onCancel: () => table.setIsAddModalOpen(false),
+          onOk: table.handleAddOk,
+          confirmLoading: table.isCreating,
+          dataSource: table.dataSource,
+          form: table.addForm,
+        })
+      ) : (
+        <Modal
+          title={`Add New ${title}`}
+          open={table.isAddModalOpen}
+          onOk={table.handleAddOk}
+          onCancel={() => table.setIsAddModalOpen(false)}
+          okText="Create"
+          confirmLoading={table.isCreating}
+          width={1200}
+          className="premium-modal"
         >
-          {table.addModalFields.map((key) => {
-            const isDate = key.toLowerCase().endsWith('_date');
-            const isTime = key.toLowerCase().includes('time') && !key.toLowerCase().includes('date');
-            const isDatetime = key.toLowerCase().includes('datetime');
+          <Form
+            form={table.addForm}
+            layout="vertical"
+            className="grid grid-cols-4 gap-x-6 gap-y-2 py-4"
+          >
+            {table.addModalFields.map((key) => {
+              const isDate = key.toLowerCase().endsWith('_date');
+              const isTime = key.toLowerCase().includes('time') && !key.toLowerCase().includes('date');
+              const isDatetime = key.toLowerCase().includes('datetime');
 
-            return (
-              <Form.Item
-                key={key}
-                name={key}
-                label={
-                  <span className="font-semibold text-slate-700 uppercase text-xs tracking-wider">
-                    {key.replace(/_/g, ' ')}
-                  </span>
-                }
-                rules={[{ required: true, message: `Please input ${key.replace(/_/g, ' ')}` }]}
-                {...(isDate && {
-                  getValueProps: (value) => ({ value: value ? dayjs(value) : null }),
-                  normalize: (value) => (value ? (dayjs.isDayjs(value) ? value.format('YYYY-MM-DD') : value) : null),
-                })}
-                {...(isTime && {
-                  getValueProps: (value) => ({ value: value ? dayjs(value, 'HH:mm') : null }),
-                  normalize: (value) => (value ? (dayjs.isDayjs(value) ? value.format('HH:mm') : value) : null),
-                })}
-                {...(isDatetime && {
-                  getValueProps: (value) => ({ value: value ? dayjs(value) : null }),
-                  normalize: (value) => (value ? (dayjs.isDayjs(value) ? value.format('YYYY-MM-DD HH:mm:ss') : value) : null),
-                })}
-              >
-                {isDate ? (
-                  <DatePicker
-                    format="YYYY-MM-DD"
-                    className="w-full rounded-lg border-slate-200 h-10"
-                    placeholder={`Select ${key.replace(/_/g, ' ')}`}
-                  />
-                ) : isTime ? (
-                  <TimePicker
-                    format="HH:mm"
-                    className="w-full rounded-lg border-slate-200 h-10"
-                    placeholder={`Select ${key.replace(/_/g, ' ')}`}
-                  />
-                ) : isDatetime ? (
-                  <DatePicker
-                    showTime
-                    format="YYYY-MM-DD HH:mm:ss"
-                    className="w-full rounded-lg border-slate-200 h-10"
-                    placeholder={`Select ${key.replace(/_/g, ' ')}`}
-                    needConfirm={false}
-                  />
-                ) : (
-                  <Input
-                    placeholder={`Enter ${key.replace(/_/g, ' ')}`}
-                    className="rounded-lg border-slate-200 h-10"
-                  />
-                )}
-              </Form.Item>
-            );
-          })}
-        </Form>
-      </Modal>
+              return (
+                <Form.Item
+                  key={key}
+                  name={key}
+                  label={
+                    <span className="font-semibold text-slate-700 uppercase text-xs tracking-wider">
+                      {key.replace(/_/g, ' ')}
+                    </span>
+                  }
+                  rules={
+                    requiredFields.includes(key)
+                      ? [{ required: true, message: `Please input ${key.replace(/_/g, ' ')}` }]
+                      : []
+                  }
+                  {...(isDate && {
+                    getValueProps: (value) => ({ value: value ? dayjs(value) : null }),
+                    normalize: (value) => (value ? (dayjs.isDayjs(value) ? value.format('YYYY-MM-DD') : value) : null),
+                  })}
+                  {...(isTime && {
+                    getValueProps: (value) => ({ value: value ? dayjs(value, 'HH:mm') : null }),
+                    normalize: (value) => (value ? (dayjs.isDayjs(value) ? value.format('HH:mm') : value) : null),
+                  })}
+                  {...(isDatetime && {
+                    getValueProps: (value) => ({ value: value ? dayjs(value) : null }),
+                    normalize: (value) => (value ? (dayjs.isDayjs(value) ? value.format('YYYY-MM-DD HH:mm:ss') : value) : null),
+                  })}
+                >
+                  {isDate ? (
+                    <DatePicker
+                      format="YYYY-MM-DD"
+                      className="w-full rounded-lg border-slate-200 h-10"
+                      placeholder={`Select ${key.replace(/_/g, ' ')}`}
+                    />
+                  ) : isTime ? (
+                    <TimePicker
+                      format="HH:mm"
+                      className="w-full rounded-lg border-slate-200 h-10"
+                      placeholder={`Select ${key.replace(/_/g, ' ')}`}
+                    />
+                  ) : isDatetime ? (
+                    <DatePicker
+                      showTime
+                      format="YYYY-MM-DD HH:mm:ss"
+                      className="w-full rounded-lg border-slate-200 h-10"
+                      placeholder={`Select ${key.replace(/_/g, ' ')}`}
+                      needConfirm={false}
+                    />
+                  ) : (
+                    <Input
+                      placeholder={`Enter ${key.replace(/_/g, ' ')}`}
+                      className="rounded-lg border-slate-200 h-10"
+                    />
+                  )}
+                </Form.Item>
+              );
+            })}
+          </Form>
+        </Modal>
+      )}
     </div>
   );
 }
