@@ -18,7 +18,7 @@ const ProtectedRoute = ({
     redirectTo = '/login',
     unauthorizedRedirect = '/' 
 }) => {
-    const { isAuthenticated, user, isLoading, isAdmin } = useAuth();
+    const { isAuthenticated, user, isLoading } = useAuth();
     const location = useLocation();
 
     if (isLoading) {

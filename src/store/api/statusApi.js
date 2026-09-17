@@ -31,7 +31,7 @@ export const statusApi = apiSlice.injectEndpoints({
             providesTags: ['ProductionSchedule'],
         }),
         getGanttEdit: builder.query({
-            query: () => `/v1/production-schedule/gantt-edit?_=${Date.now()}`,
+            query: () => '/v1/production-schedule/gantt-edit',
             providesTags: ['ProductionSchedule'],
         }),
         getTimelineData: builder.query({

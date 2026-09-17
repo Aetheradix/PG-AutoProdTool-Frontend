@@ -39,7 +39,7 @@ export const useExcelUpload = () => {
                 setEditingKey('');
             }
         } catch (errInfo) {
-            console.log('Validate Failed:', errInfo);
+            console.error('Validation failed:', errInfo);
         }
     };
 

@@ -108,7 +108,7 @@ export const useCreatePlanForm = () => {
     };
 
     const removeDowntime = (id) => {
-        setDowntimes(downtimes.filter((d) => d.id !== id));
+        setDowntimes((prev) => prev.filter((d) => d.id !== id));
     };
 
     return {

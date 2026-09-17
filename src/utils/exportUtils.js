@@ -210,9 +210,7 @@ export const exportTableToExcel = async (groupedData, sortedDates, fileName = 'p
 
 // Keep old function for backward compatibility if needed, but update it to use production schedule name
 export const exportGanttToExcel = (tasks, fileName = 'production schedule.xlsx') => {
-  // Original implementation or redirect to table export if appropriate
-  // For now, let's keep it but ideally PlanView should call exportTableToExcel
-  console.log('Old export function called');
+  // Kept for backward compatibility
 };
 
 /**

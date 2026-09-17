@@ -15,8 +15,7 @@ export function StatusPage() {
     error: rmError,
   } = useGetRmStatusQuery();
 
-  console.log('StatusPage statusData:', statusData);
-  console.log('StatusPage rmData:', rmData);
+
 
   const rawData = Array.isArray(statusData) ? statusData : statusData?.data || [];
 

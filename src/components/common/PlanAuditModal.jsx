@@ -15,7 +15,7 @@ export default function PlanAuditModal({
 }) {
   const { user } = useAuth();
   const currentUserName = user?.name || user?.full_name;
-  console.log(currentUserName, 'currentUserName');
+
 
   // Prioritize actual batch identifier over surrogate table row id
   const targetId =

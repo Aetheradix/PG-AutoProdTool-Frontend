@@ -66,7 +66,6 @@ export default function useEquipmentManagement(type) {
   }
 
   function openEditModal(record) {
-    console.log('Opening Edit Modal with cleaned record:', record);
     setEditingRecord(record);
 
     editForm.setFieldsValue({
@@ -105,7 +104,6 @@ export default function useEquipmentManagement(type) {
   async function handleEdit() {
     try {
       const values = await editForm.validateFields();
-      console.log('Proceeding with handleEdit. editingRecord:', editingRecord);
       const originalName = editingRecord.equipment_name || editingRecord['equipment_name '];
 
       if (!originalName) {
@@ -122,7 +120,6 @@ export default function useEquipmentManagement(type) {
         equip_type:     type,
       };
 
-      console.log('Sending Update Payload:', payload);
       await updateEquipment(payload).unwrap();
       message.success(`${type} updated successfully!`);
       closeEditModal();
@@ -134,12 +131,10 @@ export default function useEquipmentManagement(type) {
 
   async function handleDelete(record) {
     try {
-      console.log('Deleting equipment:', record);
       if (!record?.equipment_name) {
         throw new Error('Equipment name is missing.');
       }
       await deleteEquipment(record.equipment_name).unwrap();
-      console.log('Delete successful:', record.equipment_name);
       message.success(`${type} deleted successfully!`);
     } catch (err) {
       message.error(err?.data?.detail || `Failed to delete ${type.toLowerCase()}.`);

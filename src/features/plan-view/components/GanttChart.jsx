@@ -42,7 +42,7 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
     return Object.values(systems).sort((a, b) => (order[a.name] ?? 99) - (order[b.name] ?? 99));
   }, [tasksWithLanes]);
 
-  console.log('Grouped Data for Gantt Chart:', groupedData);
+
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-2xl overflow-hidden w-full font-sans">

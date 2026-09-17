@@ -37,8 +37,6 @@ const PackingPlanAddModal = ({ open, onCancel, onOk, confirmLoading, initialValu
   }, [open, initialValues, form]);
 
   const onFinish = (values) => {
-    console.log('onFinish received values:', values);
-    
     const submissionData = {
       line: values.line,
       order_no: values.order_no,
@@ -59,7 +57,6 @@ const PackingPlanAddModal = ({ open, onCancel, onOk, confirmLoading, initialValu
       Object.entries(submissionData).filter(([_, v]) => v !== undefined)
     );
 
-    console.log('Submitting final payload from onFinish:', filteredData);
     onOk(filteredData);
   };
 

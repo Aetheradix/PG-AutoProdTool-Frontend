@@ -71,7 +71,8 @@ export const apiSlice = createApi({
         'ArchivedPlan',
         'PackingPlan',
         'Tanks',
-        'EquipmentsMaster'
+        'EquipmentsMaster',
+        'WashoutMatrix'
     ],
     endpoints: () => ({}),
 });
