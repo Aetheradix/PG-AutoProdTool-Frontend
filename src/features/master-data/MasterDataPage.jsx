@@ -43,35 +43,35 @@ export function MasterDataPage() {
   );
 
   const tabItems = [
-    {
-      key: 'upload',
-      label: (
-        <span className="flex items-center gap-2 px-1">
-          <FiUpload /> Upload Master Data
-        </span>
-      ),
-      children: (
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h3 className="text-lg font-semibold text-slate-700">Upload Data</h3>
-            <div className="w-full sm:w-auto overflow-x-auto custom-scrollbar">
-              <UploadActionButtons
-                handleFileUpload={handleFileUpload}
-                handleSubmit={handleSubmit}
-                clearData={clearData}
-                isUploading={isUploading}
-                hasData={uploadData.length > 0}
-              />
-            </div>
-          </div>
-          <UploadDataTable
-            uploadData={uploadData}
-            columns={columns}
-            uploadForm={uploadForm}
-          />
-        </div>
-      )
-    },
+    // {
+    //   key: 'upload',
+    //   label: (
+    //     <span className="flex items-center gap-2 px-1">
+    //       <FiUpload /> Upload Master Data
+    //     </span>
+    //   ),
+    //   children: (
+    //     <div className="flex flex-col gap-6">
+    //       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    //         <h3 className="text-lg font-semibold text-slate-700">Upload Data</h3>
+    //         <div className="w-full sm:w-auto overflow-x-auto custom-scrollbar">
+    //           <UploadActionButtons
+    //             handleFileUpload={handleFileUpload}
+    //             handleSubmit={handleSubmit}
+    //             clearData={clearData}
+    //             isUploading={isUploading}
+    //             hasData={uploadData.length > 0}
+    //           />
+    //         </div>
+    //       </div>
+    //       <UploadDataTable
+    //         uploadData={uploadData}
+    //         columns={columns}
+    //         uploadForm={uploadForm}
+    //       />
+    //     </div>
+    //   )
+    // },
     {
       key: 'sku-master',
       label: (

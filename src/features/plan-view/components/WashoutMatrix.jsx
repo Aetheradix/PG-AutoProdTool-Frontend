@@ -1,13 +1,13 @@
-﻿import { Empty, Spin, Tabs, Tooltip, Input } from "antd";
+import { Empty, Spin, Tabs, Tooltip, Input } from "antd";
 import { useMemo, useState } from "react";
 import { useGetWashoutMatrixQuery } from "../../../store/api/statusApi";
 import { FiDroplet, FiSearch } from "react-icons/fi";
 
 const WASHOUT_CONFIG = {
-  WASH:  { label: "WASH",  color: "#dc2626", bg: "#fef2f2", border: "#fca5a5", minutes: 20 },
-  RINSE: { label: "RINSE", color: "#d97706", bg: "#fffbeb", border: "#fcd34d", minutes: 10 },
-  NONE:  { label: "NONE",  color: "#16a34a", bg: "#f0fdf4", border: "#86efac", minutes: 0  },
-  "-":   { label: "-",     color: "#94a3b8", bg: "#f8fafc", border: "#e2e8f0", minutes: null },
+  WASH:  { label: "WASH",  color: "#dc2626", bg: "#fef2f2", border: "#fca5a5" },
+  RINSE: { label: "WASH",  color: "#dc2626", bg: "#fef2f2", border: "#fca5a5" },
+  NONE:  { label: "NONE",  color: "#16a34a", bg: "#f0fdf4", border: "#86efac" },
+  "-":   { label: "-",     color: "#94a3b8", bg: "#f8fafc", border: "#e2e8f0"},
 };
 
 const MATRIX_TABS = [
@@ -20,7 +20,7 @@ const MATRIX_TABS = [
 const Legend = () => (
   <div className="flex flex-wrap items-center gap-3 text-xs">
     {Object.entries(WASHOUT_CONFIG)
-      .filter(([k]) => k !== "-")
+      .filter(([k]) => k !== "-" && k !== "RINSE")
       .map(([key, cfg]) => (
         <div key={key} className="flex items-center gap-1.5">
           <span
@@ -30,9 +30,7 @@ const Legend = () => (
           <span className="font-bold" style={{ color: cfg.color }}>
             {cfg.label}
           </span>
-          {cfg.minutes !== null && (
-            <span className="text-slate-400">({cfg.minutes}min)</span>
-          )}
+       
         </div>
       ))}
   </div>

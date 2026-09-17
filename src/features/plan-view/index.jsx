@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   useGetGanttEditQuery,
   useGetProductionScheduleGanttQuery,
+  useGetWashoutMatrixQuery,
 } from '../../store/api/statusApi';
 import { setActiveTab } from '../../store/slices/uiSlice';
 import { exportTableToExcel } from '../../utils/exportUtils';
@@ -43,7 +44,74 @@ const flattenGanttResponse = (data) => {
   return flat;
 };
 
-const mapScheduleToGanttFormat = (flatData) => {
+/**
+ * Calculates washout info between consecutive batches based on the C&M (Cleaning & Making) matrix.
+ */
+const getWashoutInfo = (prevBatch, nextBatch, system, tankConfig, matrices) => {
+  if (!prevBatch) return null;
+
+  const prevDesc = String(prevBatch.description || '').toLowerCase();
+  const isPrevCond = prevDesc.includes('cond') || prevDesc.includes('conditioner');
+
+  // Business rule: Conditioners always require 60 min wash
+  if (isPrevCond) {
+    return {
+      duration: 60,
+      title: 'COND WASH (60m)',
+      type: 'COND_WASH',
+    };
+  }
+
+  // If there's no next batch, no transition washout
+  if (!nextBatch) return null;
+
+  const prevGcas = String(prevBatch.gcas || '').trim();
+  const nextGcas = String(nextBatch.gcas || '').trim();
+
+  // Same GCAS -> No washout needed
+  if (prevGcas && nextGcas && prevGcas === nextGcas) {
+    return null;
+  }
+
+  // Select appropriate matrix: FMT, MMT_6T, MMT_12T
+  let matrixKey = 'FMT';
+  if (system === '6T' && (tankConfig || '').includes('MMT')) {
+    matrixKey = 'MMT_6T';
+  } else if (system === '12T' && (tankConfig || '').includes('MMT')) {
+    matrixKey = 'MMT_12T';
+  }
+
+  const matrixList = matrices?.[matrixKey] || matrices?.FMT || [];
+
+  let rule = null;
+  if (prevGcas && nextGcas && Array.isArray(matrixList) && matrixList.length > 0) {
+    rule = matrixList.find(
+      (r) =>
+        String(r.source_gcas || '').trim() === prevGcas &&
+        String(r.target_gcas || '').trim() === nextGcas
+    );
+  }
+
+  if (rule) {
+    const wType = String(rule.washout_type || '').toUpperCase().trim();
+    if (wType === 'WASH' || wType === 'RINSE') {
+      return { duration: 20, title: 'WASHOUT', type: 'WASH' };
+    }
+    if (wType === 'NONE' || wType === 'X' || wType === '-' || !wType) {
+      return null;
+    }
+    return { duration: 20, title: 'WASHOUT', type: 'WASH' };
+  }
+
+  // Fallback: If GCAS differs or descriptions differ, default to 20m washout
+  if (prevGcas !== nextGcas || prevBatch.description !== nextBatch.description) {
+    return { duration: 20, title: 'WASHOUT', type: 'WASH' };
+  }
+
+  return null;
+};
+
+const mapScheduleToGanttFormat = (flatData, washoutMatrices = null) => {
   if (!Array.isArray(flatData)) return [];
 
   const grouped = {
@@ -102,17 +170,51 @@ const mapScheduleToGanttFormat = (flatData) => {
     }));
 
     Object.entries(processedConfigs).forEach(([tankConfig, batches]) => {
-      const items = batches.map(b => ({
-        ...b,
-        id: b.batch_id,
-        title: b.description,
-        batch: b.batch_id,
-        start_time: b.mkg_start_time,
-        end_time: b.mkg_end_time,
-        tech_type: b.tech_type,
-        system: b.system,
-        status: b.tech_type === 'Dual' ? 'warning' : 'ready'
-      }));
+      // Sort batches chronologically to evaluate transitions
+      const sortedBatches = [...batches].sort(
+        (a, b) =>
+          new Date(a.mkg_start_time || a.start_time).getTime() -
+          new Date(b.mkg_start_time || b.start_time).getTime()
+      );
+
+      const items = [];
+
+      sortedBatches.forEach((b, idx) => {
+        // Add production batch item
+        items.push({
+          ...b,
+          id: b.batch_id,
+          title: b.description,
+          batch: b.batch_id,
+          start_time: b.mkg_start_time,
+          end_time: b.mkg_end_time,
+          tech_type: b.tech_type,
+          system: b.system,
+          status: b.tech_type === 'Dual' ? 'warning' : 'ready'
+        });
+
+        // Evaluate washout slot after this batch based on C&M matrix
+        const nextB = sortedBatches[idx + 1];
+        const washInfo = getWashoutInfo(b, nextB, system, tankConfig, washoutMatrices);
+        if (washInfo && washInfo.duration > 0 && b.mkg_end_time) {
+          const washStart = new Date(b.mkg_end_time);
+          const washEnd = new Date(washStart.getTime() + washInfo.duration * 60000);
+
+          items.push({
+            id: `${b.batch_id}-${tankConfig}-washout`,
+            title: washInfo.title || 'WASHOUT',
+            batch: 'WASHOUT',
+            description: washInfo.title || 'WASHOUT',
+            start_time: washStart.toISOString(),
+            end_time: washEnd.toISOString(),
+            tech_type: 'Single',
+            system,
+            tank_config: tankConfig,
+            status: 'washout',
+            duration_minutes: washInfo.duration,
+          });
+        }
+      });
 
       // Inject downtimes into this lane
       items.push(...systemDowntimes.map(dt => ({ ...dt, id: dt.id + '-' + tankConfig })));
@@ -206,6 +308,9 @@ const PlanView = () => {
     useGetProductionScheduleGanttQuery();
     
   const { data: ganttEditResponse } = useGetGanttEditQuery();
+  const { data: washoutResponse } = useGetWashoutMatrixQuery();
+
+  const washoutMatrices = useMemo(() => washoutResponse?.data || null, [washoutResponse]);
 
   // Added for Excel Export and Table View consistency
   const {
@@ -222,8 +327,8 @@ const PlanView = () => {
   const tasks = useMemo(() => {
     if (!scheduleGanttResponse?.data) return [];
     const flatData = flattenGanttResponse(scheduleGanttResponse.data);
-    return mapScheduleToGanttFormat(flatData);
-  }, [scheduleGanttResponse]);
+    return mapScheduleToGanttFormat(flatData, washoutMatrices);
+  }, [scheduleGanttResponse, washoutMatrices]);
 
   // console.log('Mapped Gantt tasks:', tasks);    
 
@@ -243,8 +348,8 @@ const PlanView = () => {
     const dataToMap = Array.isArray(editData) && editData.length > 0 ? editData : liveData;
     const flatData = flattenGanttResponse(dataToMap);
     
-    return mapScheduleToGanttFormat(flatData);
-  }, [ganttEditResponse, scheduleGanttResponse]);
+    return mapScheduleToGanttFormat(flatData, washoutMatrices);
+  }, [ganttEditResponse, scheduleGanttResponse, washoutMatrices]);
 
 
   const filterRange = useMemo(() => {
@@ -387,7 +492,7 @@ const PlanView = () => {
                   const allDates = new Set();
 
                   allBatches.forEach(b => {
-                    if (b.status === 'downtime') return; // Skip downtime in schedule table
+                    if (b.status === 'downtime' || b.status === 'washout') return; // Skip downtime & washout in schedule table
                     
                     const system = b.system || 'Unknown';
                     const shift = b.shift || 'Unknown';

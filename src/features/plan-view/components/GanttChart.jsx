@@ -10,6 +10,7 @@ const statusColors = {
   conflict: 'bg-gradient-to-r from-rose-500 to-rose-600',
   warning: 'bg-gradient-to-r from-amber-500 to-amber-600',
   downtime: 'bg-gradient-to-br from-yellow-400 to-yellow-600',
+  washout: 'bg-gradient-to-br from-slate-600 to-slate-700',
 };
 
 const fmtTime = (ms) => new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -88,40 +89,46 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
                       </div>
 
                       {/* Task Bars */}
-                      {row.items.map((item) => (
-                        <Tooltip key={item.id} title={`${item.title} | Batch: ${item.batch} | ${fmtDate(item.start)} ${fmtTime(item.start)} – ${fmtDate(item.end)} ${fmtTime(item.end)} | Status: ${item.status}`} color="#000">
+                      {row.items.map((item) => {
+                        const isWashout = item.status === 'washout';
+                        return (
+                        <Tooltip key={item.id} title={`${item.title} | ${isWashout ? 'WASHOUT' : `Batch: ${item.batch}`} | ${fmtDate(item.start)} ${fmtTime(item.start)} – ${fmtDate(item.end)} ${fmtTime(item.end)} | Status: ${item.status}`} color="#000">
                           <div
-                            className={`absolute rounded-xl px-3 py-1.5 text-white shadow-lg flex flex-col justify-between transition-all hover:scale-[1.02] cursor-pointer border border-white/20 ${statusColors[item.status] || statusColors.ready}`}
+                            className={`absolute rounded-xl px-2 py-1.5 text-white shadow-lg flex flex-col justify-between transition-all hover:scale-[1.02] cursor-pointer border border-white/20 overflow-hidden ${statusColors[item.status] || statusColors.ready}`}
                             style={{
                               left: `${getPosition(item.start)}%`,
                               width: `${getPosition(item.end) - getPosition(item.start)}%`,
                               top: `${item.laneIndex * 100 + 10}px`,
                               height: '90px',
-                              minWidth: '60px',
+                              minWidth: '45px',
                             }}
                           >
                             {/* Title */}
-                            <span className="font-bold truncate text-[11px] leading-tight">{item.title}</span>
+                            <span className="font-bold truncate text-[11px] leading-tight block w-full">{item.title}</span>
 
-                            {/* Batch ID */}
-                            <div className="flex items-center gap-1 mt-0.5">
-                              <span className="bg-black/25 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider truncate">{item.batch}</span>
-                            </div>
+                            {!isWashout && (
+                              <>
+                                {/* Batch ID */}
+                                <div className="flex items-center mt-0.5 min-w-0">
+                                  <span className="bg-black/25 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider truncate block max-w-full">{item.batch}</span>
+                                </div>
 
-                            {/* Start & End Time */}
-                            <div className="flex items-center gap-1 text-[9px] opacity-90 mt-0.5">
-                              <span className="bg-white/15 px-1 py-0.5 rounded font-semibold">{fmtTime(item.start)}</span>
-                              <span className="opacity-70">→</span>
-                              <span className="bg-white/15 px-1 py-0.5 rounded font-semibold">{fmtTime(item.end)}</span>
-                            </div>
+                                {/* Start & End Time */}
+                                <div className="flex items-center gap-1 text-[9px] opacity-90 mt-0.5 min-w-0">
+                                  <span className="bg-white/15 px-1 py-0.5 rounded font-semibold truncate max-w-[45%]">{fmtTime(item.start)}</span>
+                                  <span className="opacity-70 shrink-0">→</span>
+                                  <span className="bg-white/15 px-1 py-0.5 rounded font-semibold truncate max-w-[45%]">{fmtTime(item.end)}</span>
+                                </div>
+                              </>
+                            )}
 
                             {/* Status */}
-                            <div className="flex items-center gap-1 mt-0.5">
-                              <span className="text-[8px] uppercase bg-black/20 px-1.5 py-0.5 rounded-full font-bold tracking-widest">{item.status}</span>
+                            <div className="flex items-center mt-0.5 min-w-0">
+                              <span className="text-[8px] uppercase bg-black/20 px-1.5 py-0.5 rounded-full font-bold tracking-widest truncate block max-w-full">{item.status}</span>
                             </div>
                           </div>
                         </Tooltip>
-                      ))}
+                      )})}
                     </div>
                   </div>
                 ))}

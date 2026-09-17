@@ -15,6 +15,7 @@ const statusColors = {
   conflict: 'bg-gradient-to-br from-rose-500 to-red-600',
   warning: 'bg-gradient-to-br from-amber-500 to-orange-500',
   downtime: 'bg-gradient-to-br from-yellow-400 to-yellow-600',
+  washout: 'bg-gradient-to-br from-slate-600 to-slate-700',
 };
 
 const MS_PER_5_MIN = 5 * 60 * 1000;
@@ -28,11 +29,11 @@ const formatLocalISO = (date) => {
 // TaskBar: Draggable Item
 // ─────────────────────────────────────────────
 const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
-  const isDowntime = item.status === 'downtime';
+  const isNonDraggable = item.status === 'downtime' || item.status === 'washout';
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: item.id,
     data: item,
-    disabled: isDowntime,
+    disabled: isNonDraggable,
   });
 
   const fmtTime = (ms) =>
@@ -48,8 +49,10 @@ const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
     height: '90px',
     transform: transform ? `translateX(${transform.x}px)` : undefined,
     opacity: isDragging && !isDragOverlay ? 0.45 : 1,
-    minWidth: 60,
+    minWidth: 45,
   };
+
+  const isWashout = item.status === 'washout';
 
   const content = (
     <div
@@ -57,28 +60,32 @@ const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
       {...(isDragOverlay ? {} : listeners)}
       {...(isDragOverlay ? {} : attributes)}
       style={style}
-      className={`rounded-xl px-3 py-1.5 text-white shadow-lg flex flex-col justify-between z-10 border border-white/20 select-none ${statusColors[item.status] || statusColors.ready} transition-all duration-200 ${isDowntime ? 'cursor-default' : 'cursor-grab'} ${isDragOverlay ? 'cursor-grabbing ring-4 ring-white/30 scale-[1.05]' : ''}`}
+      className={`rounded-xl px-2 py-1.5 text-white shadow-lg flex flex-col justify-between z-10 border border-white/20 select-none overflow-hidden ${statusColors[item.status] || statusColors.ready} transition-all duration-200 ${isNonDraggable ? 'cursor-default' : 'cursor-grab'} ${isDragOverlay ? 'cursor-grabbing ring-4 ring-white/30 scale-[1.05]' : ''}`}
     >
       {/* Title */}
-      <span className="font-bold truncate text-[11px] leading-tight">{item.title}</span>
+      <span className="font-bold truncate text-[11px] leading-tight block w-full">{item.title}</span>
 
-      {/* Batch ID */}
-      <div className="flex items-center gap-1 mt-0.5">
-        <span className="bg-black/25 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider truncate">
-          {item.batch}
-        </span>
-      </div>
+      {!isWashout && (
+        <>
+          {/* Batch ID */}
+          <div className="flex items-center mt-0.5 min-w-0">
+            <span className="bg-black/25 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider truncate block max-w-full">
+              {item.batch}
+            </span>
+          </div>
 
-      {/* Start & End Time */}
-      <div className="flex items-center gap-1 text-[9px] opacity-90 mt-0.5">
-        <span className="bg-white/15 px-1 py-0.5 rounded font-semibold whitespace-nowrap">{fmtDate(item.start)} {fmtTime(item.start)}</span>
-        <span className="opacity-70">→</span>
-        <span className="bg-white/15 px-1 py-0.5 rounded font-semibold whitespace-nowrap">{fmtDate(item.end)} {fmtTime(item.end)}</span>
-      </div>
+          {/* Start & End Time */}
+          <div className="flex items-center gap-1 text-[9px] opacity-90 mt-0.5 min-w-0">
+            <span className="bg-white/15 px-1 py-0.5 rounded font-semibold truncate max-w-[45%]">{fmtTime(item.start)}</span>
+            <span className="opacity-70 shrink-0">→</span>
+            <span className="bg-white/15 px-1 py-0.5 rounded font-semibold truncate max-w-[45%]">{fmtTime(item.end)}</span>
+          </div>
+        </>
+      )}
 
       {/* Status */}
-      <div className="flex items-center gap-1 mt-0.5">
-        <span className="text-[8px] uppercase bg-black/20 px-1.5 py-0.5 rounded-full font-bold tracking-widest">
+      <div className="flex items-center mt-0.5 min-w-0">
+        <span className="text-[8px] uppercase bg-black/20 px-1.5 py-0.5 rounded-full font-bold tracking-widest truncate block max-w-full">
           {item.status}
         </span>
       </div>
@@ -89,7 +96,7 @@ const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
     content
   ) : (
     <Tooltip
-      title={`${item.title} | Batch: ${item.batch} | ${fmtDate(item.start)} ${fmtTime(item.start)} – ${fmtDate(item.end)} ${fmtTime(item.end)} | Status: ${item.status}`}
+      title={`${item.title} | ${item.status === 'washout' ? 'WASHOUT' : `Batch: ${item.batch}`} | ${fmtDate(item.start)} ${fmtTime(item.start)} – ${fmtDate(item.end)} ${fmtTime(item.end)} | Status: ${item.status}`}
       placement="top"
       color="#1e293b"
     >
