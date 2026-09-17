@@ -13,6 +13,7 @@ export function CreatePlanForm() {
     downtimeForm,
     downtimes,
     reasonOptions,
+    isOtherReason,
     onFinish,
     handleReasonChange,
     addDowntime,
@@ -98,13 +99,26 @@ export function CreatePlanForm() {
                     className=" h-10"
                     options={reasonOptions}
                     onChange={handleReasonChange}
+                    showSearch
                   />
                 </div>
+
+                {isOtherReason && (
+                  <div className="col-span-1 md:col-span-4">
+                    <FormInput
+                      name="customReason"
+                      label="Specify Reason (Manual)"
+                      placeholder="Enter manual downtime reason (e.g., Boiler Maintenance, Steam Leakage)..."
+                      className="h-10"
+                      rules={[{ required: true, message: 'Please enter custom reason' }]}
+                    />
+                  </div>
+                )}
               </div>
-              <div className="mt-12">
+              <div className="mt-6 pt-5">
                 <Button
                   onClick={addDowntime}
-                  className="px-12 py-12  bg-slate-100 border-none font-semibold text-slate-600 hover:bg-slate-200"
+                  className="px-8 py-2.5 bg-slate-100 border border-slate-200 font-semibold text-slate-700 hover:bg-slate-200 cursor-pointer rounded-lg"
                 >
                   Add Downtime
                 </Button>

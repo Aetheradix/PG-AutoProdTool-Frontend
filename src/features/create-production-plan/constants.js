@@ -17,4 +17,5 @@ export const REASON_OPTIONS = [
   { value: 'Changeover', label: 'Changeover' },
   { value: 'Breakdown', label: 'Breakdown' },
   { value: 'Maintenance', label: 'Maintenance' },
+  { value: 'Other', label: 'Other' },
 ];

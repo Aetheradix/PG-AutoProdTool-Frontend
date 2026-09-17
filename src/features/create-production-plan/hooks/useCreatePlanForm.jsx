@@ -11,8 +11,12 @@ export const useCreatePlanForm = () => {
     const [form] = Form.useForm();
     const [downtimeForm] = Form.useForm();
     const [downtimes, setDowntimes] = useState([]);
+    const [reasonOptions, setReasonOptions] = useState(REASON_OPTIONS);
     const navigate = useNavigate();
     const [runSimulation, { isLoading }] = useRunSimulationMutation();
+
+    const selectedReason = Form.useWatch('reason', downtimeForm);
+    const isOtherReason = selectedReason === 'Other';
 
     const onFinish = async (values) => {
         const targetDate = values.planningDate
@@ -59,21 +63,44 @@ export const useCreatePlanForm = () => {
     const handleReasonChange = (value) => {
         if (DOWNTIME_DURATIONS[value]) {
             downtimeForm.setFieldsValue({ duration: DOWNTIME_DURATIONS[value] });
+        } else if (value === 'Other') {
+            downtimeForm.setFieldsValue({ duration: undefined, customReason: '' });
         }
     };
 
     const addDowntime = async () => {
         try {
             const values = await downtimeForm.validateFields();
+            const finalReason = values.reason === 'Other'
+                ? (values.customReason?.trim() || 'Other')
+                : values.reason;
+
             const newDowntime = {
                 id: Date.now(),
                 line: values.line || 'All', // Default to All if not provided
-                reason: values.reason,
+                reason: finalReason,
                 startTime: values.startTime ? values.startTime.format('DD/MM/YYYY, hh:mm A') : '',
                 duration: values.duration,
             };
 
-            setDowntimes([...downtimes, newDowntime]);
+            setDowntimes(prev => [...prev, newDowntime]);
+
+            // If user entered a custom reason, add it to options so it can be re-selected
+            if (values.reason === 'Other' && values.customReason?.trim()) {
+                const customTrimmed = values.customReason.trim();
+                setReasonOptions(prev => {
+                    if (prev.some(opt => opt.value.toLowerCase() === customTrimmed.toLowerCase())) {
+                        return prev;
+                    }
+                    const withoutOther = prev.filter(opt => opt.value !== 'Other');
+                    return [
+                        ...withoutOther,
+                        { value: customTrimmed, label: customTrimmed },
+                        { value: 'Other', label: 'Other' },
+                    ];
+                });
+            }
+
             downtimeForm.resetFields();
         } catch (error) {
             console.error('Validation failed:', error);
@@ -89,7 +116,8 @@ export const useCreatePlanForm = () => {
         downtimeForm,
         downtimes,
         isLoading,
-        reasonOptions: REASON_OPTIONS,
+        reasonOptions,
+        isOtherReason,
         onFinish,
         handleReasonChange,
         addDowntime,
