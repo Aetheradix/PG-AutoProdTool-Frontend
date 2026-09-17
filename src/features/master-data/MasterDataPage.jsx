@@ -1,12 +1,13 @@
 import { Card, Tabs } from 'antd';
 import { AiOutlineStock } from "react-icons/ai";
-import { FiDatabase, FiPackage, FiUpload, FiActivity, FiCpu } from 'react-icons/fi';
+import { FiDatabase, FiPackage, FiUpload, FiActivity, FiCpu, FiGrid } from 'react-icons/fi';
 import { useExcelUpload } from '../excel-upload/hooks/useExcelUpload';
 import { BulkDetailTable } from './components/BulkDetailTable';
 import RMStatusDeadStock from './components/RMStatusDeadStock';
 import { SKUMasterTable } from './components/SKUMasterTable';
 import { UploadActionButtons } from './components/UploadActionButtons';
 import { UploadDataTable } from './components/UploadDataTable';
+import WashoutMatrix from '../plan-view/components/WashoutMatrix';
 
 import { getUploadColumns } from './utils/uploadColumns';
 import { useSelector, useDispatch } from 'react-redux';
@@ -166,6 +167,15 @@ export function MasterDataPage() {
           <EquipmentManagement type="Mix" />
         </div>
       )
+    },
+    {
+      key: 'washout-matrix',
+      label: (
+        <span className="flex items-center gap-2 px-1">
+          <FiGrid /> Washout Matrix
+        </span>
+      ),
+      children: <WashoutMatrix />
     },
   ];
 

@@ -3,18 +3,17 @@ import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  useGetProductionScheduleGanttQuery,
   useGetGanttEditQuery,
+  useGetProductionScheduleGanttQuery,
 } from '../../store/api/statusApi';
 import { setActiveTab } from '../../store/slices/uiSlice';
-import { exportTableToExcel, exportDataTableToExcel } from '../../utils/exportUtils';
+import { exportTableToExcel } from '../../utils/exportUtils';
+import PackingPlanScheduleView from '../packing-plan/components/PackingPlanScheduleView';
 import DraggableGanttChart from './components/DraggableGanttChart';
 import GanttChart from './components/GanttChart';
 import PlanHeader from './components/PlanHeader';
 import ScheduleTable from './components/ScheduleTable';
 import TankTimeline from './components/TankTimeline';
-import PackingPlanScheduleView from '../packing-plan/components/PackingPlanScheduleView';
-import WashoutMatrix from './components/WashoutMatrix';
 import { useScheduleTable } from './hooks/useScheduleTable';
 
 
@@ -285,7 +284,6 @@ const PlanView = () => {
   const renderContent = () => {
     // These tabs don't depend on the Gantt schedule data — render them directly
     if (activeTab === 'packing-schedule') return <PackingPlanScheduleView />;
-    if (activeTab === 'washout-matrix') return <WashoutMatrix />;
 
     switch (activeTab) {
       case 'table':

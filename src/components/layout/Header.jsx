@@ -35,7 +35,7 @@ const Header = () => {
     { key: '/packing-plan', icon: <FiPackage />, label: 'Packing Plan' },
     { key: '/create-making-plan', icon: <FiFilePlus />, label: 'Create Making Plan' },
     // { key: '/upload', icon: <FiUpload />, label: 'Upload Data' },
-    { key: '/plan-view', icon: <FiLayers />, label: 'Plan View' },
+    { key: '/plan-view', icon: <FiLayers />, label: 'Making Plan' },
     { key: '/master-data', icon: <FiDatabase />, label: 'Master Data' },
     { key: '/status', icon: <FiActivity />, label: 'Current Status' },
     { key: '/kpi', icon: <FiTrendingUp />, label: 'KPI Dashboard' },

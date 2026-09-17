@@ -1,4 +1,4 @@
-﻿import { Button } from "antd";
+import { Button } from "antd";
 import { FiFileText } from "react-icons/fi";
 
 const PlanHeader = ({
@@ -12,8 +12,7 @@ const PlanHeader = ({
 }) => {
   const showTimeFilter =
     activeTab !== "table" &&
-    activeTab !== "packing-schedule" &&
-    activeTab !== "washout-matrix";
+    activeTab !== "packing-schedule";
 
   return (
     <div className="flex flex-col gap-2 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
@@ -49,13 +48,7 @@ const PlanHeader = ({
           >
             Tank Timeline
           </Button>
-          <Button
-            type={activeTab === "washout-matrix" ? "primary" : "text"}
-            className="rounded-md shadow-none font-bold whitespace-nowrap"
-            onClick={() => onTabChange("washout-matrix")}
-          >
-            Washout Matrix
-          </Button>
+
         </div>
 
         {/* Export button - right side */}
