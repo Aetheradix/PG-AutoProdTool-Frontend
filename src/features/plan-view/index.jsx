@@ -1,11 +1,12 @@
-import { Empty, Spin } from 'antd';
+import { Empty, Spin, message, Modal } from 'antd';
 import dayjs from 'dayjs';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   useGetGanttEditQuery,
   useGetProductionScheduleGanttQuery,
   useGetWashoutMatrixQuery,
+  useUpdateGanttEditMutation,
 } from '../../store/api/statusApi';
 import { setActiveTab } from '../../store/slices/uiSlice';
 import { exportTableToExcel } from '../../utils/exportUtils';
@@ -312,6 +313,14 @@ const PlanView = () => {
 
   const washoutMatrices = useMemo(() => washoutResponse?.data || null, [washoutResponse]);
 
+  // ── Reset / Modification Tracking ──────────────────────────────────────────
+  // Stores original start/end times per batch_id (captured once on first load)
+  const originalSnapshotRef = useRef(null);
+  // Map of batch_id → { originalStart, originalEnd } for batches user has dragged
+  const [modifiedBatches, setModifiedBatches] = useState(new Map());
+  const [isResetting, setIsResetting] = useState(false);
+  const [updateGanttEdit] = useUpdateGanttEditMutation();
+
   // Added for Excel Export and Table View consistency
   const {
     groupedData,
@@ -350,6 +359,105 @@ const PlanView = () => {
     
     return mapScheduleToGanttFormat(flatData, washoutMatrices);
   }, [ganttEditResponse, scheduleGanttResponse, washoutMatrices]);
+
+  // Helper to format Date/ms into local ISO string (YYYY-MM-DDTHH:mm:ss) expected by API
+  const formatLocalISO = useCallback((dateOrMs) => {
+    const d = typeof dateOrMs === 'number' ? new Date(dateOrMs) : new Date(dateOrMs);
+    const tzOffset = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - tzOffset).toISOString().slice(0, 19);
+  }, []);
+
+  // Capture the very first load as the "original" snapshot (session-based)
+  useEffect(() => {
+    if (originalSnapshotRef.current !== null) return; // already captured
+    if (!draggableTasks || draggableTasks.length === 0) return;
+
+    const snapshot = new Map();
+    draggableTasks.forEach((row) => {
+      row.items?.forEach((item) => {
+        if (item.status === 'downtime' || item.status === 'washout') return;
+        const batchKey = item.batch != null ? String(item.batch) : null;
+        if (!batchKey) return;
+
+        const rawStart = item.start_time || item.mkg_start_time;
+        const rawEnd = item.end_time || item.mkg_end_time;
+        if (!rawStart || !rawEnd) return;
+
+        const startMs = new Date(rawStart).getTime();
+        const endMs = new Date(rawEnd).getTime();
+        if (isNaN(startMs) || isNaN(endMs)) return;
+
+        if (!snapshot.has(batchKey)) {
+          snapshot.set(batchKey, {
+            start: startMs,
+            end: endMs,
+            start_time: rawStart,
+            end_time: rawEnd,
+          });
+        }
+      });
+    });
+
+    if (snapshot.size > 0) {
+      originalSnapshotRef.current = snapshot;
+    }
+  }, [draggableTasks]);
+
+  // Called by DraggableGanttChart when a task is about to be updated
+  const handleTaskModified = useCallback((batchId, newStart, newEnd, origStartMs, origEndMs) => {
+    const batchKey = batchId != null ? String(batchId) : null;
+    if (!batchKey) return;
+
+    setModifiedBatches((prev) => {
+      const next = new Map(prev);
+      // Only record the ORIGINAL times the first time this batch is modified
+      if (!next.has(batchKey)) {
+        const orig = originalSnapshotRef.current?.get(batchKey) || (origStartMs && origEndMs ? {
+          start: origStartMs,
+          end: origEndMs,
+        } : null);
+        if (orig) {
+          next.set(batchKey, orig);
+        }
+      }
+      return next;
+    });
+  }, []);
+
+  // Reset ALL modified batches back to their original times via API
+  const handleReset = useCallback(async () => {
+    if (modifiedBatches.size === 0) return;
+
+    Modal.confirm({
+      title: 'Reset to Default Schedule',
+      content: `This action will revert all ${modifiedBatches.size} modified batch${modifiedBatches.size > 1 ? 'es' : ''} back to their original scheduled positions. Are you sure you want to proceed?`,
+      okText: 'Yes, Reset',
+      cancelText: 'Cancel',
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        setIsResetting(true);
+        try {
+          // Call RTK mutation sequentially for each modified batch to restore original times
+          for (const [batchId, orig] of modifiedBatches.entries()) {
+            if (!orig || orig.start == null || orig.end == null) continue;
+            await updateGanttEdit({
+              id: batchId,
+              start_time: formatLocalISO(orig.start),
+              end_time: formatLocalISO(orig.end),
+            }).unwrap();
+          }
+
+          setModifiedBatches(new Map());
+          message.success('Gantt chart successfully reset to default schedule.');
+        } catch (err) {
+          console.error('Reset error:', err);
+          message.error('Failed to reset schedule. Please try again.');
+        } finally {
+          setIsResetting(false);
+        }
+      },
+    });
+  }, [modifiedBatches, updateGanttEdit, formatLocalISO]);
 
 
   const filterRange = useMemo(() => {
@@ -473,67 +581,107 @@ const PlanView = () => {
           <div className="flex justify-between items-center mb-4 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
             <div>
               <h3 className="m-0 text-lg font-bold text-[#002060]">Interactive Plan</h3>
-              <p className="m-0 text-xs text-slate-500">Drag items to adjust start and end times.</p>
+              <p className="m-0 text-xs text-slate-500">
+                Drag items to adjust start and end times.
+                {modifiedBatches.size > 0 && (
+                  <span className="ml-2 text-amber-600 font-semibold">
+                    ● {modifiedBatches.size} batch{modifiedBatches.size > 1 ? 'es' : ''} modified
+                  </span>
+                )}
+              </p>
             </div>
-            <button 
-                className="bg-emerald-600 hover:bg-emerald-700 text-white border-none font-bold shadow-md rounded-lg px-4 py-2 flex items-center gap-2 cursor-pointer transition-colors"
-                onClick={() => {
-                  const flatItemsMap = new Map();
-                  draggableTasks.forEach(row => {
-                    row.items.forEach(item => {
-                       if (!flatItemsMap.has(item.batch)) {
-                         flatItemsMap.set(item.batch, { ...item });
-                       }
-                    });
-                  });
-
-                  const allBatches = Array.from(flatItemsMap.values());
-                  const grouped = {};
-                  const allDates = new Set();
-
-                  allBatches.forEach(b => {
-                    if (b.status === 'downtime' || b.status === 'washout') return; // Skip downtime & washout in schedule table
-                    
-                    const system = b.system || 'Unknown';
-                    const shift = b.shift || 'Unknown';
-                    const startTime = dayjs(b.start_time);
-                    const dk = startTime.format('YYYY-MM-DD');
-                    const label = startTime.format('DD MMMM YYYY');
-                    
-                    allDates.add(dk);
-
-                    if (!grouped[system]) grouped[system] = {};
-                    if (!grouped[system][shift]) grouped[system][shift] = {};
-                    if (!grouped[system][shift][dk]) {
-                      grouped[system][shift][dk] = { label, batches: [] };
-                    }
-
-                    grouped[system][shift][dk].batches.push({
-                      ...b,
-                      startTime: startTime.format('HH:mm'),
-                      endTime: dayjs(b.end_time).format('HH:mm'),
-                    });
-                  });
-
-                  const sorted = {};
-                  ['12T', '6T'].forEach(sys => {
-                    if (grouped[sys]) {
-                      const sortedShifts = {};
-                      ['A', 'B', 'C'].forEach(s => {
-                        if (grouped[sys][s]) sortedShifts[s] = grouped[sys][s];
+            <div className="flex items-center gap-3">
+              {/* Reset to Default Button */}
+              {modifiedBatches.size > 0 && (
+                <button
+                  onClick={handleReset}
+                  disabled={isResetting}
+                  className="bg-rose-500 hover:bg-rose-600 disabled:opacity-50 disabled:cursor-not-allowed text-white border-none font-bold shadow-md rounded-lg px-4 py-2 flex items-center gap-2 cursor-pointer transition-colors"
+                >
+                  {isResetting ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                      </svg>
+                      Resetting...
+                    </>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                        <path d="M3 3v5h5"/>
+                      </svg>
+                      Reset to Default
+                    </>
+                  )}
+                </button>
+              )}
+              {/* Export Button */}
+              <button 
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white border-none font-bold shadow-md rounded-lg px-4 py-2 flex items-center gap-2 cursor-pointer transition-colors"
+                  onClick={() => {
+                    const flatItemsMap = new Map();
+                    draggableTasks.forEach(row => {
+                      row.items.forEach(item => {
+                         if (!flatItemsMap.has(item.batch)) {
+                           flatItemsMap.set(item.batch, { ...item });
+                         }
                       });
-                      sorted[sys] = sortedShifts;
-                    }
-                  });
+                    });
 
-                  const sortedDates = Array.from(allDates).sort();
-                  exportTableToExcel(sorted, sortedDates, 'Updated_Production_Schedule.xlsx');
-                }}
-            >
-              Export Updated Plan
-            </button>
+                    const allBatches = Array.from(flatItemsMap.values());
+                    const grouped = {};
+                    const allDates = new Set();
+
+                    allBatches.forEach(b => {
+                      if (b.status === 'downtime' || b.status === 'washout') return;
+                      
+                      const system = b.system || 'Unknown';
+                      const shift = b.shift || 'Unknown';
+                      const startTime = dayjs(b.start_time);
+                      const dk = startTime.format('YYYY-MM-DD');
+                      const label = startTime.format('DD MMMM YYYY');
+                      
+                      allDates.add(dk);
+
+                      if (!grouped[system]) grouped[system] = {};
+                      if (!grouped[system][shift]) grouped[system][shift] = {};
+                      if (!grouped[system][shift][dk]) {
+                        grouped[system][shift][dk] = { label, batches: [] };
+                      }
+
+                      grouped[system][shift][dk].batches.push({
+                        ...b,
+                        startTime: startTime.format('HH:mm'),
+                        endTime: dayjs(b.end_time).format('HH:mm'),
+                      });
+                    });
+
+                    const sorted = {};
+                    ['12T', '6T'].forEach(sys => {
+                      if (grouped[sys]) {
+                        const sortedShifts = {};
+                        ['A', 'B', 'C'].forEach(s => {
+                          if (grouped[sys][s]) sortedShifts[s] = grouped[sys][s];
+                        });
+                        sorted[sys] = sortedShifts;
+                      }
+                    });
+
+                    const sortedDates = Array.from(allDates).sort();
+                    exportTableToExcel(sorted, sortedDates, 'Updated_Production_Schedule.xlsx');
+                  }}
+              >
+                Export Updated Plan
+              </button>
+            </div>
           </div>
-          <DraggableGanttChart tasks={draggableTasks} filterRange={filterRange} />
+          <DraggableGanttChart
+            tasks={draggableTasks}
+            filterRange={filterRange}
+            onTaskModified={handleTaskModified}
+          />
         </div>
       )}
     </div>

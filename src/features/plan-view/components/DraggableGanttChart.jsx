@@ -115,6 +115,7 @@ const TankRow = ({
   timelineEnd,
   getPosition,
   onTaskUpdate,
+  onTaskModified,
   isFirst,
 }) => {
   const rowRef = useRef(null);
@@ -131,9 +132,12 @@ const TankRow = ({
         let newEnd = newStart + (item.end - item.start);
         if (newStart < timelineStart) newStart = timelineStart;
         if (newEnd > timelineEnd) newEnd = timelineEnd;
+        if (newStart === item.start && newEnd === item.end) return;
+        // Notify parent that this batch was modified (for reset tracking)
+        onTaskModified?.(item.batch, newStart, newEnd, item.start, item.end);
         onTaskUpdate({ id: item.id, batch_id: item.batch, start: newStart, end: newEnd });
       },
-      [timelineStart, timelineEnd, onTaskUpdate]
+      [timelineStart, timelineEnd, onTaskUpdate, onTaskModified]
     );
 
   return (
@@ -183,6 +187,7 @@ const DraggableGanttChart = ({
   filterRange = null,
   synchronizedScroll = null,
   onScrollChange,
+  onTaskModified,
 }) => {
   const { tasksWithLanes, timeLabels, timelineStart, timelineEnd, totalDurationHrs, getPosition } =
     useTimeline(tasks, filterRange);
@@ -300,6 +305,7 @@ const DraggableGanttChart = ({
                     timelineEnd={timelineEnd}
                     getPosition={getPosition}
                     onTaskUpdate={handleTaskUpdate}
+                    onTaskModified={onTaskModified}
                   />
                 ))}
                 {/* System Divider */}
