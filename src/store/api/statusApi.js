@@ -44,7 +44,7 @@ export const statusApi = apiSlice.injectEndpoints({
                 method: 'PUT',
                 body: data,
             }),
-            invalidatesTags: ['Status'],
+            invalidatesTags: ['Status', 'ProductionSchedule', 'Timeline', 'Plan'],
         }),
         getWashoutMatrix: builder.query({
             query: () => '/v1/washout-matrix',
@@ -59,7 +59,7 @@ export const statusApi = apiSlice.injectEndpoints({
                     end_time,
                 },
             }),
-            invalidatesTags: ['ProductionSchedule'],
+            invalidatesTags: ['ProductionSchedule', 'Status', 'Timeline', 'Plan'],
         }),
     }),
 });

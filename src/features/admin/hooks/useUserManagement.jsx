@@ -38,8 +38,8 @@ export const useUserManagement = () => {
       username: user.username,
       full_name: user.full_name,
       email: user.email,
-      is_admin: user.is_admin,
-      is_active: user.is_active,
+      is_admin: Boolean(user.is_admin),
+      is_active: Boolean(user.is_active),
     });
     setIsEditModalOpen(true);
   };

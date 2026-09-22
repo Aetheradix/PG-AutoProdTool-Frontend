@@ -19,7 +19,7 @@ export const planApi = apiSlice.injectEndpoints({
                 method: 'POST',
                 body,
             }),
-            invalidatesTags: ['Plan', 'ProductionSchedule', 'PackingPlan'],
+            invalidatesTags: ['Plan', 'ProductionSchedule', 'PackingPlan', 'Timeline', 'Status', 'Tanks'],
         }),
     }),
 });

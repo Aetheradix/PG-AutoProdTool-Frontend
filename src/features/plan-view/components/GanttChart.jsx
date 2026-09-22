@@ -43,6 +43,7 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
   }, [tasksWithLanes]);
 
 
+  console.log('GanttChart Rendered', { tasks, tasksWithLanes, groupedData });
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-2xl overflow-hidden w-full font-sans">

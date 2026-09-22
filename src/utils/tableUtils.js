@@ -49,7 +49,12 @@ function isTimeField(key) {
 }
 
 /**
- * Parses a duration-like string (e.g., PT15H43M or 15:43:00) into {hours, minutes}.
+ * Parses a duration-like string into {hours, minutes}.
+ * Supports:
+ *   PT15H43M  (ISO duration)
+ *   15:43 / 15:43:00  (24-hour time)
+ *   0 days 04:05:00  (pandas Timedelta string)
+ *   1 days 02:19:00
  */
 export function parseDuration(val) {
     let hours = 0;
@@ -58,24 +63,35 @@ export function parseDuration(val) {
 
     if (typeof val !== 'string') return { hours, minutes, isParsed };
 
+    const s = val.trim();
+
+    // Handle pandas Timedelta strings like "0 days 04:05:00" or "1 days 02:19:00"
+    const daysMatch = s.match(/^(\d+)\s+days?\s+(\d+):(\d+)/i);
+    if (daysMatch) {
+        const extraDays = parseInt(daysMatch[1], 10);
+        hours = extraDays * 24 + parseInt(daysMatch[2], 10);
+        minutes = parseInt(daysMatch[3], 10);
+        isParsed = true;
+        return { hours, minutes, isParsed };
+    }
+
     // Handle PT ISO Duration (e.g., PT15H43M)
-    if (val.startsWith('PT')) {
-        let timeStr = val.substring(2);
+    if (s.startsWith('PT')) {
+        let timeStr = s.substring(2);
         if (timeStr.includes('H')) {
             const p = timeStr.split('H');
             hours = parseInt(p[0] || '0', 10);
-            timeStr = p[1];
+            timeStr = p[1] || '';
         }
         if (timeStr.includes('M')) {
             const p = timeStr.split('M');
-            hours = hours; // stay same
             minutes = parseInt(p[0] || '0', 10);
         }
         isParsed = true;
     }
     // Handle standard 24-hour format (e.g., 15:43 or 15:43:00)
-    else if (val.includes(':')) {
-        const parts = val.split(':');
+    else if (s.includes(':')) {
+        const parts = s.split(':');
         hours = parseInt(parts[0], 10);
         minutes = parseInt(parts[1], 10);
         if (!isNaN(hours) && !isNaN(minutes)) {
@@ -87,20 +103,41 @@ export function parseDuration(val) {
 }
 
 /**
- * Combines a date string (YYYY-MM-DD or absolute) with a duration-like time string.
+ * Parses a date string that may be in YYYY-MM-DD, DD.MM.YYYY or DD/MM/YYYY.
+ * Returns a dayjs object or null.
+ */
+function parseDateStrict(dateStr) {
+    if (!dateStr) return null;
+    const s = String(dateStr).trim();
+
+    // DD.MM.YYYY  or  DD/MM/YYYY
+    const dmyDot = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if (dmyDot) {
+        return dayjs(`${dmyDot[3]}-${dmyDot[2].padStart(2,'0')}-${dmyDot[1].padStart(2,'0')}`);
+    }
+    const dmySlash = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (dmySlash) {
+        return dayjs(`${dmySlash[3]}-${dmySlash[2].padStart(2,'0')}-${dmySlash[1].padStart(2,'0')}`);
+    }
+
+    // Default: let dayjs try (handles ISO, YYYY-MM-DD, etc.)
+    return dayjs(s);
+}
+
+/**
+ * Combines a date string (YYYY-MM-DD, DD.MM.YYYY, DD/MM/YYYY) with a duration-like time string.
  * Returns an ISO datetime string for the start of that time on that date.
  */
 export function combineDateAndDuration(dateStr, timeStr) {
     if (!dateStr) return null;
-    
-    // Create base date (ensure it handles various input formats)
-    const baseDate = dayjs(dateStr);
-    if (!baseDate.isValid()) return null;
+
+    const baseDate = parseDateStrict(dateStr);
+    if (!baseDate || !baseDate.isValid()) return null;
 
     if (!timeStr) return baseDate.toISOString();
 
     const { hours, minutes, isParsed } = parseDuration(timeStr);
-    
+
     if (isParsed) {
         return baseDate.startOf('day').hour(hours).minute(minutes).second(0).toISOString();
     }

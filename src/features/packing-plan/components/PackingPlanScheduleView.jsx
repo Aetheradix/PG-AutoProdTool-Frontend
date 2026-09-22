@@ -37,7 +37,7 @@ export default function PackingPlanScheduleView() {
   const [auditModalOpen, setAuditModalOpen] = useState(false);
   const [selectedAuditRecord, setSelectedAuditRecord] = useState(null);
 
-  const { data: apiData, isLoading } = useGetPackingPlanQuery({ limit: 1000 });
+  const { data: apiData, isLoading } = useGetPackingPlanQuery({ page: 1, limit: 1000 });
 
   const rawData = useMemo(() => extractApiData(apiData, []), [apiData]);
 
