@@ -54,7 +54,8 @@ export function CreatePlanForm() {
       <Form form={form} layout="vertical" onFinish={onFinish} size="large" requiredMark={false}>
         <div className="space-y-6">
 
-          {/* Planning Date */}
+          {/* Planning Date (commented out) */}
+          {/*
           <div className="bg-slate-50 rounded-xl p-5 border border-slate-100">
             <Text strong className="text-slate-700 block mb-4 text-sm uppercase tracking-wide">
               Planning Date
@@ -72,6 +73,7 @@ export function CreatePlanForm() {
           </div>
 
           <Divider className="my-2" />
+          */}
 
           {/* Downtime Section */}
           <div className="space-y-5">

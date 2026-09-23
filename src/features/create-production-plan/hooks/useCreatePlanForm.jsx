@@ -44,17 +44,24 @@ export const useCreatePlanForm = () => {
     }, [packingPlanRes, form]);
 
     const onFinish = async (values) => {
-        const targetDate = values.planningDate
-            ? values.planningDate.format('YYYY-MM-DD')
+        let targetDate = values?.planningDate
+            ? (values.planningDate.format ? values.planningDate.format('YYYY-MM-DD') : String(values.planningDate))
             : null;
 
         if (!targetDate) {
-            notification.error({
-                message: 'Invalid Date',
-                description: 'Please select a valid planning date.',
-                placement: 'topRight',
-            });
-            return;
+            let earliest = null;
+            if (packingPlanRes?.data?.length > 0) {
+                packingPlanRes.data.forEach((row) => {
+                    const rawDate = row.start_date;
+                    if (rawDate) {
+                        const parsed = dayjs(rawDate);
+                        if (parsed.isValid() && (!earliest || parsed.isBefore(earliest))) {
+                            earliest = parsed;
+                        }
+                    }
+                });
+            }
+            targetDate = earliest ? earliest.format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD');
         }
 
         try {

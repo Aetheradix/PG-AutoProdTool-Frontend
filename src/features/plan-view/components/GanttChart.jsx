@@ -1,5 +1,7 @@
-import React, { useMemo, useRef, useEffect, useCallback } from 'react';
-import { Typography, Tooltip } from 'antd';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
+import { Typography, Tooltip, Modal, Button } from 'antd';
+import { FiBox } from 'react-icons/fi';
+import dayjs from 'dayjs';
 import { useTimeline } from '../hooks/useTimeline';
 import { useTimelineScale } from '../hooks/useTimelineScale';
 import { TimelineControls } from './TimelineControls';
@@ -13,6 +15,15 @@ const statusColors = {
   warning: 'bg-gradient-to-r from-amber-500 to-amber-600',
   downtime: 'bg-gradient-to-br from-orange-500 to-red-600',
   washout: 'bg-gradient-to-br from-slate-600 to-slate-700',
+};
+
+const statusBadgeColors = {
+  ready: 'bg-blue-100 text-blue-700 border-blue-300',
+  running: 'bg-emerald-100 text-emerald-700 border-emerald-300',
+  conflict: 'bg-rose-100 text-rose-700 border-rose-300',
+  warning: 'bg-amber-100 text-amber-700 border-amber-300',
+  downtime: 'bg-red-100 text-red-700 border-red-300',
+  washout: 'bg-slate-100 text-slate-700 border-slate-300',
 };
 
 const fmtTime = (ms) => new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -39,7 +50,7 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
     slotCount,
     fixedLeftWidth: 192,
     minSlotWidth: 50,
-    initialZoom: 'fit',
+    initialZoom: 200,
     scrollRef,
   });
 
@@ -82,19 +93,8 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
     return earliest;
   }, [groupedData]);
 
-  // Auto-scroll to show the first downtime when chart loads
-  useEffect(() => {
-    if (!firstDowntime || !scrollRef.current || timelineEnd === timelineStart) return;
-    const pct = (firstDowntime.startMs - timelineStart) / (timelineEnd - timelineStart);
-    const scrollableW = scrollRef.current.scrollWidth;
-    // Scroll so the downtime is in the center of the viewport
-    const scrollTo = pct * scrollableW - scrollRef.current.clientWidth / 2;
-    if (scrollTo > 50) { // Only auto-scroll if downtime is not already near the start
-      setTimeout(() => {
-        scrollRef.current?.scrollTo({ left: Math.max(0, scrollTo), behavior: 'smooth' });
-      }, 300);
-    }
-  }, [firstDowntime, timelineStart, timelineEnd, totalWidth]);
+  // Active item for Detail Modal
+  const [activeDetailItem, setActiveDetailItem] = useState(null);
 
   const jumpToDowntime = useCallback(() => {
     if (!firstDowntime || !scrollRef.current || timelineEnd === timelineStart) return;
@@ -241,9 +241,19 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
                                 ? `DOWNTIME — ${item.reason || item.title} | ${fmtDate(startMs)} ${fmtTime(startMs)} – ${fmtTime(endMs)} | Duration: ${item.duration ?? '?'} mins | Line: ${item.line || 'All'}`
                                 : `${item.title} | ${isWashout ? 'WASHOUT' : `Batch: ${item.batch}`} | ${fmtDate(startMs)} ${fmtTime(startMs)} – ${fmtDate(endMs)} ${fmtTime(endMs)}${isWashout ? '' : ` | Tech: ${item.tech_type || (item.status === 'warning' ? 'Dual' : 'Single')}`}`
                             }
-                            color={isDowntime ? '#7f1d1d' : '#000'}
+                            color={isDowntime ? '#7f1d1d' : '#1e293b'}
                           >
                             <div
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveDetailItem({
+                                  ...item,
+                                  startMs,
+                                  endMs,
+                                  system: system.name,
+                                  tankName: row.tankName,
+                                });
+                              }}
                               className={`absolute rounded-xl px-2 py-1.5 text-white shadow-lg flex flex-col justify-between transition-all hover:scale-[1.02] cursor-pointer border overflow-hidden
                                 ${isDowntime ? 'border-amber-300/80 border-dashed ring-1 ring-amber-400/50 shadow-md shadow-red-900/40' : 'border-white/20'}
                                 ${isDowntime ? '' : (statusColors[item.status] || statusColors.ready)}`}
@@ -322,6 +332,139 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
           )}
         </div>
       </div>
+
+      {/* ── Detail Modal ────────────────────────────────────────────── */}
+      <Modal
+        open={!!activeDetailItem}
+        onCancel={() => setActiveDetailItem(null)}
+        footer={[
+          <Button key="close" type="primary" onClick={() => setActiveDetailItem(null)}>
+            Close
+          </Button>,
+        ]}
+        title={
+          <div className="flex items-center justify-between border-b pb-2 pr-6">
+            <div className="flex items-center gap-2">
+              <FiBox className={`${activeDetailItem?.status === 'downtime' ? 'text-red-600' : 'text-blue-600'} text-lg`} />
+              <span className="font-black text-slate-800 text-base">
+                {activeDetailItem?.status === 'downtime'
+                  ? `Downtime Details: ${activeDetailItem?.title || activeDetailItem?.batch}`
+                  : activeDetailItem?.status === 'washout'
+                  ? `Washout Details: ${activeDetailItem?.title}`
+                  : `Batch Details: ${activeDetailItem?.batch || activeDetailItem?.id}`}
+              </span>
+            </div>
+            {activeDetailItem && (
+              <span
+                className={`text-xs px-2 py-0.5 rounded font-black uppercase border ${
+                  statusBadgeColors[activeDetailItem.status] || statusBadgeColors.ready
+                }`}
+              >
+                {activeDetailItem.status.toUpperCase()}
+              </span>
+            )}
+          </div>
+        }
+      >
+        {activeDetailItem && (
+          <div className="py-2 space-y-3">
+            <div className="bg-slate-50 p-3 rounded border border-slate-200">
+              <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Product Info</div>
+              <div className="text-sm font-black text-slate-800 mt-1">
+                {activeDetailItem.description || activeDetailItem.title || (activeDetailItem.status === 'downtime' ? activeDetailItem.reason : 'No Description')}
+              </div>
+              {activeDetailItem.status !== 'downtime' && activeDetailItem.status !== 'washout' && (
+                <div className="text-xs text-blue-700 font-bold mt-0.5">
+                  Product Code (P_CODE): {activeDetailItem.pCode || activeDetailItem.p_code || activeDetailItem.gcas || activeDetailItem.product_code || '—'}
+                </div>
+              )}
+              {activeDetailItem.status === 'downtime' && (
+                <div className="text-xs text-red-700 font-bold mt-0.5">
+                  Target Line: {activeDetailItem.line || activeDetailItem.system || 'All Systems'}
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="bg-slate-50 p-2.5 rounded border border-slate-100">
+                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px] block">
+                  Production Line
+                </span>
+                <span className="text-slate-800 font-bold text-sm">
+                  {activeDetailItem.system ? `${activeDetailItem.system} System` : (activeDetailItem.line || 'Unassigned')}
+                </span>
+                {(activeDetailItem.tank_config || activeDetailItem.tankName) && (
+                  <span className="text-slate-500 ml-1">({activeDetailItem.tank_config || activeDetailItem.tankName})</span>
+                )}
+              </div>
+
+              <div className="bg-slate-50 p-2.5 rounded border border-slate-100">
+                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px] block">
+                  Order Number
+                </span>
+                <span className="text-slate-800 font-bold text-sm">
+                  {activeDetailItem.orderNo || activeDetailItem.order_no || activeDetailItem.order_number || activeDetailItem.batch || '—'}
+                </span>
+              </div>
+
+              <div className="bg-slate-50 p-2.5 rounded border border-slate-100">
+                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px] block">
+                  Scheduled Start
+                </span>
+                <span className="text-slate-800 font-bold">
+                  {activeDetailItem.startMs ? dayjs(activeDetailItem.startMs).format('DD MMM YYYY, HH:mm') : '—'}
+                </span>
+              </div>
+
+              <div className="bg-slate-50 p-2.5 rounded border border-slate-100">
+                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px] block">
+                  Scheduled End
+                </span>
+                <span className="text-slate-800 font-bold">
+                  {activeDetailItem.endMs ? dayjs(activeDetailItem.endMs).format('DD MMM YYYY, HH:mm') : '—'}
+                </span>
+              </div>
+
+              <div className="bg-slate-50 p-2.5 rounded border border-slate-100">
+                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px] block">
+                  Planned Quantity
+                </span>
+                <span className="text-emerald-700 font-black text-sm">
+                  {activeDetailItem.qty != null
+                    ? `${Number(activeDetailItem.qty).toLocaleString()} ${activeDetailItem.uom || 'EA'}`
+                    : activeDetailItem.quantity != null
+                    ? `${Number(activeDetailItem.quantity).toLocaleString()} ${activeDetailItem.uom || 'EA'}`
+                    : activeDetailItem.batch_size != null
+                    ? `${Number(activeDetailItem.batch_size).toLocaleString()} ${activeDetailItem.uom || 'T'}`
+                    : '1 Batch'}
+                </span>
+              </div>
+
+              <div className="bg-slate-50 p-2.5 rounded border border-slate-100">
+                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px] block">
+                  Duration
+                </span>
+                <span className="text-blue-700 font-black text-sm">
+                  {activeDetailItem.status === 'downtime'
+                    ? `${activeDetailItem.duration || Math.round((activeDetailItem.endMs - activeDetailItem.startMs) / 60000)} Minutes`
+                    : activeDetailItem.status === 'washout'
+                    ? `${activeDetailItem.duration_minutes || Math.round((activeDetailItem.endMs - activeDetailItem.startMs) / 60000)} Minutes`
+                    : activeDetailItem.startMs && activeDetailItem.endMs
+                    ? `${((activeDetailItem.endMs - activeDetailItem.startMs) / 3600000).toFixed(1)} Hours`
+                    : '—'}
+                </span>
+              </div>
+            </div>
+
+            {activeDetailItem.remarks && (
+              <div className="bg-amber-50 p-2.5 rounded border border-amber-200 text-xs">
+                <span className="text-amber-800 font-bold block">Remarks:</span>
+                <span className="text-slate-700 mt-0.5 block">{activeDetailItem.remarks}</span>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
