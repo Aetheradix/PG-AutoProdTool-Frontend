@@ -5,6 +5,8 @@ import { useDraggable } from '@dnd-kit/core';
 import { restrictToParentElement } from '@dnd-kit/modifiers';
 import { useUpdateGanttEditMutation } from '@/store/api/statusApi';
 import { useTimeline } from '../hooks/useTimeline';
+import { useTimelineScale } from '../hooks/useTimelineScale';
+import { TimelineControls } from './TimelineControls';
 import { ClockCircleOutlined, ControlOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
@@ -219,6 +221,26 @@ const DraggableGanttChart = ({
   const scrollRef = useRef(null);
   const isSyncingRef = useRef(false);
 
+  const slotCount = timeLabels.slice(0, -1).length;
+  const {
+    effectiveSlotWidth,
+    totalWidth: scaledTotalWidth,
+    isOverflowing,
+    isFit,
+    zoomIn,
+    zoomOut,
+    zoomFit,
+    canZoomIn,
+    canZoomOut,
+    zoomLevelDisplay,
+  } = useTimelineScale({
+    slotCount,
+    fixedLeftWidth: 240,   // w-28 (112px) + w-32 (128px)
+    minSlotWidth: 50,
+    initialZoom: 'fit',
+    scrollRef,
+  });
+
   // --- NESTED GROUPING LOGIC ---
   const groupedData = useMemo(() => {
     const groups = {};
@@ -306,22 +328,22 @@ const DraggableGanttChart = ({
   useEffect(() => {
     if (!firstDowntime || !scrollRef.current || timelineEnd === timelineStart) return;
     const pct = (firstDowntime.startMs - timelineStart) / (timelineEnd - timelineStart);
-    const totalWidth = Math.max(totalDurationHrs * 200, 1200);
-    const scrollTo = pct * totalWidth - scrollRef.current.clientWidth / 2;
+    const scrollableW = scrollRef.current.scrollWidth;
+    const scrollTo = pct * scrollableW - scrollRef.current.clientWidth / 2;
     if (scrollTo > 50) {
       setTimeout(() => {
         scrollRef.current?.scrollTo({ left: Math.max(0, scrollTo), behavior: 'smooth' });
       }, 300);
     }
-  }, [firstDowntime, timelineStart, timelineEnd, totalDurationHrs]);
+  }, [firstDowntime, timelineStart, timelineEnd, scaledTotalWidth]);
 
   const jumpToDowntime = useCallback(() => {
     if (!firstDowntime || !scrollRef.current || timelineEnd === timelineStart) return;
     const pct = (firstDowntime.startMs - timelineStart) / (timelineEnd - timelineStart);
-    const totalWidth = Math.max(totalDurationHrs * 200, 1200);
-    const scrollTo = pct * totalWidth - scrollRef.current.clientWidth / 2;
+    const scrollableW = scrollRef.current.scrollWidth;
+    const scrollTo = pct * scrollableW - scrollRef.current.clientWidth / 2;
     scrollRef.current.scrollTo({ left: Math.max(0, scrollTo), behavior: 'smooth' });
-  }, [firstDowntime, timelineStart, timelineEnd, totalDurationHrs]);
+  }, [firstDowntime, timelineStart, timelineEnd]);
 
   const jumpToStart = useCallback(() => {
     scrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
@@ -329,36 +351,54 @@ const DraggableGanttChart = ({
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl overflow-hidden w-full">
-      {/* Jump buttons bar */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-200 bg-slate-50/70">
-        <button
-          onClick={jumpToStart}
-          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
-        >
-          ⏮ Start
-        </button>
-        {firstDowntime && (
+      {/* Top Toolbar: Navigation + Timeline View Controls */}
+      <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-slate-200 bg-slate-50/70 flex-wrap">
+        <div className="flex items-center gap-2">
           <button
-            onClick={jumpToDowntime}
-            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-colors animate-pulse"
+            onClick={jumpToStart}
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors cursor-pointer"
           >
-            ⛔ Jump to Downtime — {fmtDate(firstDowntime.startMs)} {fmtTime(firstDowntime.startMs)}
+            ⏮ Start
           </button>
-        )}
-        {!firstDowntime && (
-          <span className="text-xs text-slate-400">No downtimes planned</span>
-        )}
-        <span className="ml-auto text-xs text-slate-400">
-          {timelineStart ? `${fmtDate(timelineStart)} → ${fmtDate(timelineEnd)}` : ''}
-        </span>
+          {firstDowntime && (
+            <button
+              onClick={jumpToDowntime}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-colors animate-pulse cursor-pointer"
+            >
+              ⛔ Jump to Downtime — {fmtDate(firstDowntime.startMs)} {fmtTime(firstDowntime.startMs)}
+            </button>
+          )}
+          {!firstDowntime && (
+            <span className="text-xs text-slate-400">No downtimes planned</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <TimelineControls
+            zoomLevelDisplay={zoomLevelDisplay}
+            isFit={isFit}
+            canZoomIn={canZoomIn}
+            canZoomOut={canZoomOut}
+            onZoomIn={zoomIn}
+            onZoomOut={zoomOut}
+            onZoomFit={zoomFit}
+          />
+          <span className="text-xs font-medium text-slate-500 bg-white border border-slate-200/80 px-2.5 py-1 rounded-md shadow-2xs">
+            {timelineStart ? `${fmtDate(timelineStart)} → ${fmtDate(timelineEnd)}` : ''}
+          </span>
+        </div>
       </div>
+
       <div
         ref={scrollRef}
         onScroll={handleScroll}
         className="overflow-auto custom-scrollbar max-h-[80vh]"
       >
         <div
-          style={{ minWidth: `${Math.max(totalDurationHrs * 200, 1200)}px` }}
+          style={{
+            width: isFit && !isOverflowing ? '100%' : `${scaledTotalWidth}px`,
+            minWidth: isFit && !isOverflowing ? '100%' : `${scaledTotalWidth}px`,
+          }}
           className="relative"
         >
           {/* Header Row */}
@@ -372,7 +412,12 @@ const DraggableGanttChart = ({
             {timeLabels.slice(0, -1).map((time, i) => (
               <div
                 key={i}
-                className={`flex-1 py-2 text-center border-r border-slate-200/50 ${
+                style={{
+                  flex: isFit && !isOverflowing ? '1 1 0%' : 'none',
+                  width: isFit && !isOverflowing ? undefined : `${effectiveSlotWidth}px`,
+                  minWidth: isFit && !isOverflowing ? undefined : `${effectiveSlotWidth}px`,
+                }}
+                className={`py-2 text-center border-r border-slate-200/50 ${
                   time.isNewDay || i === 0 ? 'bg-indigo-100/60 border-l-2 border-l-indigo-500' : ''
                 }`}
               >

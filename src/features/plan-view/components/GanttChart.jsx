@@ -1,6 +1,8 @@
 import React, { useMemo, useRef, useEffect, useCallback } from 'react';
 import { Typography, Tooltip } from 'antd';
 import { useTimeline } from '../hooks/useTimeline';
+import { useTimelineScale } from '../hooks/useTimelineScale';
+import { TimelineControls } from './TimelineControls';
 
 const { Text } = Typography;
 
@@ -20,6 +22,26 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
   const scrollRef = useRef(null);
   const { tasksWithLanes, timeLabels, timelineStart, timelineEnd, totalDurationHrs, getPosition } =
     useTimeline(tasks, filterRange);
+
+  const slotCount = timeLabels.slice(0, -1).length;
+  const {
+    effectiveSlotWidth,
+    totalWidth,
+    isOverflowing,
+    isFit,
+    zoomIn,
+    zoomOut,
+    zoomFit,
+    canZoomIn,
+    canZoomOut,
+    zoomLevelDisplay,
+  } = useTimelineScale({
+    slotCount,
+    fixedLeftWidth: 192,
+    minSlotWidth: 50,
+    initialZoom: 'fit',
+    scrollRef,
+  });
 
   // --- API DATA GROUPING LOGIC ---
   const groupedData = useMemo(() => {
@@ -64,23 +86,23 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
   useEffect(() => {
     if (!firstDowntime || !scrollRef.current || timelineEnd === timelineStart) return;
     const pct = (firstDowntime.startMs - timelineStart) / (timelineEnd - timelineStart);
-    const totalWidth = Math.max(totalDurationHrs * 200, 1200);
+    const scrollableW = scrollRef.current.scrollWidth;
     // Scroll so the downtime is in the center of the viewport
-    const scrollTo = pct * totalWidth - scrollRef.current.clientWidth / 2;
+    const scrollTo = pct * scrollableW - scrollRef.current.clientWidth / 2;
     if (scrollTo > 50) { // Only auto-scroll if downtime is not already near the start
       setTimeout(() => {
         scrollRef.current?.scrollTo({ left: Math.max(0, scrollTo), behavior: 'smooth' });
       }, 300);
     }
-  }, [firstDowntime, timelineStart, timelineEnd, totalDurationHrs]);
+  }, [firstDowntime, timelineStart, timelineEnd, totalWidth]);
 
   const jumpToDowntime = useCallback(() => {
     if (!firstDowntime || !scrollRef.current || timelineEnd === timelineStart) return;
     const pct = (firstDowntime.startMs - timelineStart) / (timelineEnd - timelineStart);
-    const totalWidth = Math.max(totalDurationHrs * 200, 1200);
-    const scrollTo = pct * totalWidth - scrollRef.current.clientWidth / 2;
+    const scrollableW = scrollRef.current.scrollWidth;
+    const scrollTo = pct * scrollableW - scrollRef.current.clientWidth / 2;
     scrollRef.current.scrollTo({ left: Math.max(0, scrollTo), behavior: 'smooth' });
-  }, [firstDowntime, timelineStart, timelineEnd, totalDurationHrs]);
+  }, [firstDowntime, timelineStart, timelineEnd]);
 
   const jumpToStart = useCallback(() => {
     scrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
@@ -90,32 +112,51 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-2xl overflow-hidden w-full font-sans">
-      {/* Jump buttons bar */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-100 bg-slate-50/70">
-        <button
-          onClick={jumpToStart}
-          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
-        >
-          ⏮ Start
-        </button>
-        {firstDowntime && (
+      {/* Top Toolbar: Navigation + Timeline View Controls */}
+      <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-slate-100 bg-slate-50/70 flex-wrap">
+        <div className="flex items-center gap-2">
           <button
-            onClick={jumpToDowntime}
-            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-colors animate-pulse"
+            onClick={jumpToStart}
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors cursor-pointer"
           >
-            ⛔ Jump to Downtime — {fmtDate(firstDowntime.startMs)} {fmtTime(firstDowntime.startMs)}
+            ⏮ Start
           </button>
-        )}
-        {!firstDowntime && (
-          <span className="text-xs text-slate-400">No downtimes planned</span>
-        )}
-        <span className="ml-auto text-xs text-slate-400">
-          {timelineStart ? `${fmtDate(timelineStart)} → ${fmtDate(timelineEnd)}` : ''}
-        </span>
+          {firstDowntime && (
+            <button
+              onClick={jumpToDowntime}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-colors animate-pulse cursor-pointer"
+            >
+              ⛔ Jump to Downtime — {fmtDate(firstDowntime.startMs)} {fmtTime(firstDowntime.startMs)}
+            </button>
+          )}
+          {!firstDowntime && (
+            <span className="text-xs text-slate-400">No downtimes planned</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <TimelineControls
+            zoomLevelDisplay={zoomLevelDisplay}
+            isFit={isFit}
+            canZoomIn={canZoomIn}
+            canZoomOut={canZoomOut}
+            onZoomIn={zoomIn}
+            onZoomOut={zoomOut}
+            onZoomFit={zoomFit}
+          />
+          <span className="text-xs font-medium text-slate-500 bg-white border border-slate-200/80 px-2.5 py-1 rounded-md shadow-2xs">
+            {timelineStart ? `${fmtDate(timelineStart)} → ${fmtDate(timelineEnd)}` : ''}
+          </span>
+        </div>
       </div>
+
       <div ref={scrollRef} className="overflow-auto custom-scrollbar max-h-[75vh]">
-        <div style={{ minWidth: `${Math.max(totalDurationHrs * 200, 1200)}px` }}>
-          
+        <div
+          style={{
+            width: isFit && !isOverflowing ? '100%' : `${totalWidth}px`,
+            minWidth: isFit && !isOverflowing ? '100%' : `${totalWidth}px`,
+          }}
+        >
           {/* Timeline Header */}
           <div className="flex border-b border-slate-100 bg-slate-50/50 sticky top-0 z-50 backdrop-blur-md">
             <div className="w-24 shrink-0 border-r border-slate-200 flex items-center justify-center font-bold text-[10px] text-slate-400 sticky left-0 z-50 bg-slate-50 uppercase tracking-widest">System</div>
@@ -123,7 +164,12 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
             {timeLabels.slice(0, -1).map((time, i) => (
               <div
                 key={i}
-                className={`flex-1 py-2 text-center border-r border-slate-100 ${
+                style={{
+                  flex: isFit && !isOverflowing ? '1 1 0%' : 'none',
+                  width: isFit && !isOverflowing ? undefined : `${effectiveSlotWidth}px`,
+                  minWidth: isFit && !isOverflowing ? undefined : `${effectiveSlotWidth}px`,
+                }}
+                className={`py-2 text-center border-r border-slate-100 ${
                   time.isNewDay || i === 0 ? 'bg-blue-50/70 border-l-2 border-l-blue-400' : ''
                 }`}
               >
@@ -159,10 +205,20 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
                     </div>
 
                     {/* Timeline Grid */}
-                    <div className="flex-1 relative p-3">
+                    <div className="flex-1 relative py-2">
                       {/* Grid Vertical Lines */}
                       <div className="absolute inset-0 flex pointer-events-none opacity-5">
-                        {timeLabels.map((_, i) => <div key={i} className="flex-1 border-r border-black"></div>)}
+                        {timeLabels.slice(0, -1).map((_, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              flex: isFit && !isOverflowing ? '1 1 0%' : 'none',
+                              width: isFit && !isOverflowing ? undefined : `${effectiveSlotWidth}px`,
+                              minWidth: isFit && !isOverflowing ? undefined : `${effectiveSlotWidth}px`,
+                            }}
+                            className="border-r border-black"
+                          />
+                        ))}
                       </div>
 
                       {/* Task Bars */}
