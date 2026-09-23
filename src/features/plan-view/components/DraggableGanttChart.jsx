@@ -14,7 +14,7 @@ const statusColors = {
   running: 'bg-gradient-to-br from-emerald-500 to-teal-600',
   conflict: 'bg-gradient-to-br from-rose-500 to-red-600',
   warning: 'bg-gradient-to-br from-amber-500 to-orange-500',
-  downtime: 'bg-gradient-to-br from-yellow-400 to-yellow-600',
+  downtime: 'bg-gradient-to-br from-orange-500 to-red-600',
   washout: 'bg-gradient-to-br from-slate-600 to-slate-700',
 };
 
@@ -25,21 +25,22 @@ const formatLocalISO = (date) => {
   return new Date(date.getTime() - tzOffset).toISOString().slice(0, 19);
 };
 
+const fmtTime = (ms) =>
+  new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+const fmtDate = (ms) =>
+  new Date(ms).toLocaleDateString([], { day: '2-digit', month: 'short' });
+
 // ─────────────────────────────────────────────
 // TaskBar: Draggable Item
 // ─────────────────────────────────────────────
 const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
   const isNonDraggable = item.status === 'downtime' || item.status === 'washout';
+  const isDowntime = item.status === 'downtime';
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: item.id,
     data: item,
     disabled: isNonDraggable,
   });
-
-  const fmtTime = (ms) =>
-    new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-  const fmtDate = (ms) =>
-    new Date(ms).toLocaleDateString([], { day: '2-digit', month: 'short' });
 
   const style = {
     position: 'absolute',
@@ -50,6 +51,12 @@ const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
     transform: transform ? `translateX(${transform.x}px)` : undefined,
     opacity: isDragging && !isDragOverlay ? 0.45 : 1,
     minWidth: 45,
+    // Diagonal stripe pattern for downtime blocks
+    ...(isDowntime && {
+      backgroundImage:
+        'repeating-linear-gradient(135deg, rgba(0,0,0,0.12) 0px, rgba(0,0,0,0.12) 4px, transparent 4px, transparent 12px)',
+      zIndex: 20,
+    }),
   };
 
   const isWashout = item.status === 'washout';
@@ -60,12 +67,17 @@ const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
       {...(isDragOverlay ? {} : listeners)}
       {...(isDragOverlay ? {} : attributes)}
       style={style}
-      className={`rounded-xl px-2 py-1.5 text-white shadow-lg flex flex-col justify-between z-10 border border-white/20 select-none overflow-hidden ${statusColors[item.status] || statusColors.ready} transition-all duration-200 ${isNonDraggable ? 'cursor-default' : 'cursor-grab'} ${isDragOverlay ? 'cursor-grabbing ring-4 ring-white/30 scale-[1.05]' : ''}`}
+      className={`rounded-xl px-2 py-1.5 text-white shadow-lg flex flex-col justify-between z-10 border select-none overflow-hidden
+        ${isDowntime ? 'border-orange-300/60 border-dashed' : 'border-white/20'}
+        ${statusColors[item.status] || statusColors.ready}
+        transition-all duration-200
+        ${isNonDraggable ? 'cursor-default' : 'cursor-grab'}
+        ${isDragOverlay ? 'cursor-grabbing ring-4 ring-white/30 scale-[1.05]' : ''}`}
     >
       {/* Title */}
       <span className="font-bold truncate text-[11px] leading-tight block w-full">{item.title}</span>
 
-      {!isWashout && (
+      {!isWashout && !isDowntime && (
         <>
           {/* Batch ID */}
           <div className="flex items-center mt-0.5 min-w-0">
@@ -83,6 +95,14 @@ const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
         </>
       )}
 
+      {isDowntime && (
+        <div className="flex items-center gap-1 text-[9px] opacity-90 mt-0.5 min-w-0">
+          <span className="bg-white/20 px-1 py-0.5 rounded font-semibold">{fmtTime(item.start)}</span>
+          <span className="opacity-70 shrink-0">→</span>
+          <span className="bg-white/20 px-1 py-0.5 rounded font-semibold">{fmtTime(item.end)}</span>
+        </div>
+      )}
+
       {/* Status */}
       <div className="flex items-center mt-0.5 min-w-0">
         <span className="text-[8px] uppercase bg-black/20 px-1.5 py-0.5 rounded-full font-bold tracking-widest truncate block max-w-full">
@@ -92,13 +112,17 @@ const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
     </div>
   );
 
+  const tooltipTitle = isDowntime
+    ? `⛔ DOWNTIME — ${item.reason || item.title} | ${fmtDate(item.start)} ${fmtTime(item.start)} – ${fmtTime(item.end)} | Duration: ${item.duration ?? '?'} mins | Line: ${item.line || 'All'}`
+    : `${item.title} | ${item.status === 'washout' ? 'WASHOUT' : `Batch: ${item.batch}`} | ${fmtDate(item.start)} ${fmtTime(item.start)} – ${fmtDate(item.end)} ${fmtTime(item.end)} | Status: ${item.status}`;
+
   return isDragOverlay ? (
     content
   ) : (
     <Tooltip
-      title={`${item.title} | ${item.status === 'washout' ? 'WASHOUT' : `Batch: ${item.batch}`} | ${fmtDate(item.start)} ${fmtTime(item.start)} – ${fmtDate(item.end)} ${fmtTime(item.end)} | Status: ${item.status}`}
+      title={tooltipTitle}
       placement="top"
-      color="#1e293b"
+      color={isDowntime ? '#7f1d1d' : '#1e293b'}
     >
       {content}
     </Tooltip>
@@ -262,8 +286,72 @@ const DraggableGanttChart = ({
     [onScrollChange]
   );
 
+  // Find earliest downtime across all rows
+  const firstDowntime = useMemo(() => {
+    let earliest = null;
+    tasksWithLanes.forEach((row) => {
+      row.items?.forEach((item) => {
+        if (item.status === 'downtime') {
+          const startMs = item.start ?? new Date(item.start_time).getTime();
+          if (!earliest || startMs < earliest.startMs) {
+            earliest = { ...item, startMs };
+          }
+        }
+      });
+    });
+    return earliest;
+  }, [tasksWithLanes]);
+
+  // Auto-scroll to show the first downtime when chart loads
+  useEffect(() => {
+    if (!firstDowntime || !scrollRef.current || timelineEnd === timelineStart) return;
+    const pct = (firstDowntime.startMs - timelineStart) / (timelineEnd - timelineStart);
+    const totalWidth = Math.max(totalDurationHrs * 200, 1200);
+    const scrollTo = pct * totalWidth - scrollRef.current.clientWidth / 2;
+    if (scrollTo > 50) {
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ left: Math.max(0, scrollTo), behavior: 'smooth' });
+      }, 300);
+    }
+  }, [firstDowntime, timelineStart, timelineEnd, totalDurationHrs]);
+
+  const jumpToDowntime = useCallback(() => {
+    if (!firstDowntime || !scrollRef.current || timelineEnd === timelineStart) return;
+    const pct = (firstDowntime.startMs - timelineStart) / (timelineEnd - timelineStart);
+    const totalWidth = Math.max(totalDurationHrs * 200, 1200);
+    const scrollTo = pct * totalWidth - scrollRef.current.clientWidth / 2;
+    scrollRef.current.scrollTo({ left: Math.max(0, scrollTo), behavior: 'smooth' });
+  }, [firstDowntime, timelineStart, timelineEnd, totalDurationHrs]);
+
+  const jumpToStart = useCallback(() => {
+    scrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
+  }, []);
+
   return (
     <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl overflow-hidden w-full">
+      {/* Jump buttons bar */}
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-200 bg-slate-50/70">
+        <button
+          onClick={jumpToStart}
+          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+        >
+          ⏮ Start
+        </button>
+        {firstDowntime && (
+          <button
+            onClick={jumpToDowntime}
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-colors animate-pulse"
+          >
+            ⛔ Jump to Downtime — {fmtDate(firstDowntime.startMs)} {fmtTime(firstDowntime.startMs)}
+          </button>
+        )}
+        {!firstDowntime && (
+          <span className="text-xs text-slate-400">No downtimes planned</span>
+        )}
+        <span className="ml-auto text-xs text-slate-400">
+          {timelineStart ? `${fmtDate(timelineStart)} → ${fmtDate(timelineEnd)}` : ''}
+        </span>
+      </div>
       <div
         ref={scrollRef}
         onScroll={handleScroll}
@@ -284,9 +372,16 @@ const DraggableGanttChart = ({
             {timeLabels.slice(0, -1).map((time, i) => (
               <div
                 key={i}
-                className={`flex-1 py-3 text-center text-[11px] font-black text-slate-600 border-r border-slate-200/50 ${time.isNewDay ? 'bg-indigo-100/30' : ''}`}
+                className={`flex-1 py-2 text-center border-r border-slate-200/50 ${
+                  time.isNewDay || i === 0 ? 'bg-indigo-100/60 border-l-2 border-l-indigo-500' : ''
+                }`}
               >
-                {time.label}
+                <div className="text-[11px] font-black text-slate-700">{time.label}</div>
+                {(time.isNewDay || i === 0) && (
+                  <div className="text-[9px] font-bold text-indigo-700 tracking-tight leading-none mt-0.5">
+                    {new Date(time.timestamp).toLocaleDateString([], { day: '2-digit', month: 'short' })}
+                  </div>
+                )}
               </div>
             ))}
           </div>

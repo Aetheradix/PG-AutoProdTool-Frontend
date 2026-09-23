@@ -9,6 +9,8 @@ export const useTimeline = (tasks = [], filterRange = null, stepMinutes = 60) =>
     useMemo(() => {
       let minTime = Infinity;
       let maxTime = -Infinity;
+      let downtimeMinTime = Infinity;
+      let downtimeMaxTime = -Infinity;
       const allItemsMap = new Map();
 
       // Extract all items and find global time range
@@ -17,10 +19,20 @@ export const useTimeline = (tasks = [], filterRange = null, stepMinutes = 60) =>
         resource.items.forEach((item) => {
           const start = new Date(item.start_time).getTime();
           const end = new Date(item.end_time).getTime();
-          if (start < minTime) minTime = start;
-          if (end > maxTime) maxTime = end;
 
-          // Only add to global units list once per ID
+          const isDowntime = item.status === 'downtime';
+          if (!isNaN(start) && !isNaN(end)) {
+            if (!isDowntime) {
+              if (start < minTime) minTime = start;
+              if (end > maxTime) maxTime = end;
+            } else {
+              // Track downtime range separately
+              if (start < downtimeMinTime) downtimeMinTime = start;
+              if (end > downtimeMaxTime) downtimeMaxTime = end;
+            }
+          }
+
+          // Store every item (unique by ID) for later lane-assignment
           if (!allItemsMap.has(item.id)) {
             allItemsMap.set(item.id, { ...item, start, end });
           }
@@ -39,9 +51,22 @@ export const useTimeline = (tasks = [], filterRange = null, stepMinutes = 60) =>
         };
       }
 
+      // If only downtimes exist (no production batches), anchor on downtime range
+      const hasProduction = minTime !== Infinity;
+      const hasDowntimes = downtimeMinTime !== Infinity;
+
+      let effectiveMin = hasProduction ? minTime : (hasDowntimes ? downtimeMinTime : 0);
+      let effectiveMax = hasProduction ? maxTime : (hasDowntimes ? downtimeMaxTime : 0);
+
+      // Extend the range to include downtimes
+      if (hasDowntimes) {
+        if (downtimeMinTime < effectiveMin) effectiveMin = downtimeMinTime;
+        if (downtimeMaxTime > effectiveMax) effectiveMax = downtimeMaxTime;
+      }
+
       // Use filter range if provided, otherwise calculate from data
-      let finalMinTime = filterRange?.start ? new Date(filterRange.start).getTime() : minTime;
-      let finalMaxTime = filterRange?.end ? new Date(filterRange.end).getTime() : maxTime;
+      let finalMinTime = filterRange?.start ? new Date(filterRange.start).getTime() : effectiveMin;
+      let finalMaxTime = filterRange?.end ? new Date(filterRange.end).getTime() : effectiveMax;
 
       // Fallback for empty data with filterRange
       if (allItems.length === 0 && filterRange) {
@@ -63,14 +88,14 @@ export const useTimeline = (tasks = [], filterRange = null, stepMinutes = 60) =>
       const timelineEnd = end.getTime();
 
       const durationMs = timelineEnd - timelineStart;
-      // Cap at 168 hours (1 week) to avoid absurdly wide canvas
-      const totalDurationHrs = Math.min(durationMs / (1000 * 60 * 60), 168);
+      // Cap at 336 hours (2 weeks) to avoid absurdly wide canvas
+      const totalDurationHrs = Math.min(durationMs / (1000 * 60 * 60), 336);
 
       // Generate labels for each step (default 60 mins)
       const stepMs = stepMinutes * 60 * 1000;
-      // Cap at 288 steps max (~6 days at 30min intervals) to prevent DOM explosion
+      // Cap at 336 steps max to prevent DOM explosion
       const rawSteps = durationMs / stepMs;
-      const totalSteps = Math.min(Math.ceil(rawSteps), 288);
+      const totalSteps = Math.min(Math.ceil(rawSteps), 336);
       const labels = [];
       for (let i = 0; i <= totalSteps; i++) {
         const time = new Date(timelineStart + i * stepMs);
@@ -82,8 +107,13 @@ export const useTimeline = (tasks = [], filterRange = null, stepMinutes = 60) =>
         });
       }
 
+      // When filterRange is active: apply it to normal items but ALWAYS keep downtime items visible
       const filteredItems = filterRange
-        ? allItems.filter((item) => item.start < timelineEnd && item.end > timelineStart)
+        ? allItems.filter(
+            (item) =>
+              item.status === 'downtime' ||
+              (item.start < timelineEnd && item.end > timelineStart)
+          )
         : allItems;
 
       return {

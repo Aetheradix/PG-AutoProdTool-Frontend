@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect, useCallback } from 'react';
 import { Typography, Tooltip } from 'antd';
 import { useTimeline } from '../hooks/useTimeline';
 
@@ -9,7 +9,7 @@ const statusColors = {
   running: 'bg-gradient-to-r from-emerald-500 to-emerald-600',
   conflict: 'bg-gradient-to-r from-rose-500 to-rose-600',
   warning: 'bg-gradient-to-r from-amber-500 to-amber-600',
-  downtime: 'bg-gradient-to-br from-yellow-400 to-yellow-600',
+  downtime: 'bg-gradient-to-br from-orange-500 to-red-600',
   washout: 'bg-gradient-to-br from-slate-600 to-slate-700',
 };
 
@@ -17,6 +17,7 @@ const fmtTime = (ms) => new Date(ms).toLocaleTimeString([], { hour: '2-digit', m
 const fmtDate = (ms) => new Date(ms).toLocaleDateString([], { day: '2-digit', month: 'short' });
 
 const GanttChart = ({ tasks = [], filterRange = null }) => {
+  const scrollRef = useRef(null);
   const { tasksWithLanes, timeLabels, timelineStart, timelineEnd, totalDurationHrs, getPosition } =
     useTimeline(tasks, filterRange);
 
@@ -26,7 +27,6 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
     const order = { '12T': 0, '6T': 1, '1.25T': 2 };
 
     tasksWithLanes.forEach((row) => {
-      // API se aane wale resource name ko split karein (e.g., "12T / FMT")
       const [sys, tank] = row.resource.split('/').map(s => s.trim());
       
       if (!systems[sys]) {
@@ -42,12 +42,78 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
     return Object.values(systems).sort((a, b) => (order[a.name] ?? 99) - (order[b.name] ?? 99));
   }, [tasksWithLanes]);
 
+  // Find earliest downtime across all rows
+  const firstDowntime = useMemo(() => {
+    let earliest = null;
+    groupedData.forEach(sys => {
+      sys.rows.forEach(row => {
+        row.items.forEach(item => {
+          if (item.status === 'downtime') {
+            const startMs = item.start ?? new Date(item.start_time).getTime();
+            if (!earliest || startMs < earliest.startMs) {
+              earliest = { ...item, startMs };
+            }
+          }
+        });
+      });
+    });
+    return earliest;
+  }, [groupedData]);
 
-  console.log('GanttChart Rendered', { tasks, tasksWithLanes, groupedData });
+  // Auto-scroll to show the first downtime when chart loads
+  useEffect(() => {
+    if (!firstDowntime || !scrollRef.current || timelineEnd === timelineStart) return;
+    const pct = (firstDowntime.startMs - timelineStart) / (timelineEnd - timelineStart);
+    const totalWidth = Math.max(totalDurationHrs * 200, 1200);
+    // Scroll so the downtime is in the center of the viewport
+    const scrollTo = pct * totalWidth - scrollRef.current.clientWidth / 2;
+    if (scrollTo > 50) { // Only auto-scroll if downtime is not already near the start
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ left: Math.max(0, scrollTo), behavior: 'smooth' });
+      }, 300);
+    }
+  }, [firstDowntime, timelineStart, timelineEnd, totalDurationHrs]);
+
+  const jumpToDowntime = useCallback(() => {
+    if (!firstDowntime || !scrollRef.current || timelineEnd === timelineStart) return;
+    const pct = (firstDowntime.startMs - timelineStart) / (timelineEnd - timelineStart);
+    const totalWidth = Math.max(totalDurationHrs * 200, 1200);
+    const scrollTo = pct * totalWidth - scrollRef.current.clientWidth / 2;
+    scrollRef.current.scrollTo({ left: Math.max(0, scrollTo), behavior: 'smooth' });
+  }, [firstDowntime, timelineStart, timelineEnd, totalDurationHrs]);
+
+  const jumpToStart = useCallback(() => {
+    scrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
+  }, []);
+
+  console.log('GanttChart Rendered — items per row:', groupedData.map(s => ({ system: s.name, rows: s.rows.map(r => ({ tank: r.tankName, items: r.items.length, downtimes: r.items.filter(i => i.status === 'downtime').length })) })));
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-2xl overflow-hidden w-full font-sans">
-      <div className="overflow-auto custom-scrollbar max-h-[75vh]">
+      {/* Jump buttons bar */}
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-100 bg-slate-50/70">
+        <button
+          onClick={jumpToStart}
+          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+        >
+          ⏮ Start
+        </button>
+        {firstDowntime && (
+          <button
+            onClick={jumpToDowntime}
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-colors animate-pulse"
+          >
+            ⛔ Jump to Downtime — {fmtDate(firstDowntime.startMs)} {fmtTime(firstDowntime.startMs)}
+          </button>
+        )}
+        {!firstDowntime && (
+          <span className="text-xs text-slate-400">No downtimes planned</span>
+        )}
+        <span className="ml-auto text-xs text-slate-400">
+          {timelineStart ? `${fmtDate(timelineStart)} → ${fmtDate(timelineEnd)}` : ''}
+        </span>
+      </div>
+      <div ref={scrollRef} className="overflow-auto custom-scrollbar max-h-[75vh]">
         <div style={{ minWidth: `${Math.max(totalDurationHrs * 200, 1200)}px` }}>
           
           {/* Timeline Header */}
@@ -55,8 +121,18 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
             <div className="w-24 shrink-0 border-r border-slate-200 flex items-center justify-center font-bold text-[10px] text-slate-400 sticky left-0 z-50 bg-slate-50 uppercase tracking-widest">System</div>
             <div className="w-24 shrink-0 border-r border-slate-200 flex items-center justify-center font-bold text-[10px] text-slate-400 sticky left-[96px] z-50 bg-slate-50 uppercase tracking-widest">Tanks</div>
             {timeLabels.slice(0, -1).map((time, i) => (
-              <div key={i} className="flex-1 py-4 text-center text-[11px] font-black text-slate-500 border-r border-slate-100">
-                {time.label}
+              <div
+                key={i}
+                className={`flex-1 py-2 text-center border-r border-slate-100 ${
+                  time.isNewDay || i === 0 ? 'bg-blue-50/70 border-l-2 border-l-blue-400' : ''
+                }`}
+              >
+                <div className="text-[11px] font-black text-slate-600">{time.label}</div>
+                {(time.isNewDay || i === 0) && (
+                  <div className="text-[9px] font-bold text-blue-600 tracking-tight leading-none mt-0.5">
+                    {new Date(time.timestamp).toLocaleDateString([], { day: '2-digit', month: 'short' })}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -92,38 +168,65 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
                       {/* Task Bars */}
                       {row.items.map((item) => {
                         const isWashout = item.status === 'washout';
+                        const isDowntime = item.status === 'downtime';
+                        // Compute start/end ms — prefer pre-computed, fall back to start_time string
+                        const startMs = item.start ?? new Date(item.start_time).getTime();
+                        const endMs   = item.end   ?? new Date(item.end_time).getTime();
+                        if (isNaN(startMs) || isNaN(endMs)) return null;
+                        const leftPct  = getPosition(startMs);
+                        const widthPct = getPosition(endMs) - leftPct;
+                        if (widthPct <= 0) return null;
+                        const topPx = (item.laneIndex ?? 0) * 100 + 10;
                         return (
-                        <Tooltip key={item.id} title={`${item.title} | ${isWashout ? 'WASHOUT' : `Batch: ${item.batch}`} | ${fmtDate(item.start)} ${fmtTime(item.start)} – ${fmtDate(item.end)} ${fmtTime(item.end)} | Status: ${item.status}`} color="#000">
+                        <Tooltip
+                          key={item.id}
+                          title={
+                            isDowntime
+                              ? `⛔ DOWNTIME — ${item.reason || item.title} | ${fmtDate(startMs)} ${fmtTime(startMs)} – ${fmtTime(endMs)} | Duration: ${item.duration ?? '?'} mins | Line: ${item.line || 'All'}`
+                              : `${item.title} | ${isWashout ? 'WASHOUT' : `Batch: ${item.batch}`} | ${fmtDate(startMs)} ${fmtTime(startMs)} – ${fmtDate(endMs)} ${fmtTime(endMs)} | Status: ${item.status}`
+                          }
+                          color={isDowntime ? '#7f1d1d' : '#000'}
+                        >
                           <div
-                            className={`absolute rounded-xl px-2 py-1.5 text-white shadow-lg flex flex-col justify-between transition-all hover:scale-[1.02] cursor-pointer border border-white/20 overflow-hidden ${statusColors[item.status] || statusColors.ready}`}
+                            className={`absolute rounded-xl px-2 py-1.5 text-white shadow-lg flex flex-col justify-between transition-all hover:scale-[1.02] cursor-pointer border overflow-hidden
+                              ${isDowntime ? 'border-orange-300/60 border-dashed' : 'border-white/20'}
+                              ${statusColors[item.status] || statusColors.ready}`}
                             style={{
-                              left: `${getPosition(item.start)}%`,
-                              width: `${getPosition(item.end) - getPosition(item.start)}%`,
-                              top: `${item.laneIndex * 100 + 10}px`,
+                              left: `${leftPct}%`,
+                              width: `${widthPct}%`,
+                              top: `${topPx}px`,
                               height: '90px',
                               minWidth: '45px',
+                              ...(isDowntime && {
+                                backgroundImage:
+                                  'repeating-linear-gradient(135deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 4px, transparent 4px, transparent 12px)',
+                                zIndex: 20,
+                              }),
                             }}
                           >
-                            {/* Title */}
                             <span className="font-bold truncate text-[11px] leading-tight block w-full">{item.title}</span>
 
-                            {!isWashout && (
+                            {!isWashout && !isDowntime && (
                               <>
-                                {/* Batch ID */}
                                 <div className="flex items-center mt-0.5 min-w-0">
                                   <span className="bg-black/25 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider truncate block max-w-full">{item.batch}</span>
                                 </div>
-
-                                {/* Start & End Time */}
                                 <div className="flex items-center gap-1 text-[9px] opacity-90 mt-0.5 min-w-0">
-                                  <span className="bg-white/15 px-1 py-0.5 rounded font-semibold truncate max-w-[45%]">{fmtTime(item.start)}</span>
+                                  <span className="bg-white/15 px-1 py-0.5 rounded font-semibold truncate max-w-[45%]">{fmtTime(startMs)}</span>
                                   <span className="opacity-70 shrink-0">→</span>
-                                  <span className="bg-white/15 px-1 py-0.5 rounded font-semibold truncate max-w-[45%]">{fmtTime(item.end)}</span>
+                                  <span className="bg-white/15 px-1 py-0.5 rounded font-semibold truncate max-w-[45%]">{fmtTime(endMs)}</span>
                                 </div>
                               </>
                             )}
 
-                            {/* Status */}
+                            {isDowntime && (
+                              <div className="flex items-center gap-1 text-[9px] opacity-90 mt-0.5">
+                                <span className="bg-white/20 px-1 py-0.5 rounded font-semibold">{fmtTime(startMs)}</span>
+                                <span className="opacity-70">→</span>
+                                <span className="bg-white/20 px-1 py-0.5 rounded font-semibold">{fmtTime(endMs)}</span>
+                              </div>
+                            )}
+
                             <div className="flex items-center mt-0.5 min-w-0">
                               <span className="text-[8px] uppercase bg-black/20 px-1.5 py-0.5 rounded-full font-bold tracking-widest truncate block max-w-full">{item.status}</span>
                             </div>

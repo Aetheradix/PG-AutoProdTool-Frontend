@@ -3,12 +3,14 @@ import { setupListeners } from '@reduxjs/toolkit/query';
 import { apiSlice } from './api/apiSlice';
 import profileReducer from './slices/profileSlice';
 import uiReducer from './slices/uiSlice';
+import downtimeReducer from './slices/downtimeSlice';
 
 export const store = configureStore({
     reducer: {
         [apiSlice.reducerPath]: apiSlice.reducer,
         profile: profileReducer,
         ui: uiReducer,
+        downtime: downtimeReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware().concat(apiSlice.middleware),

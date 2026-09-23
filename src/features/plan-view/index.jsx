@@ -9,6 +9,8 @@ import {
   useUpdateGanttEditMutation,
 } from '../../store/api/statusApi';
 import { setActiveTab } from '../../store/slices/uiSlice';
+// ↓ downtime overlay
+import { parseDowntimesToGanttItems } from '../../utils/downtimeUtils';
 import { exportTableToExcel } from '../../utils/exportUtils';
 import PackingPlanScheduleView from '../packing-plan/components/PackingPlanScheduleView';
 import DraggableGanttChart from './components/DraggableGanttChart';
@@ -28,16 +30,18 @@ const flattenGanttResponse = (data) => {
   if (typeof data === 'object') {
     Object.entries(data).forEach(([key, val]) => {
       if (key === 'Tanks') return;
-      if (val && typeof val === 'object') {
-        if (Array.isArray(val)) {
-          flat.push(...val);
-        } else {
-          Object.values(val).forEach((batches) => {
-            if (Array.isArray(batches)) {
-              flat.push(...batches);
-            }
-          });
-        }
+      if (!val) return;
+
+      if (Array.isArray(val)) {
+        // Flat array — e.g. ALL_SYSTEMS downtime list
+        flat.push(...val);
+      } else if (typeof val === 'object') {
+        // Nested object — e.g. { FMT: [...], MMT: [...] }
+        Object.values(val).forEach((batches) => {
+          if (Array.isArray(batches)) {
+            flat.push(...batches);
+          }
+        });
       }
     });
   }
@@ -112,6 +116,16 @@ const getWashoutInfo = (prevBatch, nextBatch, system, tankConfig, matrices) => {
   return null;
 };
 
+// Safely parse a datetime string from MySQL (handles both "YYYY-MM-DD HH:mm:ss" and ISO formats)
+const safeParseDT = (val) => {
+  if (!val) return null;
+  if (val instanceof Date) return val;
+  // MySQL returns "2026-09-22 14:30:00" — replace space with T for reliable parsing
+  const iso = String(val).replace(' ', 'T');
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? null : d;
+};
+
 const mapScheduleToGanttFormat = (flatData, washoutMatrices = null) => {
   if (!Array.isArray(flatData)) return [];
 
@@ -123,7 +137,8 @@ const mapScheduleToGanttFormat = (flatData, washoutMatrices = null) => {
   const downtimes = [];
 
   flatData.forEach(b => {
-    if (b.description && b.description.startsWith('DOWNTIME')) {
+    const desc = String(b.description || '');
+    if (desc.toUpperCase().startsWith('DOWNTIME')) {
       downtimes.push(b);
     } else {
       const sys = b.system || 'Unknown';
@@ -133,6 +148,8 @@ const mapScheduleToGanttFormat = (flatData, washoutMatrices = null) => {
       grouped[sys][tc].push(b);
     }
   });
+
+  console.log('[mapSchedule] total flat:', flatData.length, '| downtimes found:', downtimes.length, downtimes.map(d => ({ id: d.batch_id, sys: d.system, start: d.mkg_start_time })));
 
   const rows = [];
 
@@ -156,19 +173,45 @@ const mapScheduleToGanttFormat = (flatData, washoutMatrices = null) => {
       }
     }
 
-    // Prepare downtimes applicable to this system
-    const systemDowntimes = downtimes.filter(dt =>
-      dt.system === system || dt.system === 'ALL_SYSTEMS' || dt.system?.toUpperCase() === 'ALL'
-    ).map(b => ({
-      id: b.batch_id + '-' + system,
-      title: b.description,
-      batch: b.batch_id || '',
-      start_time: b.mkg_start_time,
-      end_time: b.mkg_end_time,
-      tech_type: 'Single',
-      system: b.system,
-      status: 'downtime'
-    }));
+    // Prepare downtimes applicable to this system — includes ALL_SYSTEMS entries
+    const systemDowntimes = downtimes.filter(dt => {
+      const dtSys = (dt.system || '').toUpperCase();
+      return (
+        dtSys === system.toUpperCase() ||
+        dtSys === 'ALL_SYSTEMS' ||
+        dtSys === 'ALL' ||
+        dtSys === 'BOTH'
+      );
+    }).map(b => {
+      const startDT = safeParseDT(b.mkg_start_time);
+      const endDT   = safeParseDT(b.mkg_end_time);
+      if (!startDT || !endDT) return null;
+      const desc = String(b.description || '');
+      return {
+        id: b.batch_id + '-' + system,
+        title: '⛔ ' + desc.replace(/^DOWNTIME:\s*/i, ''),
+        batch: b.batch_id || '',
+        start_time: startDT.toISOString(),
+        end_time: endDT.toISOString(),
+        tech_type: 'Single',
+        system: b.system,
+        status: 'downtime',
+        reason: desc.replace(/^DOWNTIME:\s*/i, ''),
+        duration: b.bct_minutes,
+        line: system,
+      };
+    }).filter(Boolean);
+
+    // If this system has NO production batches but HAS downtimes → create a dedicated row
+    if (Object.keys(processedConfigs).length === 0 && systemDowntimes.length > 0) {
+      rows.push({
+        resource: `${system} / FMT`,
+        system,
+        tankConfig: 'FMT',
+        items: systemDowntimes.map(dt => ({ ...dt, id: dt.id + '-FMT' })),
+      });
+      return; // skip the normal Object.entries loop for this system
+    }
 
     Object.entries(processedConfigs).forEach(([tankConfig, batches]) => {
       // Sort batches chronologically to evaluate transitions
@@ -181,14 +224,18 @@ const mapScheduleToGanttFormat = (flatData, washoutMatrices = null) => {
       const items = [];
 
       sortedBatches.forEach((b, idx) => {
+        const bStart = safeParseDT(b.mkg_start_time);
+        const bEnd   = safeParseDT(b.mkg_end_time);
+        if (!bStart || !bEnd) return;
+
         // Add production batch item
         items.push({
           ...b,
           id: b.batch_id,
           title: b.description,
           batch: b.batch_id,
-          start_time: b.mkg_start_time,
-          end_time: b.mkg_end_time,
+          start_time: bStart.toISOString(),
+          end_time: bEnd.toISOString(),
           tech_type: b.tech_type,
           system: b.system,
           status: b.tech_type === 'Dual' ? 'warning' : 'ready'
@@ -197,8 +244,8 @@ const mapScheduleToGanttFormat = (flatData, washoutMatrices = null) => {
         // Evaluate washout slot after this batch based on C&M matrix
         const nextB = sortedBatches[idx + 1];
         const washInfo = getWashoutInfo(b, nextB, system, tankConfig, washoutMatrices);
-        if (washInfo && washInfo.duration > 0 && b.mkg_end_time) {
-          const washStart = new Date(b.mkg_end_time);
+        if (washInfo && washInfo.duration > 0) {
+          const washStart = new Date(bEnd.getTime());
           const washEnd = new Date(washStart.getTime() + washInfo.duration * 60000);
 
           items.push({
@@ -304,6 +351,9 @@ const PlanView = () => {
   const activeTab = useSelector(state => state.ui.activeTabs.planView);
   const [activeFilter, setActiveFilter] = useState(null);
 
+  // Read downtimes stored after simulation ran (from Redux / sessionStorage)
+  const storedDowntimes = useSelector(state => state.downtime.downtimes);
+
   // New API for GanttChart, TankTimeline, and DraggableGanttChart
   const { data: scheduleGanttResponse, isLoading: isScheduleLoading, error: scheduleError } =
     useGetProductionScheduleGanttQuery();
@@ -336,8 +386,12 @@ const PlanView = () => {
   const tasks = useMemo(() => {
     if (!scheduleGanttResponse?.data) return [];
     const flatData = flattenGanttResponse(scheduleGanttResponse.data);
-    return mapScheduleToGanttFormat(flatData, washoutMatrices);
-  }, [scheduleGanttResponse, washoutMatrices]);
+    const rows = mapScheduleToGanttFormat(flatData, washoutMatrices);
+    // Inject user-entered downtimes as overlay bars on every system row
+    const result = parseDowntimesToGanttItems(rows, storedDowntimes);
+    console.log('[PlanView] storedDowntimes (Redux):', storedDowntimes?.length, '| backend downtimes in flatData:', flattenGanttResponse(scheduleGanttResponse?.data)?.filter(b => b.description?.startsWith('DOWNTIME'))?.length, '| rows after inject:', result.map(r => ({ res: r.resource, total: r.items.length, downtimes: r.items.filter(i => i.status === 'downtime').length })));
+    return result;
+  }, [scheduleGanttResponse, washoutMatrices, storedDowntimes]);
 
   // console.log('Mapped Gantt tasks:', tasks);    
 
@@ -352,13 +406,12 @@ const PlanView = () => {
   const draggableTasks = useMemo(() => {
     const editData = ganttEditResponse?.data || [];
     const liveData = scheduleGanttResponse?.data || [];
-    
-    // Fallback to live data if edit data is empty (only for UI grouping check)
     const dataToMap = Array.isArray(editData) && editData.length > 0 ? editData : liveData;
     const flatData = flattenGanttResponse(dataToMap);
-    
-    return mapScheduleToGanttFormat(flatData, washoutMatrices);
-  }, [ganttEditResponse, scheduleGanttResponse, washoutMatrices]);
+    const rows = mapScheduleToGanttFormat(flatData, washoutMatrices);
+    // Inject user-entered downtimes as overlay bars on every system row
+    return parseDowntimesToGanttItems(rows, storedDowntimes);
+  }, [ganttEditResponse, scheduleGanttResponse, washoutMatrices, storedDowntimes]);
 
   // Helper to format Date/ms into local ISO string (YYYY-MM-DDTHH:mm:ss) expected by API
   const formatLocalISO = useCallback((dateOrMs) => {

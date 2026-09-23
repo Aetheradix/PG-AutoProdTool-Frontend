@@ -85,28 +85,37 @@ export const useScheduleTable = () => {
 
     batchesArray.forEach((batchRaw, index) => {
         const shift = batchRaw.shift || 'Unknown';
-        const system = batchRaw.system || 'Unknown';
-        
-        // Ignore downtime in standard production schedule table
-        if (batchRaw.description && batchRaw.description.startsWith('DOWNTIME')) return;
-        
-        if (systemFilter !== 'All' && system !== systemFilter) return;
+        const rawSystem = batchRaw.system || 'Unknown';
+        const isDowntime = batchRaw.description && batchRaw.description.startsWith('DOWNTIME');
 
-        const batch = processBatch(batchRaw, index);
-        
-        if (searchText && !Object.values(batch).some(val => val?.toString().toLowerCase().includes(lowerSearch))) {
-            return;
-        }
+        const systemsToInclude = (rawSystem === 'ALL_SYSTEMS' || rawSystem === 'ALL')
+            ? ['12T', '6T']
+            : [rawSystem];
 
-        if (!result[system]) result[system] = {};
-        if (!result[system][shift]) result[system][shift] = {};
+        systemsToInclude.forEach((system) => {
+            if (systemFilter !== 'All' && system !== systemFilter) return;
 
-        const dk = batch.dateKey;
-        allDates.add(dk);
-        if (!result[system][shift][dk]) {
-            result[system][shift][dk] = { label: batch.dateLabel, batches: [] };
-        }
-        result[system][shift][dk].batches.push(batch);
+            const batch = processBatch({
+                ...batchRaw,
+                system,
+                production_line: isDowntime ? (batchRaw.line || 'ALL') : batchRaw.production_line,
+                gcas: isDowntime ? '⛔ DOWNTIME' : batchRaw.gcas,
+            }, index);
+            
+            if (searchText && !Object.values(batch).some(val => val?.toString().toLowerCase().includes(lowerSearch))) {
+                return;
+            }
+
+            if (!result[system]) result[system] = {};
+            if (!result[system][shift]) result[system][shift] = {};
+
+            const dk = batch.dateKey;
+            allDates.add(dk);
+            if (!result[system][shift][dk]) {
+                result[system][shift][dk] = { label: batch.dateLabel, batches: [] };
+            }
+            result[system][shift][dk].batches.push(batch);
+        });
     });
 
     // Sort systems: 12T first, then 6T

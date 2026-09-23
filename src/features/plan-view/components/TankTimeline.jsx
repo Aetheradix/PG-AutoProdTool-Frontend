@@ -122,7 +122,7 @@ const TankTimeline = ({ tasks = [], filterRange = null }) => {
       </div>
 
       {/* Legend */}
-      <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-center gap-10">
+      <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex flex-wrap justify-center gap-8">
         <div className="flex items-center gap-3">
           <div className="w-5 h-5 rounded-lg bg-linear-to-br from-blue-600 to-blue-700 shadow-md"></div>
           <Text className="text-sm font-semibold text-slate-700 uppercase tracking-tight">
@@ -145,6 +145,18 @@ const TankTimeline = ({ tasks = [], filterRange = null }) => {
           <div className="w-5 h-5 rounded-lg bg-slate-200 border border-slate-300 shadow-inner"></div>
           <Text className="text-sm font-semibold text-slate-700 uppercase tracking-tight">
             Washout
+          </Text>
+        </div>
+        <div className="flex items-center gap-3">
+          <div
+            className="w-5 h-5 rounded-lg border-2 border-dashed border-orange-400 shadow-inner"
+            style={{
+              background:
+                'repeating-linear-gradient(135deg, #f97316 0px, #f97316 4px, #dc2626 4px, #dc2626 8px)',
+            }}
+          ></div>
+          <Text className="text-sm font-semibold text-slate-700 uppercase tracking-tight">
+            Downtime
           </Text>
         </div>
       </div>
