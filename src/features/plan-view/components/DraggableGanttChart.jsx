@@ -78,7 +78,7 @@ const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
         ${isDragOverlay ? 'cursor-grabbing ring-4 ring-white/30 scale-[1.05]' : ''}`}
     >
       {/* Title */}
-      <span className="font-extrabold truncate text-[11px] leading-tight block w-full text-amber-100">{item.title}</span>
+      <span className={`font-bold truncate text-[11px] leading-tight block w-full ${isDowntime ? 'text-amber-100 font-extrabold' : 'text-white'}`}>{item.title}</span>
 
       {!isWashout && !isDowntime && (
         <>
@@ -114,9 +114,15 @@ const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
       {/* Status */}
       <div className="flex items-center mt-0.5 min-w-0">
         <span className={`text-[8px] uppercase px-1.5 py-0.5 rounded-full font-black tracking-widest truncate block max-w-full ${
-          isDowntime ? 'bg-black/50 text-amber-300 ring-1 ring-amber-400/40' : 'bg-black/20 text-white'
+          isDowntime
+            ? 'bg-black/50 text-amber-300 ring-1 ring-amber-400/40'
+            : isWashout
+            ? 'bg-black/30 text-slate-200'
+            : item.tech_type === 'Dual' || item.status === 'warning'
+            ? 'bg-black/30 text-amber-100 ring-1 ring-amber-300/40'
+            : 'bg-black/25 text-white'
         }`}>
-          {item.status}
+          {isDowntime ? 'DOWNTIME' : isWashout ? 'WASHOUT' : (item.tech_type === 'Dual' || item.status === 'warning' ? 'DUAL' : 'SINGLE')}
         </span>
       </div>
     </div>
@@ -124,7 +130,7 @@ const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
 
   const tooltipTitle = isDowntime
     ? `DOWNTIME — ${item.reason || item.title} | ${fmtDate(item.start)} ${fmtTime(item.start)} – ${fmtTime(item.end)} | Duration: ${item.duration ?? '?'} mins | Line: ${item.line || 'All'}`
-    : `${item.title} | ${item.status === 'washout' ? 'WASHOUT' : `Batch: ${item.batch}`} | ${fmtDate(item.start)} ${fmtTime(item.start)} – ${fmtDate(item.end)} ${fmtTime(item.end)} | Status: ${item.status}`;
+    : `${item.title} | ${item.status === 'washout' ? 'WASHOUT' : `Batch: ${item.batch}`} | ${fmtDate(item.start)} ${fmtTime(item.start)} – ${fmtDate(item.end)} ${fmtTime(item.end)}${item.status === 'washout' ? '' : ` | Tech: ${item.tech_type || (item.status === 'warning' ? 'Dual' : 'Single')}`}`;
 
   return isDragOverlay ? (
     content

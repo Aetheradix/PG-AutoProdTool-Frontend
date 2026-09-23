@@ -234,68 +234,76 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
                         if (widthPct <= 0) return null;
                         const topPx = (item.laneIndex ?? 0) * 100 + 10;
                         return (
-                        <Tooltip
-                          key={item.id}
-                          title={
-                            isDowntime
-                              ? `DOWNTIME — ${item.reason || item.title} | ${fmtDate(startMs)} ${fmtTime(startMs)} – ${fmtTime(endMs)} | Duration: ${item.duration ?? '?'} mins | Line: ${item.line || 'All'}`
-                              : `${item.title} | ${isWashout ? 'WASHOUT' : `Batch: ${item.batch}`} | ${fmtDate(startMs)} ${fmtTime(startMs)} – ${fmtDate(endMs)} ${fmtTime(endMs)} | Status: ${item.status}`
-                          }
-                          color={isDowntime ? '#7f1d1d' : '#000'}
-                        >
-                          <div
-                            className={`absolute rounded-xl px-2 py-1.5 text-white shadow-lg flex flex-col justify-between transition-all hover:scale-[1.02] cursor-pointer border overflow-hidden
-                              ${isDowntime ? 'border-amber-300/80 border-dashed ring-1 ring-amber-400/50 shadow-md shadow-red-900/40' : 'border-white/20'}
-                              ${isDowntime ? '' : (statusColors[item.status] || statusColors.ready)}`}
-                            style={{
-                              left: `${leftPct}%`,
-                              width: `${widthPct}%`,
-                              top: `${topPx}px`,
-                              height: '90px',
-                              minWidth: '55px',
-                              ...(isDowntime && {
-                                backgroundColor: '#b91c1c',
-                                backgroundImage:
-                                  'repeating-linear-gradient(135deg, rgba(0,0,0,0.22) 0px, rgba(0,0,0,0.22) 6px, transparent 6px, transparent 14px), linear-gradient(135deg, #c2410c 0%, #b91c1c 50%, #7f1d1d 100%)',
-                                zIndex: 20,
-                              }),
-                            }}
+                          <Tooltip
+                            key={item.id}
+                            title={
+                              isDowntime
+                                ? `DOWNTIME — ${item.reason || item.title} | ${fmtDate(startMs)} ${fmtTime(startMs)} – ${fmtTime(endMs)} | Duration: ${item.duration ?? '?'} mins | Line: ${item.line || 'All'}`
+                                : `${item.title} | ${isWashout ? 'WASHOUT' : `Batch: ${item.batch}`} | ${fmtDate(startMs)} ${fmtTime(startMs)} – ${fmtDate(endMs)} ${fmtTime(endMs)}${isWashout ? '' : ` | Tech: ${item.tech_type || (item.status === 'warning' ? 'Dual' : 'Single')}`}`
+                            }
+                            color={isDowntime ? '#7f1d1d' : '#000'}
                           >
-                            <span className="font-extrabold truncate text-[11px] leading-tight block w-full text-amber-100">{item.title}</span>
+                            <div
+                              className={`absolute rounded-xl px-2 py-1.5 text-white shadow-lg flex flex-col justify-between transition-all hover:scale-[1.02] cursor-pointer border overflow-hidden
+                                ${isDowntime ? 'border-amber-300/80 border-dashed ring-1 ring-amber-400/50 shadow-md shadow-red-900/40' : 'border-white/20'}
+                                ${isDowntime ? '' : (statusColors[item.status] || statusColors.ready)}`}
+                              style={{
+                                left: `${leftPct}%`,
+                                width: `${widthPct}%`,
+                                top: `${topPx}px`,
+                                height: '90px',
+                                minWidth: '55px',
+                                ...(isDowntime && {
+                                  backgroundColor: '#b91c1c',
+                                  backgroundImage:
+                                    'repeating-linear-gradient(135deg, rgba(0,0,0,0.22) 0px, rgba(0,0,0,0.22) 6px, transparent 6px, transparent 14px), linear-gradient(135deg, #c2410c 0%, #b91c1c 50%, #7f1d1d 100%)',
+                                  zIndex: 20,
+                                }),
+                              }}
+                            >
+                              <span className={`font-bold truncate text-[11px] leading-tight block w-full ${isDowntime ? 'text-amber-100 font-extrabold' : 'text-white'}`}>{item.title}</span>
 
-                            {!isWashout && !isDowntime && (
-                              <>
-                                <div className="flex items-center mt-0.5 min-w-0">
-                                  <span className="bg-black/25 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider truncate block max-w-full">{item.batch}</span>
-                                </div>
-                                <div className="flex items-center gap-1 text-[9px] opacity-90 mt-0.5 min-w-0">
-                                  <span className="bg-white/15 px-1 py-0.5 rounded font-semibold truncate max-w-[45%]">{fmtTime(startMs)}</span>
-                                  <span className="opacity-70 shrink-0">→</span>
-                                  <span className="bg-white/15 px-1 py-0.5 rounded font-semibold truncate max-w-[45%]">{fmtTime(endMs)}</span>
-                                </div>
-                              </>
-                            )}
+                              {!isWashout && !isDowntime && (
+                                <>
+                                  <div className="flex items-center mt-0.5 min-w-0">
+                                    <span className="bg-black/25 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider truncate block max-w-full">{item.batch}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1 text-[9px] opacity-90 mt-0.5 min-w-0">
+                                    <span className="bg-white/15 px-1 py-0.5 rounded font-semibold truncate max-w-[45%]">{fmtTime(startMs)}</span>
+                                    <span className="opacity-70 shrink-0">→</span>
+                                    <span className="bg-white/15 px-1 py-0.5 rounded font-semibold truncate max-w-[45%]">{fmtTime(endMs)}</span>
+                                  </div>
+                                </>
+                              )}
 
-                            {isDowntime && (
-                              <div className="flex flex-col gap-0.5 mt-0.5 min-w-0">
-                                <div className="flex items-center gap-1 text-[9px] opacity-95 min-w-0">
-                                  <span className="bg-black/40 px-1 py-0.5 rounded font-mono font-bold truncate">{fmtTime(startMs)}</span>
-                                  <span className="opacity-70 shrink-0">→</span>
-                                  <span className="bg-black/40 px-1 py-0.5 rounded font-mono font-bold truncate">{fmtTime(endMs)}</span>
+                              {isDowntime && (
+                                <div className="flex flex-col gap-0.5 mt-0.5 min-w-0">
+                                  <div className="flex items-center gap-1 text-[9px] opacity-95 min-w-0">
+                                    <span className="bg-black/40 px-1 py-0.5 rounded font-mono font-bold truncate">{fmtTime(startMs)}</span>
+                                    <span className="opacity-70 shrink-0">→</span>
+                                    <span className="bg-black/40 px-1 py-0.5 rounded font-mono font-bold truncate">{fmtTime(endMs)}</span>
+                                  </div>
+                                  {item.duration != null && (
+                                    <span className="text-[9px] font-bold text-amber-300">({item.duration}m)</span>
+                                  )}
                                 </div>
-                                {item.duration != null && (
-                                  <span className="text-[9px] font-bold text-amber-300">({item.duration}m)</span>
-                                )}
+                              )}
+
+                              <div className="flex items-center mt-0.5 min-w-0">
+                                <span className={`text-[8px] uppercase px-1.5 py-0.5 rounded-full font-black tracking-widest truncate block max-w-full ${
+                                  isDowntime
+                                    ? 'bg-black/50 text-amber-300 ring-1 ring-amber-400/40'
+                                    : isWashout
+                                    ? 'bg-black/30 text-slate-200'
+                                    : item.tech_type === 'Dual' || item.status === 'warning'
+                                    ? 'bg-black/30 text-amber-100 ring-1 ring-amber-300/40'
+                                    : 'bg-black/25 text-white'
+                                }`}>
+                                  {isDowntime ? 'DOWNTIME' : isWashout ? 'WASHOUT' : (item.tech_type === 'Dual' || item.status === 'warning' ? 'DUAL' : 'SINGLE')}
+                                </span>
                               </div>
-                            )}
-
-                            <div className="flex items-center mt-0.5 min-w-0">
-                              <span className={`text-[8px] uppercase px-1.5 py-0.5 rounded-full font-black tracking-widest truncate block max-w-full ${
-                                isDowntime ? 'bg-black/50 text-amber-300 ring-1 ring-amber-400/40' : 'bg-black/20 text-white'
-                              }`}>{item.status}</span>
                             </div>
-                          </div>
-                        </Tooltip>
+                          </Tooltip>
                       )})}
                     </div>
                   </div>
