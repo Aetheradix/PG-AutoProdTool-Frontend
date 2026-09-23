@@ -98,7 +98,7 @@ export const useScheduleTable = () => {
             const batch = processBatch({
                 ...batchRaw,
                 system,
-                production_line: isDowntime ? (batchRaw.line || 'ALL') : batchRaw.production_line,
+                production_line: isDowntime ? (batchRaw.line || batchRaw.system || 'ALL') : batchRaw.production_line,
                 gcas: isDowntime ? 'DOWNTIME' : batchRaw.gcas,
             }, index);
             

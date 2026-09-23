@@ -245,22 +245,23 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
                         >
                           <div
                             className={`absolute rounded-xl px-2 py-1.5 text-white shadow-lg flex flex-col justify-between transition-all hover:scale-[1.02] cursor-pointer border overflow-hidden
-                              ${isDowntime ? 'border-orange-300/60 border-dashed' : 'border-white/20'}
-                              ${statusColors[item.status] || statusColors.ready}`}
+                              ${isDowntime ? 'border-amber-300/80 border-dashed ring-1 ring-amber-400/50 shadow-md shadow-red-900/40' : 'border-white/20'}
+                              ${isDowntime ? '' : (statusColors[item.status] || statusColors.ready)}`}
                             style={{
                               left: `${leftPct}%`,
                               width: `${widthPct}%`,
                               top: `${topPx}px`,
                               height: '90px',
-                              minWidth: '45px',
+                              minWidth: '55px',
                               ...(isDowntime && {
+                                backgroundColor: '#b91c1c',
                                 backgroundImage:
-                                  'repeating-linear-gradient(135deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 4px, transparent 4px, transparent 12px)',
+                                  'repeating-linear-gradient(135deg, rgba(0,0,0,0.22) 0px, rgba(0,0,0,0.22) 6px, transparent 6px, transparent 14px), linear-gradient(135deg, #c2410c 0%, #b91c1c 50%, #7f1d1d 100%)',
                                 zIndex: 20,
                               }),
                             }}
                           >
-                            <span className="font-bold truncate text-[11px] leading-tight block w-full">{item.title}</span>
+                            <span className="font-extrabold truncate text-[11px] leading-tight block w-full text-amber-100">{item.title}</span>
 
                             {!isWashout && !isDowntime && (
                               <>
@@ -276,15 +277,22 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
                             )}
 
                             {isDowntime && (
-                              <div className="flex items-center gap-1 text-[9px] opacity-90 mt-0.5">
-                                <span className="bg-white/20 px-1 py-0.5 rounded font-semibold">{fmtTime(startMs)}</span>
-                                <span className="opacity-70">→</span>
-                                <span className="bg-white/20 px-1 py-0.5 rounded font-semibold">{fmtTime(endMs)}</span>
+                              <div className="flex flex-col gap-0.5 mt-0.5 min-w-0">
+                                <div className="flex items-center gap-1 text-[9px] opacity-95 min-w-0">
+                                  <span className="bg-black/40 px-1 py-0.5 rounded font-mono font-bold truncate">{fmtTime(startMs)}</span>
+                                  <span className="opacity-70 shrink-0">→</span>
+                                  <span className="bg-black/40 px-1 py-0.5 rounded font-mono font-bold truncate">{fmtTime(endMs)}</span>
+                                </div>
+                                {item.duration != null && (
+                                  <span className="text-[9px] font-bold text-amber-300">({item.duration}m)</span>
+                                )}
                               </div>
                             )}
 
                             <div className="flex items-center mt-0.5 min-w-0">
-                              <span className="text-[8px] uppercase bg-black/20 px-1.5 py-0.5 rounded-full font-bold tracking-widest truncate block max-w-full">{item.status}</span>
+                              <span className={`text-[8px] uppercase px-1.5 py-0.5 rounded-full font-black tracking-widest truncate block max-w-full ${
+                                isDowntime ? 'bg-black/50 text-amber-300 ring-1 ring-amber-400/40' : 'bg-black/20 text-white'
+                              }`}>{item.status}</span>
                             </div>
                           </div>
                         </Tooltip>

@@ -44,15 +44,15 @@ export default function getPackingPlanTabItems({
         />
       ),
     },
-    {
-      key: 'packing-plan-view',
-      label: (
-        <span className="flex items-center gap-2 px-1">
-          <FiCalendar /> Packing Plan View
-        </span>
-      ),
-      children: <PackingPlanScheduleView />,
-    },
+    // {
+    //   key: 'packing-plan-view',
+    //   label: (
+    //     <span className="flex items-center gap-2 px-1">
+    //       <FiCalendar /> Packing Plan View
+    //     </span>
+    //   ),
+    //   children: <PackingPlanScheduleView />,
+    // },
     {
       key: 'dead-stock',
       label: (

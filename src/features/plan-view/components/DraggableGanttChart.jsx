@@ -52,11 +52,12 @@ const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
     height: '90px',
     transform: transform ? `translateX(${transform.x}px)` : undefined,
     opacity: isDragging && !isDragOverlay ? 0.45 : 1,
-    minWidth: 45,
-    // Diagonal stripe pattern for downtime blocks
+    minWidth: 55,
+    // Diagonal stripe pattern + solid deep red/amber gradient for downtime blocks
     ...(isDowntime && {
+      backgroundColor: '#b91c1c',
       backgroundImage:
-        'repeating-linear-gradient(135deg, rgba(0,0,0,0.12) 0px, rgba(0,0,0,0.12) 4px, transparent 4px, transparent 12px)',
+        'repeating-linear-gradient(135deg, rgba(0,0,0,0.22) 0px, rgba(0,0,0,0.22) 6px, transparent 6px, transparent 14px), linear-gradient(135deg, #c2410c 0%, #b91c1c 50%, #7f1d1d 100%)',
       zIndex: 20,
     }),
   };
@@ -70,14 +71,14 @@ const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
       {...(isDragOverlay ? {} : attributes)}
       style={style}
       className={`rounded-xl px-2 py-1.5 text-white shadow-lg flex flex-col justify-between z-10 border select-none overflow-hidden
-        ${isDowntime ? 'border-orange-300/60 border-dashed' : 'border-white/20'}
-        ${statusColors[item.status] || statusColors.ready}
+        ${isDowntime ? 'border-amber-300/80 border-dashed ring-1 ring-amber-400/50 shadow-md shadow-red-900/40' : 'border-white/20'}
+        ${isDowntime ? '' : (statusColors[item.status] || statusColors.ready)}
         transition-all duration-200
         ${isNonDraggable ? 'cursor-default' : 'cursor-grab'}
         ${isDragOverlay ? 'cursor-grabbing ring-4 ring-white/30 scale-[1.05]' : ''}`}
     >
       {/* Title */}
-      <span className="font-bold truncate text-[11px] leading-tight block w-full">{item.title}</span>
+      <span className="font-extrabold truncate text-[11px] leading-tight block w-full text-amber-100">{item.title}</span>
 
       {!isWashout && !isDowntime && (
         <>
@@ -98,16 +99,23 @@ const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
       )}
 
       {isDowntime && (
-        <div className="flex items-center gap-1 text-[9px] opacity-90 mt-0.5 min-w-0">
-          <span className="bg-white/20 px-1 py-0.5 rounded font-semibold">{fmtTime(item.start)}</span>
-          <span className="opacity-70 shrink-0">→</span>
-          <span className="bg-white/20 px-1 py-0.5 rounded font-semibold">{fmtTime(item.end)}</span>
+        <div className="flex flex-col gap-0.5 mt-0.5 min-w-0">
+          <div className="flex items-center gap-1 text-[9px] opacity-95 min-w-0">
+            <span className="bg-black/40 px-1 py-0.5 rounded font-mono font-bold truncate">{fmtTime(item.start)}</span>
+            <span className="opacity-70 shrink-0">→</span>
+            <span className="bg-black/40 px-1 py-0.5 rounded font-mono font-bold truncate">{fmtTime(item.end)}</span>
+          </div>
+          {item.duration != null && (
+            <span className="text-[9px] font-bold text-amber-300">({item.duration}m)</span>
+          )}
         </div>
       )}
 
       {/* Status */}
       <div className="flex items-center mt-0.5 min-w-0">
-        <span className="text-[8px] uppercase bg-black/20 px-1.5 py-0.5 rounded-full font-bold tracking-widest truncate block max-w-full">
+        <span className={`text-[8px] uppercase px-1.5 py-0.5 rounded-full font-black tracking-widest truncate block max-w-full ${
+          isDowntime ? 'bg-black/50 text-amber-300 ring-1 ring-amber-400/40' : 'bg-black/20 text-white'
+        }`}>
           {item.status}
         </span>
       </div>
