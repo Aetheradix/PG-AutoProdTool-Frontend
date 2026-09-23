@@ -469,43 +469,7 @@ export default function UserManagementPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Top Hero Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-6 md:p-8 rounded-2xl text-white shadow-xl shadow-slate-900/10 relative overflow-hidden">
-        {/* Background decorative gradient */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
-
-        <div className="flex items-center gap-4 relative z-10">
-          <div className="p-3.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl text-white shadow-lg shadow-blue-500/30 flex items-center justify-center">
-            <FiShield size={28} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2.5 mb-1">
-              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white m-0">
-                User Management & Access Control
-              </h1>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-400/30">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Enterprise RBAC
-              </span>
-            </div>
-            <p className="text-slate-400 text-xs md:text-sm m-0">
-              Manage team access permissions, assign system roles, and monitor compliant audit logs.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 relative z-10">
-          <Button 
-            type="primary"
-            icon={<FiUserPlus size={16} />} 
-            onClick={() => setIsCreateModalOpen(true)}
-            className="rounded-xl h-11 px-5 font-semibold bg-blue-500 hover:bg-blue-600 shadow-md shadow-blue-500/20 border-none flex items-center gap-2"
-          >
-            Create User
-          </Button>
-        </div>
-      </div>
-
+   
     
       {/* Main Card with Tabs */}
       <Card className="rounded-2xl border-slate-200/80 shadow-sm overflow-hidden p-2 sm:p-4">

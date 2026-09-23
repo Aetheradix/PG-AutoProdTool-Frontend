@@ -63,7 +63,7 @@ export function CreatePlanForm() {
               <FormDatePicker
                 name="planningDate"
                 label=""
-                rules={[{ required: true, message: 'Please select a planning date' }]}
+                // rules={[{ required: true, message: 'Please select a planning date' }]}
                 className="w-full"
                 format="DD/MM/YYYY"
                 placeholder="Select date"
