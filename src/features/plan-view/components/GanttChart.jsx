@@ -238,7 +238,7 @@ const GanttChart = ({ tasks = [], filterRange = null }) => {
                           key={item.id}
                           title={
                             isDowntime
-                              ? `⛔ DOWNTIME — ${item.reason || item.title} | ${fmtDate(startMs)} ${fmtTime(startMs)} – ${fmtTime(endMs)} | Duration: ${item.duration ?? '?'} mins | Line: ${item.line || 'All'}`
+                              ? `DOWNTIME — ${item.reason || item.title} | ${fmtDate(startMs)} ${fmtTime(startMs)} – ${fmtTime(endMs)} | Duration: ${item.duration ?? '?'} mins | Line: ${item.line || 'All'}`
                               : `${item.title} | ${isWashout ? 'WASHOUT' : `Batch: ${item.batch}`} | ${fmtDate(startMs)} ${fmtTime(startMs)} – ${fmtDate(endMs)} ${fmtTime(endMs)} | Status: ${item.status}`
                           }
                           color={isDowntime ? '#7f1d1d' : '#000'}

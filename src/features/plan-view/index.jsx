@@ -132,6 +132,7 @@ const mapScheduleToGanttFormat = (flatData, washoutMatrices = null) => {
   const grouped = {
     '6T': {},
     '12T': {},
+    '1.25T': {},
   };
 
   const downtimes = [];
@@ -153,7 +154,7 @@ const mapScheduleToGanttFormat = (flatData, washoutMatrices = null) => {
 
   const rows = [];
 
-  const systemsToProcess = Array.from(new Set(['6T', '12T', ...Object.keys(grouped)]));
+  const systemsToProcess = Array.from(new Set(['6T', '12T', '1.25T', ...Object.keys(grouped)]));
   systemsToProcess.forEach(system => {
     const configs = grouped[system] || {};
 
@@ -189,7 +190,7 @@ const mapScheduleToGanttFormat = (flatData, washoutMatrices = null) => {
       const desc = String(b.description || '');
       return {
         id: b.batch_id + '-' + system,
-        title: '⛔ ' + desc.replace(/^DOWNTIME:\s*/i, ''),
+        title: desc.replace(/^DOWNTIME:\s*/i, ''),
         batch: b.batch_id || '',
         start_time: startDT.toISOString(),
         end_time: endDT.toISOString(),
@@ -712,7 +713,7 @@ const PlanView = () => {
                     });
 
                     const sorted = {};
-                    ['12T', '6T'].forEach(sys => {
+                    ['12T', '6T', '1.25T'].forEach(sys => {
                       if (grouped[sys]) {
                         const sortedShifts = {};
                         ['A', 'B', 'C'].forEach(s => {

@@ -89,7 +89,7 @@ export const useScheduleTable = () => {
         const isDowntime = batchRaw.description && batchRaw.description.startsWith('DOWNTIME');
 
         const systemsToInclude = (rawSystem === 'ALL_SYSTEMS' || rawSystem === 'ALL')
-            ? ['12T', '6T']
+            ? ['12T', '6T', '1.25T']
             : [rawSystem];
 
         systemsToInclude.forEach((system) => {
@@ -99,7 +99,7 @@ export const useScheduleTable = () => {
                 ...batchRaw,
                 system,
                 production_line: isDowntime ? (batchRaw.line || 'ALL') : batchRaw.production_line,
-                gcas: isDowntime ? '⛔ DOWNTIME' : batchRaw.gcas,
+                gcas: isDowntime ? 'DOWNTIME' : batchRaw.gcas,
             }, index);
             
             if (searchText && !Object.values(batch).some(val => val?.toString().toLowerCase().includes(lowerSearch))) {
@@ -118,8 +118,8 @@ export const useScheduleTable = () => {
         });
     });
 
-    // Sort systems: 12T first, then 6T
-    const systemOrder = ['12T', '6T'];
+    // Sort systems: 12T first, then 6T, then 1.25T
+    const systemOrder = ['12T', '6T', '1.25T'];
     const sorted = {};
     systemOrder.forEach((sys) => {
       if (result[sys]) {

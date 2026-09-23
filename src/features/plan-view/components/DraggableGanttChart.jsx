@@ -115,7 +115,7 @@ const TaskBar = ({ item, leftPct, widthPct, isDragOverlay = false }) => {
   );
 
   const tooltipTitle = isDowntime
-    ? `⛔ DOWNTIME — ${item.reason || item.title} | ${fmtDate(item.start)} ${fmtTime(item.start)} – ${fmtTime(item.end)} | Duration: ${item.duration ?? '?'} mins | Line: ${item.line || 'All'}`
+    ? `DOWNTIME — ${item.reason || item.title} | ${fmtDate(item.start)} ${fmtTime(item.start)} – ${fmtTime(item.end)} | Duration: ${item.duration ?? '?'} mins | Line: ${item.line || 'All'}`
     : `${item.title} | ${item.status === 'washout' ? 'WASHOUT' : `Batch: ${item.batch}`} | ${fmtDate(item.start)} ${fmtTime(item.start)} – ${fmtDate(item.end)} ${fmtTime(item.end)} | Status: ${item.status}`;
 
   return isDragOverlay ? (

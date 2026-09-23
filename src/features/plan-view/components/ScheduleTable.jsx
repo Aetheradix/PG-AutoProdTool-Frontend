@@ -125,7 +125,7 @@ const ScheduleTable = ({
           />
           <div className="flex gap-2 items-center">
             <div className="flex p-0.5 rounded-none border border-[#444]">
-              {['All', '6T', '12T'].map((f) => (
+              {['All', '6T', '12T', '1.25T'].map((f) => (
                 <button
                   key={f}
                   onClick={() => onSystemFilterChange(f)}
