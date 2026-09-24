@@ -6,6 +6,10 @@ let isHandling401 = false;
 const baseQuery = fetchBaseQuery({
     baseUrl: '/api',
     prepareHeaders: (headers) => {
+        // Prevent browser from serving stale cached responses (e.g. HTML from disk cache)
+        headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        headers.set('Pragma', 'no-cache');
+        headers.set('Accept', 'application/json');
         try {
             const storedUser = sessionStorage.getItem('user');
             if (storedUser) {

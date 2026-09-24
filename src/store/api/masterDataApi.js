@@ -195,6 +195,13 @@ export const masterDataApi = apiSlice.injectEndpoints({
                     limit: params.limit,
                 },
             }),
+            transformResponse: (response) => {
+                // API returns { status, message, data: [...], pagination }
+                // Extract just the array so consumers get it directly
+                if (Array.isArray(response?.data)) return response.data;
+                if (Array.isArray(response)) return response;
+                return [];
+            },
             providesTags: ['EquipmentsMaster'],
         }),
         createEquipmentMaster: builder.mutation({

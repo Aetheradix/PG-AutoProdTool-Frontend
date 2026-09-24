@@ -9,11 +9,18 @@ export default function useResourceGroupOptions(type) {
   const { data: apiData, isLoading } = useGetEquipmentsMasterQuery({ page: 1, limit: 1000 });
 
   const options = useMemo(() => {
-    const all = Array.isArray(apiData?.data) ? apiData.data : Array.isArray(apiData) ? apiData : [];
+    const all = Array.isArray(apiData) ? apiData : [];
 
+    const normalizedType = type.trim().toLowerCase();
     const uniqueGroups = [
       ...new Set(
-        all.filter((e) => e.equip_type === type && e.resource_group).map((e) => e.resource_group)
+        all
+          .filter(
+            (e) =>
+              (e.equip_type ?? '').trim().toLowerCase() === normalizedType &&
+              e.resource_group
+          )
+          .map((e) => e.resource_group)
       ),
     ];
 

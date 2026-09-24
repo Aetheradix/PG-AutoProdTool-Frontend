@@ -11,7 +11,7 @@ const PackingPlanAddModal = ({ open, onCancel, onOk, confirmLoading, initialValu
   const { data: equipmentData, isLoading: isLinesLoading } = useGetEquipmentsMasterQuery({ page: 1, limit: 1000 });
   
   const lineOptions = useMemo(() => {
-    const raw = Array.isArray(equipmentData?.data) ? equipmentData.data : Array.isArray(equipmentData) ? equipmentData : [];
+    const raw = Array.isArray(equipmentData) ? equipmentData : [];
     return raw
       .filter(item => item.equip_type === 'Line')
       .map(item => ({

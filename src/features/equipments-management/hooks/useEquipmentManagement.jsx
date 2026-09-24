@@ -24,7 +24,7 @@ export default function useEquipmentManagement(type) {
 
   // ── Data ─────────────────────────────────────────────────────────────────
   const allEquipments = useMemo(() => {
-    const raw = Array.isArray(apiData?.data) ? apiData.data : Array.isArray(apiData) ? apiData : [];
+    const raw = Array.isArray(apiData) ? apiData : [];
     return raw.map(item => {
       const cleaned = {};
       Object.keys(item).forEach(key => {
@@ -36,7 +36,11 @@ export default function useEquipmentManagement(type) {
     });
   }, [apiData]);
 
-  const equipments = allEquipments.filter((e) => e.equip_type === type);
+  // Case-insensitive + trim-safe filter so "tank", "TANK", "Tank" all work
+  const normalizedType = type.trim().toLowerCase();
+  const equipments = allEquipments.filter(
+    (e) => (e.equip_type ?? '').trim().toLowerCase() === normalizedType
+  );
 
   // ── UI state ─────────────────────────────────────────────────────────────
   const [addForm]                              = Form.useForm();
