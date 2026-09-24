@@ -120,21 +120,27 @@ export const useScheduleTable = () => {
 
     // Sort systems: 12T first, then 6T, then 1.25T
     const systemOrder = ['12T', '6T', '1.25T'];
+    const shiftOrder = ['A', 'B', 'C'];
     const sorted = {};
     systemOrder.forEach((sys) => {
       if (result[sys]) {
-        // Sort shifts: A, B, C
-        const shiftOrder = ['A', 'B', 'C'];
+        // Sort shifts: A, B, C — always include all 3 even if empty
         const sortedShifts = {};
         shiftOrder.forEach((s) => {
-          if (result[sys][s]) sortedShifts[s] = result[sys][s];
+          sortedShifts[s] = result[sys][s] || {};   // ← always add shift
         });
         sorted[sys] = sortedShifts;
       }
     });
-    // Add any remaining systems
+    // Add any remaining systems (also ensure A/B/C for them)
     Object.keys(result).forEach((sys) => {
-      if (!sorted[sys]) sorted[sys] = result[sys];
+      if (!sorted[sys]) {
+        const sortedShifts = {};
+        shiftOrder.forEach((s) => {
+          sortedShifts[s] = result[sys][s] || {};
+        });
+        sorted[sys] = sortedShifts;
+      }
     });
 
     const sortedDates = Array.from(allDates).sort();

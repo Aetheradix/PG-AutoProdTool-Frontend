@@ -124,12 +124,21 @@ export const exportTableToExcel = async (groupedData, sortedDates, fileName = 'p
     Object.entries(shifts).forEach(([shift, byDate]) => {
       sortedDates.forEach((dateKey) => {
         const dateData = byDate[dateKey];
-        if (!dateData) return;
+
+        // ── Always render the shift section even if empty ──
+        // Get date label: use available data label or fallback to dateKey itself
+        const dateLabel = dateData?.label || (() => {
+          // Try to find label from any other shift for same dateKey
+          for (const otherByDate of Object.values(shifts)) {
+            if (otherByDate[dateKey]?.label) return otherByDate[dateKey].label;
+          }
+          return dateKey;
+        })();
 
         // Date Header
         worksheet.mergeCells(currentRow, 1, currentRow, 9);
         const dateCell = worksheet.getCell(currentRow, 1);
-        dateCell.value = dateData.label;
+        dateCell.value = dateLabel;
         dateCell.style = dateHeaderStyle;
         currentRow++;
 
@@ -142,8 +151,8 @@ export const exportTableToExcel = async (groupedData, sortedDates, fileName = 'p
         });
         currentRow++;
 
-        const batches = dateData.batches || [];
-        const maxRows = Math.max(batches.length, 5); // Match padRows(batches, 5)
+        const batches = dateData?.batches || [];
+        const maxRows = Math.max(batches.length, 5); // Always at least 5 rows like UI
 
         for (let i = 0; i < maxRows; i++) {
           const batch = batches[i] || {};
