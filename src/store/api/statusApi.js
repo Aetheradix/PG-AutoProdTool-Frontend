@@ -41,7 +41,7 @@ export const statusApi = apiSlice.injectEndpoints({
         updateTimelineData: builder.mutation({
             query: ({ id, ...data }) => ({
                 url: `/v1/timeline-data/${id}`,
-                method: 'PUT',
+                method: 'POST',
                 body: data,
             }),
             invalidatesTags: ['Status', 'ProductionSchedule', 'Timeline', 'Plan'],
@@ -50,10 +50,25 @@ export const statusApi = apiSlice.injectEndpoints({
             query: () => '/v1/washout-matrix',
             providesTags: ['WashoutMatrix'],
         }),
+        uploadWashoutMatrix: builder.mutation({
+            query: (data) => ({
+                url: '/v1/washout-matrix/upload',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: ['WashoutMatrix'],
+        }),
+        syncPstMatrix: builder.mutation({
+            query: () => ({
+                url: '/v1/washout-matrix/sync-pst',
+                method: 'POST',
+            }),
+            invalidatesTags: ['WashoutMatrix'],
+        }),
         updateGanttEdit: builder.mutation({
             query: ({ id, start_time, end_time }) => ({
                 url: `/v1/production-schedule/gantt-edit/${encodeURIComponent(id)}`,
-                method: 'PUT',
+                method: 'POST',
                 body: {
                     start_time,
                     end_time,
@@ -76,5 +91,7 @@ export const {
     useGetTimelineDataQuery,
     useUpdateTimelineDataMutation,
     useUpdateGanttEditMutation,
-    useGetWashoutMatrixQuery
+    useGetWashoutMatrixQuery,
+    useUploadWashoutMatrixMutation,
+    useSyncPstMatrixMutation,
 } = statusApi;
